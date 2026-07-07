@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package mycel.admin.v1;
+
+option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/admin/v1;adminv1";
+
+// AdminBackupService manages daemon backup policy and manual backup runs.
+service AdminBackupService {
+  rpc GetBackupPolicy(GetBackupPolicyRequest) returns (GetBackupPolicyResponse);
+  rpc UpdateBackupPolicy(UpdateBackupPolicyRequest) returns (UpdateBackupPolicyResponse);
+  rpc TriggerBackup(TriggerBackupRequest) returns (TriggerBackupResponse);
+  rpc GetBackupStatus(GetBackupStatusRequest) returns (GetBackupStatusResponse);
+  rpc ListBackups(ListBackupsRequest) returns (ListBackupsResponse);
+  rpc DeleteBackup(DeleteBackupRequest) returns (DeleteBackupResponse);
+}
+
+message BackupPolicy {
+  bool enabled = 1;
+  string backup_dir = 2;
+  int64 interval_seconds = 3;
+  int32 retention_count = 4;
+  bool include_logs = 5;
+  string compression = 6;
+  int64 quiesce_drain_timeout_seconds = 7;
+  int64 backup_timeout_seconds = 8;
+  int64 retry_after_seconds = 9;
+  int32 status_history_limit = 10;
+  bool allow_reads_during_backup = 11;
+}
+
+message BackupStatus {
+  string backup_id = 1;
+  string state = 2;
+  string started_at = 3;
+  string completed_at = 4;
+  string archive_path = 5;
+  string manifest_path = 6;
+  string error = 7;
+  repeated QuiesceParticipantStatus participants = 8;
+  string last_success_at = 9;
+  string next_run_at = 10;
+}
+
+message BackupSummary {
+  string backup_id = 1;
+  string archive_name = 2;
+  string created_at = 3;
+  string completed_at = 4;
+  int64 size_bytes = 5;
+  string checksum_sha256 = 6;
+  string compression = 7;
+  bool include_logs = 8;
+}
+
+message QuiesceStatus {
+  repeated QuiesceParticipantStatus participants = 1;
+}
+
+message QuiesceParticipantStatus {
+  string name = 1;
+  bool quiesced = 2;
+  int32 active = 3;
+  string reason = 4;
+  string mode = 5;
+  string source = 6;
+  string since = 7;
+  string last_error = 8;
+}
+
+message GetBackupPolicyRequest {}
+
+message GetBackupPolicyResponse {
+  BackupPolicy policy = 1;
+}
+
+message UpdateBackupPolicyRequest {
+  BackupPolicy policy = 1;
+}
+
+message UpdateBackupPolicyResponse {
+  BackupPolicy policy = 1;
+}
+
+message TriggerBackupRequest {
+  string reason = 1;
+}
+
+message TriggerBackupResponse {
+  BackupStatus status = 1;
+  BackupSummary backup = 2;
+}
+
+message GetBackupStatusRequest {}
+
+message GetBackupStatusResponse {
+  BackupStatus status = 1;
+  QuiesceStatus quiesce = 2;
+}
+
+message ListBackupsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListBackupsResponse {
+  repeated BackupSummary backups = 1;
+  string next_page_token = 2;
+}
+
+message DeleteBackupRequest {
+  string backup_id = 1;
+}
+
+message DeleteBackupResponse {
+  string backup_id = 1;
+}

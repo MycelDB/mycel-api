@@ -16,6 +16,8 @@ github.com/myceldb/mycel-api
 
 This repository intentionally does not contain daemon implementation code. Applications may import generated stubs directly, but most Go applications should prefer the higher-level `mycel-go-sdk` connector once available.
 
+Admin backup control is part of this public API surface through `mycel.admin.v1.AdminBackupService`. The daemon remains the only component that reads, quiesces, snapshots, or restores Mycel storage; applications should call the Admin API instead of copying a live data directory.
+
 ## Go imports
 
 Examples:
