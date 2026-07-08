@@ -6,7 +6,6 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "mycel/common/v1/access.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/admin/v1;adminv1";
 
 // AdminOperatorService manages system admins/operators. Operators are distinct
 // from standard users and are not created through AdminUserService.

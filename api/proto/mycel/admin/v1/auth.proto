@@ -5,7 +5,6 @@ package mycel.admin.v1;
 import "google/protobuf/timestamp.proto";
 import "mycel/admin/v1/operator.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/admin/v1;adminv1";
 
 // AdminAuthService authenticates daemon operators/admins and issues short-lived
 // access tokens for protected Admin API calls.

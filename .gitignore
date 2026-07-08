@@ -1,6 +1,7 @@
 # Build/test artifacts
 coverage.out
 bin/
+gen/
 
 # Editor/OS
 .DS_Store

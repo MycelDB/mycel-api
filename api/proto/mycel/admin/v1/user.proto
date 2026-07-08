@@ -4,7 +4,6 @@ package mycel.admin.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/admin/v1;adminv1";
 
 // AdminUserService manages standard users. System admins/operators are a
 // separate principal type and are not created through this service.

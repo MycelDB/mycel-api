@@ -4,7 +4,6 @@ package mycel.common.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/common/v1;commonv1";
 
 // Principal identifies an actor that can own resources or receive access.
 //

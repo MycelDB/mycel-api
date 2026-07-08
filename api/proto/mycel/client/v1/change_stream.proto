@@ -5,7 +5,6 @@ package mycel.client.v1;
 import "google/protobuf/timestamp.proto";
 import "mycel/client/v1/graph.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/client/v1;clientv1";
 
 // ChangeStreamService streams committed domain changes to clients/connectors.
 // It does not stream uncommitted transaction operations.

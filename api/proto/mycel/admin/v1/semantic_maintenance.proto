@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package mycel.admin.v1;
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/admin/v1;adminv1";
 
 // AdminSemanticMaintenanceService runs daemon-owned semantic maintenance work.
 service AdminSemanticMaintenanceService {

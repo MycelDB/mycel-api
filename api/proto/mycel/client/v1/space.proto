@@ -5,7 +5,6 @@ package mycel.client.v1;
 import "google/protobuf/timestamp.proto";
 import "mycel/common/v1/access.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/client/v1;clientv1";
 
 // SpaceService lets authenticated clients discover and inspect spaces visible
 // to them. Space creation, archival, deletion, and system-owned space

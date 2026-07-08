@@ -6,7 +6,6 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "mycel/common/v1/access.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/client/v1;clientv1";
 
 // DomainService manages client-visible domains inside a space. Domains are
 // flat partitions within a space. Graph sessions and graph operations are
