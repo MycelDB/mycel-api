@@ -18,6 +18,8 @@ Generated code belongs in the consuming project:
 - `mycel-rust-sdk` generates Rust client stubs during Cargo builds.
 - Other SDKs should generate bindings from `api/proto/` rather than committing generated output here.
 
+Admin auth exposes short-lived access tokens plus durable refresh sessions through `mycel.admin.v1.AdminAuthService`, mirroring the client auth lifecycle for long-running service-to-service Admin API callers.
+
 Admin backup control is part of this public API surface through `mycel.admin.v1.AdminBackupService`. Backup policy supports interval schedules for compatibility plus calendar-style daily/weekly schedules using `schedule_kind`, `time_of_day`, `timezone`, `weekdays`, and `run_missed`. Backup archive format is represented by the `BackupArchiveFormat` enum via `archive_format`; supported values are ZIP, TAR, TAR_GZ, and TAR_ZST, while UNSPECIFIED defaults to ZIP. The legacy string `compression` field is deprecated for compatibility. The daemon remains the only component that reads, quiesces, snapshots, or restores Mycel storage; applications should call the Admin API instead of copying a live data directory.
 
 ## Validate the contract

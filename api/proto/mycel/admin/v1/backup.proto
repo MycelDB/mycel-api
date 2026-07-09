@@ -24,8 +24,8 @@ enum BackupArchiveFormat {
 message BackupPolicy {
   bool enabled = 1;
   string backup_dir = 2;
-  // Interval schedule period in seconds. Used when schedule_kind is empty or "interval".
-  int64 interval_seconds = 3;
+  // Interval schedule period in whole hours. Used when schedule_kind is empty or "interval".
+  int32 interval_hours = 3;
   int32 retention_count = 4;
   bool include_logs = 5;
   // Deprecated legacy archive/compression format string, for example "zip".
