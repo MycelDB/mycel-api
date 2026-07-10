@@ -3,6 +3,7 @@ syntax = "proto3";
 package mycel.admin.v1;
 
 import "mycel/client/v1/space.proto";
+import "mycel/common/v1/access.proto";
 
 
 // AdminSpaceService manages daemon spaces through the operator-facing Admin API.
@@ -11,6 +12,7 @@ service AdminSpaceService {
   rpc GetSpace(AdminSpaceServiceGetSpaceRequest) returns (AdminSpaceServiceGetSpaceResponse);
   rpc CreateSpace(CreateSpaceRequest) returns (CreateSpaceResponse);
   rpc DeleteSpace(DeleteSpaceRequest) returns (DeleteSpaceResponse);
+  rpc GrantSpaceUser(GrantSpaceUserRequest) returns (GrantSpaceUserResponse);
 }
 
 message AdminSpaceServiceListSpacesRequest {
@@ -50,3 +52,14 @@ message DeleteSpaceRequest {
 }
 
 message DeleteSpaceResponse {}
+
+message GrantSpaceUserRequest {
+  string space_id = 1;
+  string user_id = 2;
+  string username = 3;
+  mycel.common.v1.SpaceRole role = 4;
+}
+
+message GrantSpaceUserResponse {
+  mycel.common.v1.AccessGrant grant = 1;
+}
