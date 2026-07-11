@@ -61,6 +61,7 @@ message CreateDomainRequest {
   string name = 2;
   string description = 3;
   string key = 4;
+  DomainDiscoveryMode discovery_mode = 5;
 }
 
 message CreateDomainResponse {
@@ -75,8 +76,8 @@ message UpdateDomainRequest {
   // this resource and apply only fields listed in update_mask.
   Domain domain = 3;
 
-  // Mutable field paths currently include "name" and "description". The
-  // default domain name cannot be changed.
+  // Mutable field paths currently include "name", "description", and
+  // "discovery_mode". The default domain name cannot be changed.
   google.protobuf.FieldMask update_mask = 4;
 }
 
@@ -116,6 +117,15 @@ message Domain {
 
   // Stable human-readable key unique within the space.
   string key = 11;
+
+  // Controls whether the domain participates in broad discovery operations.
+  DomainDiscoveryMode discovery_mode = 12;
+}
+
+enum DomainDiscoveryMode {
+  DOMAIN_DISCOVERY_MODE_UNSPECIFIED = 0;
+  DOMAIN_DISCOVERY_MODE_NORMAL = 1;
+  DOMAIN_DISCOVERY_MODE_DIRECT_ONLY = 2;
 }
 
 enum DomainState {
