@@ -61,6 +61,10 @@ message CreateDomainRequest {
   string name = 2;
   string description = 3;
   string key = 4;
+  DomainDiscoveryMode discovery_mode = 5;
+  DomainSearchMode search_mode = 6;
+  DomainSemanticMode semantic_mode = 7;
+  bool read_only = 8;
 }
 
 message CreateDomainResponse {
@@ -75,8 +79,9 @@ message UpdateDomainRequest {
   // this resource and apply only fields listed in update_mask.
   Domain domain = 3;
 
-  // Mutable field paths currently include "name" and "description". The
-  // default domain name cannot be changed.
+  // Mutable field paths currently include "name", "description",
+  // "discovery_mode", "search_mode", "semantic_mode", and "read_only".
+  // The default domain name cannot be changed.
   google.protobuf.FieldMask update_mask = 4;
 }
 
@@ -116,6 +121,40 @@ message Domain {
 
   // Stable human-readable key unique within the space.
   string key = 11;
+
+  // Controls whether the domain participates in broad discovery operations.
+  DomainDiscoveryMode discovery_mode = 12;
+
+  // Controls whether the domain participates in graph query/search operations.
+  DomainSearchMode search_mode = 13;
+
+  // Controls whether the domain participates in semantic indexing and search.
+  DomainSemanticMode semantic_mode = 14;
+
+  // Read-only domains reject normal client/user graph mutations. Admin/import
+  // paths may still replace or update read-only domains.
+  bool read_only = 15;
+}
+
+enum DomainDiscoveryMode {
+  DOMAIN_DISCOVERY_MODE_UNSPECIFIED = 0;
+  DOMAIN_DISCOVERY_MODE_NORMAL = 1;
+  DOMAIN_DISCOVERY_MODE_EXPLICIT_ONLY = 2;
+  DOMAIN_DISCOVERY_MODE_HIDDEN = 3;
+}
+
+enum DomainSearchMode {
+  DOMAIN_SEARCH_MODE_UNSPECIFIED = 0;
+  DOMAIN_SEARCH_MODE_NORMAL = 1;
+  DOMAIN_SEARCH_MODE_EXPLICIT_ONLY = 2;
+  DOMAIN_SEARCH_MODE_DISABLED = 3;
+}
+
+enum DomainSemanticMode {
+  DOMAIN_SEMANTIC_MODE_UNSPECIFIED = 0;
+  DOMAIN_SEMANTIC_MODE_NORMAL = 1;
+  DOMAIN_SEMANTIC_MODE_EXPLICIT_ONLY = 2;
+  DOMAIN_SEMANTIC_MODE_DISABLED = 3;
 }
 
 enum DomainState {
