@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package mycel.client.v1;
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/client/v1;clientv1";
 
 // MetadataCatalogService provides transaction-scoped metadata catalog discovery.
 // It is intentionally limited to summaries such as known tags and property

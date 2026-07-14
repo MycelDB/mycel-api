@@ -4,7 +4,6 @@ package mycel.client.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/client/v1;clientv1";
 
 // AuthService manages client authentication and durable auth sessions.
 //

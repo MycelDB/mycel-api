@@ -5,7 +5,6 @@ package mycel.client.v1;
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/client/v1;clientv1";
 
 // TemplateService manages client-visible graph templates scoped to a space.
 // Templates define reusable, versioned node shapes. Nodes reference templates by

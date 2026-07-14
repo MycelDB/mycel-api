@@ -4,7 +4,6 @@ package mycel.admin.v1;
 
 import "mycel/client/v1/domain.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/admin/v1;adminv1";
 
 // AdminDomainService provides operator-facing domain lookup helpers for admin
 // semantic/inference workflows.

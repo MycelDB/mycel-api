@@ -5,7 +5,6 @@ package mycel.admin.v1;
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/admin/v1;adminv1";
 
 // AdminInferenceService manages daemon inference catalog/configuration resources
 // used by AdminSemanticService and Client SemanticService.

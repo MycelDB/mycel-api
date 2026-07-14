@@ -6,7 +6,6 @@ import "google/protobuf/timestamp.proto";
 import "mycel/client/v1/graph.proto";
 import "mycel/client/v1/template.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/client/v1;clientv1";
 
 // ImportExportService provides client/application data portability for a domain.
 // It is distinct from admin backup/restore. Format-specific importers such as

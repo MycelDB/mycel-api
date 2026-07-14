@@ -7,7 +7,6 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "mycel/client/v1/blob.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/client/v1;clientv1";
 
 // GraphService provides transaction-scoped graph node and edge operations.
 // Every request targets transaction_id; sessions and transactions are managed by

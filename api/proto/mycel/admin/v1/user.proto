@@ -4,7 +4,6 @@ package mycel.admin.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/admin/v1;adminv1";
 
 // AdminUserService manages standard users. System admins/operators are a
 // separate principal type and are not created through this service.
@@ -21,6 +20,7 @@ service AdminUserService {
 
   rpc SetUserPassword(SetUserPasswordRequest) returns (SetUserPasswordResponse);
 
+  rpc CreateUserSession(CreateUserSessionRequest) returns (CreateUserSessionResponse);
   rpc ListUserSessions(ListUserSessionsRequest) returns (ListUserSessionsResponse);
   rpc RevokeUserSession(RevokeUserSessionRequest) returns (RevokeUserSessionResponse);
   rpc RevokeUserSessions(RevokeUserSessionsRequest) returns (RevokeUserSessionsResponse);
@@ -104,6 +104,19 @@ message SetUserPasswordRequest {
 
 message SetUserPasswordResponse {
   User user = 1;
+}
+
+message CreateUserSessionRequest {
+  string user_id = 1;
+  AdminClientInfo client = 2;
+}
+
+message CreateUserSessionResponse {
+  string access_token = 1;
+  google.protobuf.Timestamp access_token_expire_time = 2;
+  optional string refresh_token = 3;
+  User user = 4;
+  string auth_session_id = 5;
 }
 
 message ListUserSessionsRequest {

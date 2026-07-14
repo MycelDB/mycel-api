@@ -4,7 +4,6 @@ package mycel.client.v1;
 
 import "mycel/client/v1/graph.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/client/v1;clientv1";
 
 // SemanticService exposes client-facing semantic search. Semantic index
 // creation/configuration, provider credentials, policies, maintenance, and

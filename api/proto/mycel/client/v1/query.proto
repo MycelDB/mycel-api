@@ -5,7 +5,6 @@ package mycel.client.v1;
 import "google/protobuf/struct.proto";
 import "mycel/client/v1/graph.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/client/v1;clientv1";
 
 // QueryService provides transaction-scoped structured graph queries.
 service QueryService {

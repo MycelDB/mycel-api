@@ -4,7 +4,6 @@ package mycel.common.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/common/v1;commonv1";
 
 // Principal identifies an actor that can own resources or receive access.
 //
@@ -74,6 +73,7 @@ enum Capability {
   CAPABILITY_OPERATOR_MANAGE = 143;
   CAPABILITY_DAEMON_CONFIGURE = 144;
   CAPABILITY_MESH_MANAGE = 145;
+  CAPABILITY_USER_SESSION_DELEGATE = 146;
 
   // System capabilities used by daemon/system internals.
   CAPABILITY_SYSTEM_COMPACT_SPACE = 160;

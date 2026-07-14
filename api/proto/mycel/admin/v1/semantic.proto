@@ -4,7 +4,6 @@ package mycel.admin.v1;
 
 import "mycel/client/v1/semantic.proto";
 
-option go_package = "github.com/myceldb/mycel-api/gen/go/mycel/admin/v1;adminv1";
 
 // AdminSemanticService manages semantic index configuration through the
 // operator-facing Admin API. Provider credentials/policies and maintenance are
