@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package mycel.admin.v1;
+
+// AdminClusterService exposes operator-facing cluster management and
+// diagnostics. It is distinct from the internal daemon-to-daemon clustering
+// backend API: these methods are intended for authenticated administrators and
+// must not expose plaintext join tokens except in the create/add-node response.
+service AdminClusterService {
+  // GetClusterStatus returns the local daemon's current cluster identity,
+  // lifecycle state, and known topology/peer view.
+  rpc GetClusterStatus(GetClusterStatusRequest) returns (GetClusterStatusResponse);
+
+  // ListClusterMembers returns the authoritative admission/membership view.
+  // Token hashes and plaintext token values are never returned.
+  rpc ListClusterMembers(ListClusterMembersRequest) returns (ListClusterMembersResponse);
+
+  // AddClusterNode creates or updates a pending membership record and returns a
+  // node-scoped one-time join token. The plaintext token is returned only in
+  // this response and should be displayed once by admin clients.
+  rpc AddClusterNode(AddClusterNodeRequest) returns (AddClusterNodeResponse);
+}
+
+// ClusterMode describes the local daemon clustering mode.
+enum ClusterMode {
+  CLUSTER_MODE_UNSPECIFIED = 0;
+  CLUSTER_MODE_STANDALONE = 1;
+  CLUSTER_MODE_CLUSTERED = 2;
+}
+
+// ClusterNodeState describes the local node lifecycle state exposed to operators.
+enum ClusterNodeState {
+  CLUSTER_NODE_STATE_UNSPECIFIED = 0;
+  CLUSTER_NODE_STATE_INITIALIZING = 1;
+  CLUSTER_NODE_STATE_STANDALONE = 2;
+  CLUSTER_NODE_STATE_CLUSTERED = 3;
+  CLUSTER_NODE_STATE_DISCOVERING = 4;
+  CLUSTER_NODE_STATE_ACTIVE = 5;
+  CLUSTER_NODE_STATE_DEGRADED = 6;
+  CLUSTER_NODE_STATE_STOPPED = 7;
+  CLUSTER_NODE_STATE_FAILED = 8;
+}
+
+// ClusterPeerState is the local view of a peer's cluster participation.
+enum ClusterPeerState {
+  CLUSTER_PEER_STATE_UNSPECIFIED = 0;
+  CLUSTER_PEER_STATE_SELF = 1;
+  CLUSTER_PEER_STATE_SEED = 2;
+  CLUSTER_PEER_STATE_ACTIVE = 3;
+  CLUSTER_PEER_STATE_UNREACHABLE = 4;
+  CLUSTER_PEER_STATE_PENDING = 5;
+  CLUSTER_PEER_STATE_REJECTED = 6;
+  CLUSTER_PEER_STATE_REMOVED = 7;
+}
+
+// ClusterPeerSource describes how a topology peer entry was learned.
+enum ClusterPeerSource {
+  CLUSTER_PEER_SOURCE_UNSPECIFIED = 0;
+  CLUSTER_PEER_SOURCE_SELF = 1;
+  CLUSTER_PEER_SOURCE_SEED = 2;
+  CLUSTER_PEER_SOURCE_DISCOVERED = 3;
+  CLUSTER_PEER_SOURCE_MANUAL = 4;
+}
+
+// ClusterMemberState is the authoritative admission state of a member.
+enum ClusterMemberState {
+  CLUSTER_MEMBER_STATE_UNSPECIFIED = 0;
+  CLUSTER_MEMBER_STATE_PENDING = 1;
+  CLUSTER_MEMBER_STATE_ACTIVE = 2;
+  CLUSTER_MEMBER_STATE_REJECTED = 3;
+  CLUSTER_MEMBER_STATE_REMOVED = 4;
+}
+
+message GetClusterStatusRequest {}
+
+message GetClusterStatusResponse {
+  ClusterLocalNode node = 1;
+  ClusterInfo cluster = 2;
+  repeated ClusterPeer peers = 3;
+}
+
+message ClusterLocalNode {
+  string node_id = 1;
+  string node_name = 2;
+  ClusterNodeState state = 3;
+  bool admitted = 4;
+  bool bootstrap = 5;
+  string backend_advertise_addr = 6;
+  string node_public_key_fingerprint = 7;
+}
+
+message ClusterInfo {
+  string cluster_id = 1;
+  string cluster_name = 2;
+  ClusterMode mode = 3;
+}
+
+message ClusterPeer {
+  string node_id = 1;
+  string node_name = 2;
+  string cluster_id = 3;
+  string cluster_name = 4;
+  string backend_advertise_addr = 5;
+  ClusterPeerState state = 6;
+  ClusterPeerSource source = 7;
+  string last_seen_at = 8;
+}
+
+message ListClusterMembersRequest {}
+
+message ListClusterMembersResponse {
+  string cluster_id = 1;
+  string cluster_name = 2;
+  repeated ClusterMember members = 3;
+}
+
+message ClusterMember {
+  string node_name = 1;
+  string node_id = 2;
+  ClusterMemberState state = 3;
+  string backend_advertise_addr = 4;
+  string role = 5;
+  bool cluster_bootstrap = 6;
+  string node_public_key_fingerprint = 7;
+  string token_id = 8;
+  string token_expires_at = 9;
+  string token_consumed_at = 10;
+  string token_revoked_at = 11;
+  string created_at = 12;
+  string updated_at = 13;
+  string joined_at = 14;
+}
+
+message AddClusterNodeRequest {
+  string node_name = 1;
+  int64 token_ttl_seconds = 2;
+}
+
+message AddClusterNodeResponse {
+  string node_name = 1;
+  ClusterMemberState state = 2;
+  string token = 3;
+  string token_id = 4;
+  string expires_at = 5;
+}
