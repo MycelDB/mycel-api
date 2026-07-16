@@ -71,12 +71,24 @@ enum ClusterMemberState {
   CLUSTER_MEMBER_STATE_REMOVED = 4;
 }
 
+// ClusterNodeRole is the local node's derived cluster authority role.
+enum ClusterNodeRole {
+  CLUSTER_NODE_ROLE_UNSPECIFIED = 0;
+  CLUSTER_NODE_ROLE_NONE = 1;
+  CLUSTER_NODE_ROLE_PRIMARY = 2;
+  CLUSTER_NODE_ROLE_FOLLOWER = 3;
+  CLUSTER_NODE_ROLE_CANDIDATE = 4;
+  CLUSTER_NODE_ROLE_OBSERVER = 5;
+  CLUSTER_NODE_ROLE_LEARNER = 6;
+}
+
 message GetClusterStatusRequest {}
 
 message GetClusterStatusResponse {
   ClusterLocalNode node = 1;
   ClusterInfo cluster = 2;
   repeated ClusterPeer peers = 3;
+  ClusterAuthority authority = 4;
 }
 
 message ClusterLocalNode {
@@ -87,6 +99,7 @@ message ClusterLocalNode {
   bool bootstrap = 5;
   string backend_advertise_addr = 6;
   string node_public_key_fingerprint = 7;
+  ClusterNodeRole role = 8;
 }
 
 message ClusterInfo {
@@ -104,6 +117,17 @@ message ClusterPeer {
   ClusterPeerState state = 6;
   ClusterPeerSource source = 7;
   string last_seen_at = 8;
+}
+
+message ClusterAuthority {
+  string cluster_id = 1;
+  string primary_node_id = 2;
+  string primary_node_name = 3;
+  string primary_backend_advertise_addr = 4;
+  int64 authority_epoch = 5;
+  int64 term = 6;
+  string source = 7;
+  string updated_at = 8;
 }
 
 message ListClusterMembersRequest {}
