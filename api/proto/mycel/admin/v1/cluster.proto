@@ -82,6 +82,23 @@ enum ClusterNodeRole {
   CLUSTER_NODE_ROLE_LEARNER = 6;
 }
 
+enum ClusterReplicationRole {
+  CLUSTER_REPLICATION_ROLE_UNSPECIFIED = 0;
+  CLUSTER_REPLICATION_ROLE_NOT_APPLICABLE = 1;
+  CLUSTER_REPLICATION_ROLE_PRIMARY = 2;
+  CLUSTER_REPLICATION_ROLE_FOLLOWER = 3;
+}
+
+enum ClusterReplicationCatchupState {
+  CLUSTER_REPLICATION_CATCHUP_STATE_UNSPECIFIED = 0;
+  CLUSTER_REPLICATION_CATCHUP_STATE_UNKNOWN = 1;
+  CLUSTER_REPLICATION_CATCHUP_STATE_STREAMING = 2;
+  CLUSTER_REPLICATION_CATCHUP_STATE_CAUGHT_UP = 3;
+  CLUSTER_REPLICATION_CATCHUP_STATE_RETRYING = 4;
+  CLUSTER_REPLICATION_CATCHUP_STATE_SNAPSHOT_REQUIRED = 5;
+  CLUSTER_REPLICATION_CATCHUP_STATE_ERROR = 6;
+}
+
 message GetClusterStatusRequest {}
 
 message GetClusterStatusResponse {
@@ -89,6 +106,7 @@ message GetClusterStatusResponse {
   ClusterInfo cluster = 2;
   repeated ClusterPeer peers = 3;
   ClusterAuthority authority = 4;
+  ClusterReplicationStatus replication = 5;
 }
 
 message ClusterLocalNode {
@@ -128,6 +146,35 @@ message ClusterAuthority {
   int64 term = 6;
   string source = 7;
   string updated_at = 8;
+}
+
+message ClusterReplicationStatus {
+  string primary_node_id = 1;
+  string primary_node_name = 2;
+  string primary_backend_advertise_addr = 3;
+  int64 authority_epoch = 4;
+  uint64 received_lsn = 5;
+  uint64 applied_lsn = 6;
+  uint64 primary_last_lsn = 7;
+  uint64 lag_records = 8;
+  bool connected = 9;
+  string last_error = 10;
+  string updated_at = 11;
+  ClusterReplicationRole role = 12;
+  ClusterReplicationCatchupState catchup_state = 13;
+  uint64 first_retained_lsn = 14;
+  uint64 checkpoint_lsn = 15;
+  SnapshotRequiredInfo snapshot_required = 16;
+}
+
+message SnapshotRequiredInfo {
+  uint64 requested_after_lsn = 1;
+  uint64 next_requested_lsn = 2;
+  uint64 first_retained_lsn = 3;
+  uint64 last_committed_lsn = 4;
+  uint64 checkpoint_lsn = 5;
+  string primary_node_id = 6;
+  int64 authority_epoch = 7;
 }
 
 message ListClusterMembersRequest {}
