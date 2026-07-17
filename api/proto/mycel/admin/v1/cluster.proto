@@ -19,6 +19,12 @@ service AdminClusterService {
   // node-scoped one-time join token. The plaintext token is returned only in
   // this response and should be displayed once by admin clients.
   rpc AddClusterNode(AddClusterNodeRequest) returns (AddClusterNodeResponse);
+
+  // ResyncClusterNode creates a primary snapshot and installs it on an active follower.
+  rpc ResyncClusterNode(ResyncClusterNodeRequest) returns (ResyncClusterNodeResponse);
+
+  // ListClusterResyncOperations returns recent primary-initiated resync operations.
+  rpc ListClusterResyncOperations(ListClusterResyncOperationsRequest) returns (ListClusterResyncOperationsResponse);
 }
 
 // ClusterMode describes the local daemon clustering mode.
@@ -213,4 +219,37 @@ message AddClusterNodeResponse {
   string token = 3;
   string token_id = 4;
   string expires_at = 5;
+}
+
+message ResyncClusterNodeRequest {
+  string target = 1;
+}
+
+message ResyncClusterNodeResponse {
+  string operation_id = 1;
+  string target_node_id = 2;
+  string target_node_name = 3;
+  uint64 snapshot_base_lsn = 4;
+  uint64 total_bytes = 5;
+  string checksum = 6;
+}
+
+message ListClusterResyncOperationsRequest {}
+
+message ListClusterResyncOperationsResponse {
+  repeated ClusterResyncOperation operations = 1;
+}
+
+message ClusterResyncOperation {
+  string operation_id = 1;
+  string target_node_id = 2;
+  string target_node_name = 3;
+  string target_backend_advertise_addr = 4;
+  string started_at = 5;
+  string completed_at = 6;
+  string status = 7;
+  uint64 snapshot_base_lsn = 8;
+  uint64 total_bytes = 9;
+  string checksum = 10;
+  string error = 11;
 }
