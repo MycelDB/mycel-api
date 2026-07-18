@@ -20,11 +20,26 @@ service AdminClusterService {
   // this response and should be displayed once by admin clients.
   rpc AddClusterNode(AddClusterNodeRequest) returns (AddClusterNodeResponse);
 
+  // RemoveClusterNode marks a non-primary member removed.
+  rpc RemoveClusterNode(RemoveClusterNodeRequest) returns (RemoveClusterNodeResponse);
+
+  // RenameClusterNode changes a member's human-facing node name.
+  rpc RenameClusterNode(RenameClusterNodeRequest) returns (RenameClusterNodeResponse);
+
   // ResyncClusterNode creates a primary snapshot and installs it on an active follower.
   rpc ResyncClusterNode(ResyncClusterNodeRequest) returns (ResyncClusterNodeResponse);
 
   // ListClusterResyncOperations returns recent primary-initiated resync operations.
   rpc ListClusterResyncOperations(ListClusterResyncOperationsRequest) returns (ListClusterResyncOperationsResponse);
+
+  // SwitchClusterPrimary performs a safe planned primary switchover.
+  rpc SwitchClusterPrimary(SwitchClusterPrimaryRequest) returns (SwitchClusterPrimaryResponse);
+
+  // PromoteLocalPrimary force-promotes the connected local node for emergency failover.
+  rpc PromoteLocalPrimary(PromoteLocalPrimaryRequest) returns (PromoteLocalPrimaryResponse);
+
+  // GetClusterHealth returns an operator-oriented aggregate cluster health summary.
+  rpc GetClusterHealth(GetClusterHealthRequest) returns (GetClusterHealthResponse);
 }
 
 // ClusterMode describes the local daemon clustering mode.
@@ -221,6 +236,27 @@ message AddClusterNodeResponse {
   string expires_at = 5;
 }
 
+message RemoveClusterNodeRequest {
+  string target = 1;
+}
+
+message RemoveClusterNodeResponse {
+  string node_id = 1;
+  string node_name = 2;
+  ClusterMemberState state = 3;
+}
+
+message RenameClusterNodeRequest {
+  string target = 1;
+  string new_node_name = 2;
+}
+
+message RenameClusterNodeResponse {
+  string node_id = 1;
+  string node_name = 2;
+  ClusterMemberState state = 3;
+}
+
 message ResyncClusterNodeRequest {
   string target = 1;
 }
@@ -252,4 +288,51 @@ message ClusterResyncOperation {
   uint64 total_bytes = 9;
   string checksum = 10;
   string error = 11;
+}
+
+message SwitchClusterPrimaryRequest {
+  string target = 1;
+  int64 timeout_seconds = 2;
+  bool dry_run = 3;
+}
+
+message SwitchClusterPrimaryResponse {
+  string operation_id = 1;
+  string old_primary_node_id = 2;
+  string old_primary_node_name = 3;
+  string new_primary_node_id = 4;
+  string new_primary_node_name = 5;
+  int64 authority_epoch = 6;
+  uint64 final_lsn = 7;
+}
+
+message PromoteLocalPrimaryRequest {
+  bool force = 1;
+  string confirm_old_primary_fenced = 2;
+}
+
+message PromoteLocalPrimaryResponse {
+  string operation_id = 1;
+  string old_primary_node_id = 2;
+  string old_primary_node_name = 3;
+  string new_primary_node_id = 4;
+  string new_primary_node_name = 5;
+  int64 authority_epoch = 6;
+}
+
+message GetClusterHealthRequest {}
+
+message GetClusterHealthResponse {
+  string status = 1;
+  repeated string warnings = 2;
+  string local_role = 3;
+  string primary_node_id = 4;
+  string primary_node_name = 5;
+  int64 authority_epoch = 6;
+  uint64 replication_lag_records = 7;
+  string catchup_state = 8;
+  bool snapshot_required = 9;
+  int32 active_members = 10;
+  int32 pending_members = 11;
+  int32 unreachable_peers = 12;
 }
