@@ -54,8 +54,7 @@ service AdminClusterService {
 // ClusterEngine describes the clustering engine implementation.
 enum ClusterEngine {
   CLUSTER_ENGINE_UNSPECIFIED = 0;
-  CLUSTER_ENGINE_STATIC = 1;
-  CLUSTER_ENGINE_RAFT = 2;
+  CLUSTER_ENGINE_RAFT = 1;
 }
 
 // RaftGroupKind describes a Raft group's routing role.
