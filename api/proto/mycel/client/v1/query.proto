@@ -51,6 +51,9 @@ message NodePattern {
 
   // Optional template key restriction.
   optional string template_key = 2;
+
+  // Required labels for the matched node.
+  repeated string labels = 3;
 }
 
 message TraversalStep {
@@ -93,22 +96,22 @@ message AndExpr {
   repeated Expr exprs = 1;
 }
 
-// HasTagExpr matches nodes whose canonical metadata tags include tag. The daemon
+// HasTagExpr matches nodes whose user properties include the tag. The daemon
 // applies Mycel tag normalization rules before evaluating the predicate.
 message HasTagExpr {
   string alias = 1;
   string tag = 2;
 }
 
-// PropertyExistsExpr matches nodes whose canonical custom metadata properties
-// contain name. The daemon applies Mycel property-name normalization rules.
+// PropertyExistsExpr matches nodes whose user properties contain name. The
+// daemon applies Mycel property-name normalization rules.
 message PropertyExistsExpr {
   string alias = 1;
   string name = 2;
 }
 
-// PropertyEqualsExpr matches nodes whose canonical custom metadata property name
-// equals value. Supported values are string, number, and boolean.
+// PropertyEqualsExpr matches nodes whose user property name equals value.
+// Supported values are string, number, and boolean.
 message PropertyEqualsExpr {
   string alias = 1;
   string name = 2;
