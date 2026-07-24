@@ -221,6 +221,7 @@ message QueryValue {
     Node node = 1;
     Tree tree = 2;
     google.protobuf.Value scalar = 3;
+    Edge edge = 4;
   }
 }
 
