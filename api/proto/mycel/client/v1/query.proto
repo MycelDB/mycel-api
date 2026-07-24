@@ -11,6 +11,9 @@ service QueryService {
   // ExecuteQuery executes a read-only structured graph query inside a
   // transaction snapshot.
   rpc ExecuteQuery(ExecuteQueryRequest) returns (ExecuteQueryResponse);
+
+  // ExecuteGQL executes textual Mycel GQL inside an existing transaction.
+  rpc ExecuteGQL(ExecuteGQLRequest) returns (ExecuteGQLResponse);
 }
 
 message ExecuteQueryRequest {
@@ -27,6 +30,42 @@ message ExecuteQueryRequest {
 message ExecuteQueryResponse {
   repeated QueryRow rows = 1;
   string next_page_token = 2;
+
+  // Normalized result envelope shared with textual GQL responses.
+  QueryResult result = 3;
+}
+
+message ExecuteGQLRequest {
+  string transaction_id = 1;
+  string query = 2;
+  map<string, google.protobuf.Value> params = 3;
+  int32 page_size = 4;
+  string page_token = 5;
+}
+
+message ExecuteGQLResponse {
+  QueryResult result = 1;
+}
+
+message QueryResult {
+  repeated QueryRow rows = 1;
+  ResultGraph graph = 2;
+  QueryCounters counters = 3;
+  string next_page_token = 4;
+}
+
+message ResultGraph {
+  repeated Node nodes = 1;
+  repeated Edge edges = 2;
+}
+
+message QueryCounters {
+  int32 rows_returned = 1;
+  int32 nodes_inserted = 2;
+  int32 nodes_updated = 3;
+  int32 nodes_deleted = 4;
+  int32 edges_inserted = 5;
+  int32 edges_deleted = 6;
 }
 
 message GraphQuery {
@@ -182,6 +221,7 @@ message QueryValue {
     Node node = 1;
     Tree tree = 2;
     google.protobuf.Value scalar = 3;
+    Edge edge = 4;
   }
 }
 

@@ -260,14 +260,15 @@ message NodeCreate {
 // Edge is the client-visible graph edge representation.
 message Edge {
   string edge_id = 1;
-  string from_node_id = 2;
-  string to_node_id = 3;
-
-  // Well-known edge kinds include "contains", "references", and "associates".
-  // The string form preserves custom edge-kind extensibility.
-  string kind = 4;
-
-  google.protobuf.Struct props = 5;
+  string domain_id = 2;
+  string from_node_id = 3;
+  string to_node_id = 4;
+  repeated string labels = 5;
+  google.protobuf.Struct properties = 6;
+  google.protobuf.Struct payload = 7;
+  google.protobuf.Struct meta = 8;
+  google.protobuf.Timestamp create_time = 9;
+  google.protobuf.Timestamp update_time = 10;
 }
 
 // EdgeCreate is the payload used to create an edge.
@@ -276,8 +277,10 @@ message EdgeCreate {
   optional string edge_id = 1;
   string from_node_id = 2;
   string to_node_id = 3;
-  string kind = 4;
-  google.protobuf.Struct props = 5;
+  repeated string labels = 4;
+  google.protobuf.Struct properties = 5;
+  google.protobuf.Struct payload = 6;
+  google.protobuf.Struct meta = 7;
 }
 
 message GraphOperation {
