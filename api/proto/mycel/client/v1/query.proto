@@ -112,8 +112,6 @@ message GraphPattern {
 message NodePattern {
   string alias = 1;
 
-  // Optional template key restriction.
-  optional string template_key = 2;
 
   // Required labels for the matched node.
   repeated string labels = 3;

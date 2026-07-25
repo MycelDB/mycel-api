@@ -4,7 +4,6 @@ package mycel.client.v1;
 
 import "google/protobuf/timestamp.proto";
 import "mycel/client/v1/graph.proto";
-import "mycel/client/v1/template.proto";
 
 
 // ImportExportService provides client/application data portability for a domain.
@@ -68,7 +67,6 @@ message ImportDomainMetadata {
 }
 
 message DomainExportOptions {
-  bool include_templates = 1;
   bool include_blobs = 2;
 
   // Semantic index configuration/content is not exported by the Client API in
@@ -78,7 +76,6 @@ message DomainExportOptions {
 }
 
 message DomainImportOptions {
-  bool include_templates = 1;
   bool include_blobs = 2;
 
   // Preserve client-supplied ids where valid. If false, the daemon may allocate
@@ -100,7 +97,6 @@ message DomainExportManifest {
 }
 
 message ImportSummary {
-  int64 templates_imported = 1;
   int64 nodes_imported = 2;
   int64 edges_imported = 3;
   int64 blobs_imported = 4;
@@ -121,7 +117,6 @@ message ImportExportRecord {
   ImportIdentity identity = 1;
 
   oneof record {
-    TemplateDefinition template = 2;
     Node node = 3;
     Edge edge = 4;
     BlobImportMetadata blob_metadata = 5;

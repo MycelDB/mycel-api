@@ -75,7 +75,6 @@ message CreateBlobNodeMetadata {
 
   // Optional client-supplied node id. If omitted, the daemon allocates one.
   optional string node_id = 2;
-  optional string template_id = 3;
   string declared_mime_type = 4;
   string original_filename = 5;
   repeated string labels = 6;
@@ -93,8 +92,7 @@ message UpdateNodeRequest {
   string transaction_id = 1;
   Node node = 2;
 
-  // Mutable paths currently include "template_id", "labels", "properties",
-  // "payload", and system-allowed "meta" fields.
+  // Mutable paths currently include "labels", "properties", "payload", and system-allowed "meta" fields.
   google.protobuf.FieldMask update_mask = 3;
 }
 
@@ -237,7 +235,6 @@ message ApplyGraphOperationsResponse {
 message Node {
   string node_id = 1;
   string domain_id = 2;
-  optional string template_id = 3;
   repeated string labels = 4;
   google.protobuf.Struct properties = 5;
   google.protobuf.Struct payload = 6;
@@ -250,7 +247,6 @@ message Node {
 message NodeCreate {
   // Optional client-supplied id. If omitted, the daemon allocates one.
   optional string node_id = 1;
-  optional string template_id = 2;
   repeated string labels = 3;
   google.protobuf.Struct properties = 4;
   google.protobuf.Struct payload = 5;
