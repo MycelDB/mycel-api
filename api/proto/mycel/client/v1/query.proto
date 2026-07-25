@@ -14,6 +14,9 @@ service QueryService {
 
   // ExecuteGQL executes textual Mycel GQL inside an existing transaction.
   rpc ExecuteGQL(ExecuteGQLRequest) returns (ExecuteGQLResponse);
+
+  // ExecuteGQLScript executes multiple semicolon-separated Mycel GQL statements.
+  rpc ExecuteGQLScript(ExecuteGQLScriptRequest) returns (ExecuteGQLScriptResponse);
 }
 
 message ExecuteQueryRequest {
@@ -45,6 +48,27 @@ message ExecuteGQLRequest {
 
 message ExecuteGQLResponse {
   QueryResult result = 1;
+}
+
+message ExecuteGQLScriptRequest {
+  string transaction_id = 1;
+  string script = 2;
+  map<string, google.protobuf.Value> params = 3;
+  bool stop_on_error = 4;
+  int32 page_size = 5;
+}
+
+message ExecuteGQLScriptResponse {
+  repeated GQLStatementResult statements = 1;
+  QueryResult result = 2;
+}
+
+message GQLStatementResult {
+  int32 index = 1;
+  string statement = 2;
+  bool success = 3;
+  QueryResult result = 4;
+  string error = 5;
 }
 
 message QueryResult {
