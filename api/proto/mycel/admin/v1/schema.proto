@@ -7,6 +7,7 @@ import "mycel/client/v1/schema.proto";
 // AdminSchemaService exposes operator read/validation access to domain schemas.
 service AdminSchemaService {
   rpc GetDomainSchema(GetDomainSchemaRequest) returns (GetDomainSchemaResponse);
+  rpc DeleteDomainSchema(DeleteDomainSchemaRequest) returns (DeleteDomainSchemaResponse);
   rpc ValidateSchema(ValidateSchemaRequest) returns (ValidateSchemaResponse);
 }
 
@@ -15,11 +16,17 @@ message GetDomainSchemaRequest {
 }
 
 message GetDomainSchemaResponse {
-  string schema_json = 1;
+  string gwl = 1;
 }
 
+message DeleteDomainSchemaRequest {
+  string domain_id = 1;
+}
+
+message DeleteDomainSchemaResponse {}
+
 message ValidateSchemaRequest {
-  string schema_json = 1;
+  string gwl = 1;
 }
 
 message ValidateSchemaResponse {
