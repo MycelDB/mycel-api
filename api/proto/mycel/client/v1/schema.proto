@@ -15,20 +15,20 @@ message GetDomainSchemaRequest {
 }
 
 message GetDomainSchemaResponse {
-  string schema_json = 1;
+  string gwl = 1;
 }
 
 message PutDomainSchemaRequest {
   string domain_id = 1;
-  string schema_json = 2;
+  string gwl = 2;
 }
 
 message PutDomainSchemaResponse {
-  string schema_json = 1;
+  string gwl = 1;
 }
 
 message ValidateSchemaRequest {
-  string schema_json = 1;
+  string gwl = 1;
 }
 
 message ValidateSchemaResponse {

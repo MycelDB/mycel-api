@@ -15,11 +15,11 @@ message GetDomainSchemaRequest {
 }
 
 message GetDomainSchemaResponse {
-  string schema_json = 1;
+  string gwl = 1;
 }
 
 message ValidateSchemaRequest {
-  string schema_json = 1;
+  string gwl = 1;
 }
 
 message ValidateSchemaResponse {
