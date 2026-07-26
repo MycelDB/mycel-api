@@ -18,6 +18,12 @@ message GetDomainSchemaResponse {
   string gwl = 1;
 }
 
+message DeleteDomainSchemaRequest {
+  string domain_id = 1;
+}
+
+message DeleteDomainSchemaResponse {}
+
 message ValidateSchemaRequest {
   string gwl = 1;
 }

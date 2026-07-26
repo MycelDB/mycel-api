@@ -6,6 +6,7 @@ package mycel.client.v1;
 service SchemaService {
   rpc GetDomainSchema(GetDomainSchemaRequest) returns (GetDomainSchemaResponse);
   rpc PutDomainSchema(PutDomainSchemaRequest) returns (PutDomainSchemaResponse);
+  rpc DeleteDomainSchema(DeleteDomainSchemaRequest) returns (DeleteDomainSchemaResponse);
   rpc ValidateSchema(ValidateSchemaRequest) returns (ValidateSchemaResponse);
   rpc ValidateGraph(ValidateGraphRequest) returns (ValidateGraphResponse);
 }
@@ -26,6 +27,12 @@ message PutDomainSchemaRequest {
 message PutDomainSchemaResponse {
   string gwl = 1;
 }
+
+message DeleteDomainSchemaRequest {
+  string domain_id = 1;
+}
+
+message DeleteDomainSchemaResponse {}
 
 message ValidateSchemaRequest {
   string gwl = 1;
