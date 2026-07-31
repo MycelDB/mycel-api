@@ -161,6 +161,7 @@ message GetClusterStatusResponse {
   ClusterLocalNode node = 1;
   ClusterInfo cluster = 2;
   repeated ClusterPeer peers = 3;
+  ClusterReadiness readiness = 4;
 }
 
 message ClusterLocalNode {
@@ -188,6 +189,17 @@ message ClusterPeer {
   ClusterPeerState state = 6;
   ClusterPeerSource source = 7;
   string last_seen_at = 8;
+}
+
+message ClusterReadiness {
+  bool client_ready = 1;
+  bool metadata_applied = 2;
+  bool metadata_validated = 3;
+  bool partition_groups_started = 4;
+  string authoritative_cluster_id = 5;
+  string local_cluster_id = 6;
+  int32 expected_member_count = 7;
+  repeated string readiness_blockers = 8;
 }
 
 message ListClusterMembersRequest {}
@@ -223,4 +235,5 @@ message GetClusterHealthResponse {
   int32 active_members = 3;
   int32 pending_members = 4;
   int32 unreachable_peers = 5;
+  ClusterReadiness readiness = 6;
 }
