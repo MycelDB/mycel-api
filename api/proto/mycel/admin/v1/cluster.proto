@@ -142,6 +142,9 @@ message RaftGroupStatus {
   uint64 commit_index = 10;
   uint64 applied_index = 11;
   uint64 apply_lag = 12;
+  uint64 last_index = 13;
+  uint64 snapshot_index = 14;
+  string health_reason = 15;
 }
 
 message LookupSpaceRouteRequest {
