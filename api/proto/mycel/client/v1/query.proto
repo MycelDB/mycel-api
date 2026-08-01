@@ -9,7 +9,8 @@ import "mycel/client/v1/graph.proto";
 // QueryService provides transaction-scoped structured graph queries.
 service QueryService {
   // ExecuteQuery executes a read-only structured graph query inside a
-  // transaction snapshot.
+  // transaction read context. Read-only transactions are current-read contexts
+  // in V1 and do not pin historical snapshots.
   rpc ExecuteQuery(ExecuteQueryRequest) returns (ExecuteQueryResponse);
 
   // ExecuteGQL executes textual Mycel GQL inside an existing transaction.
@@ -28,6 +29,7 @@ message ExecuteQueryRequest {
 
   // Opaque continuation token returned by a previous query call.
   string page_token = 4;
+  ReadOptions read_options = 5;
 }
 
 message ExecuteQueryResponse {
@@ -36,6 +38,7 @@ message ExecuteQueryResponse {
 
   // Normalized result envelope shared with textual GQL responses.
   QueryResult result = 3;
+  ReadMetadata read_metadata = 4;
 }
 
 message ExecuteGQLRequest {
@@ -44,10 +47,12 @@ message ExecuteGQLRequest {
   map<string, google.protobuf.Value> params = 3;
   int32 page_size = 4;
   string page_token = 5;
+  ReadOptions read_options = 6;
 }
 
 message ExecuteGQLResponse {
   QueryResult result = 1;
+  ReadMetadata read_metadata = 2;
 }
 
 message ExecuteGQLScriptRequest {
@@ -56,11 +61,13 @@ message ExecuteGQLScriptRequest {
   map<string, google.protobuf.Value> params = 3;
   bool stop_on_error = 4;
   int32 page_size = 5;
+  ReadOptions read_options = 6;
 }
 
 message ExecuteGQLScriptResponse {
   repeated GQLStatementResult statements = 1;
   QueryResult result = 2;
+  ReadMetadata read_metadata = 3;
 }
 
 message GQLStatementResult {
@@ -69,6 +76,7 @@ message GQLStatementResult {
   bool success = 3;
   QueryResult result = 4;
   string error = 5;
+  ReadMetadata read_metadata = 6;
 }
 
 message QueryResult {

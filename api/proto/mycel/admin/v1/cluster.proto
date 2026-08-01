@@ -26,6 +26,22 @@ service AdminClusterService {
 
   // LookupSpaceRoute returns the Raft partition and replica set for a space ID.
   rpc LookupSpaceRoute(LookupSpaceRouteRequest) returns (LookupSpaceRouteResponse);
+
+  // GetLocalGraphConsistency returns read-only local latest-state graph
+  // consistency diagnostics for one space/domain on this daemon. It does not
+  // collect from peers or prove cluster-wide consistency.
+  rpc GetLocalGraphConsistency(GetLocalGraphConsistencyRequest) returns (GetLocalGraphConsistencyResponse);
+
+  // GetGraphConsistencyReport collects local latest-state graph diagnostics
+  // from the expected raft replicas for one space/domain and classifies the
+  // currently observable cluster state. V1 compares latest-state checksums only;
+  // it is read-only and never performs repair.
+  rpc GetGraphConsistencyReport(GetGraphConsistencyReportRequest) returns (GetGraphConsistencyReportResponse);
+
+  // GetLocalGraphForensicExport returns a bounded, read-only local entity export
+  // for one space/domain. The response is intended for forensic diff tooling;
+  // it does not repair, merge, delete, or rebalance data.
+  rpc GetLocalGraphForensicExport(GetLocalGraphForensicExportRequest) returns (GetLocalGraphForensicExportResponse);
 }
 
 // ClusterEngine describes the clustering engine implementation.
@@ -174,6 +190,23 @@ message RaftGroupStatus {
   uint64 last_index = 13;
   uint64 snapshot_index = 14;
   string health_reason = 15;
+  RaftReadDiagnostics read_diagnostics = 16;
+}
+
+message RaftReadDiagnostics {
+  uint64 read_index_attempts = 1;
+  uint64 read_index_successes = 2;
+  uint64 read_index_failures = 3;
+  uint64 read_index_timeouts = 4;
+  uint64 read_index_no_leader = 5;
+  uint64 read_index_not_leader = 6;
+  uint64 apply_wait_failures = 7;
+  string last_failure_at = 8;
+  string last_failure_reason = 9;
+  uint64 last_read_index = 10;
+  uint64 last_applied_wait_index = 11;
+  uint64 last_applied_wait_success = 12;
+  int64 last_applied_wait_millis = 13;
 }
 
 message LookupSpaceRouteRequest {
@@ -185,6 +218,120 @@ message LookupSpaceRouteResponse {
   uint32 partition_id = 2;
   uint64 leader_node_id = 3;
   repeated uint64 replica_node_ids = 4;
+}
+
+message GetLocalGraphConsistencyRequest {
+  string space_id = 1;
+  string domain_id = 2;
+}
+
+message GetLocalGraphConsistencyResponse {
+  LocalGraphConsistencyStats stats = 1;
+  RaftGroupStatus raft_group = 2;
+  repeated string warnings = 3;
+}
+
+enum GraphConsistencyStatus {
+  GRAPH_CONSISTENCY_STATUS_UNSPECIFIED = 0;
+  GRAPH_CONSISTENCY_STATUS_CONSISTENT = 1;
+  GRAPH_CONSISTENCY_STATUS_LAGGING = 2;
+  GRAPH_CONSISTENCY_STATUS_DIVERGENT = 3;
+  GRAPH_CONSISTENCY_STATUS_DEGRADED = 4;
+  GRAPH_CONSISTENCY_STATUS_UNKNOWN = 5;
+}
+
+enum GraphConsistencyWarningSeverity {
+  GRAPH_CONSISTENCY_WARNING_SEVERITY_UNSPECIFIED = 0;
+  GRAPH_CONSISTENCY_WARNING_SEVERITY_INFO = 1;
+  GRAPH_CONSISTENCY_WARNING_SEVERITY_WARNING = 2;
+  GRAPH_CONSISTENCY_WARNING_SEVERITY_CRITICAL = 3;
+}
+
+message GetGraphConsistencyReportRequest {
+  string space_id = 1;
+  string domain_id = 2;
+}
+
+message GetGraphConsistencyReportResponse {
+  GraphConsistencyStatus status = 1;
+  string space_id = 2;
+  string domain_id = 3;
+  uint32 partition_id = 4;
+  uint64 local_node_id = 5;
+  uint64 leader_node_id = 6;
+  repeated uint64 expected_replica_node_ids = 7;
+  RaftGroupStatus raft_group = 8;
+  repeated GraphConsistencyReplica replicas = 9;
+  repeated GraphConsistencyWarning warnings = 10;
+  string comparison_basis = 11;
+}
+
+message GraphConsistencyReplica {
+  uint64 raft_node_id = 1;
+  string node_id = 2;
+  string node_name = 3;
+  string backend_addr = 4;
+  bool local = 5;
+  bool reachable = 6;
+  LocalGraphConsistencyStats stats = 7;
+  string error = 8;
+}
+
+message GraphConsistencyWarning {
+  string code = 1;
+  GraphConsistencyWarningSeverity severity = 2;
+  uint64 raft_node_id = 3;
+  string message = 4;
+}
+
+message GetLocalGraphForensicExportRequest {
+  string space_id = 1;
+  string domain_id = 2;
+  uint32 page_size = 3;
+  string page_token = 4;
+  string source_label = 5;
+}
+
+message GetLocalGraphForensicExportResponse {
+  GraphForensicExportManifest manifest = 1;
+  LocalGraphConsistencyStats stats = 2;
+  repeated GraphForensicEntity nodes = 3;
+  repeated GraphForensicEntity edges = 4;
+  string next_page_token = 5;
+  bool truncated = 6;
+  repeated string warnings = 7;
+}
+
+message GraphForensicExportManifest {
+  string report_id = 1;
+  string source_node_id = 2;
+  string source_node_name = 3;
+  string source_cluster_id = 4;
+  string source_label = 5;
+  string collected_at = 6;
+  string mycel_version = 7;
+  string image_tag = 8;
+}
+
+message GraphForensicEntity {
+  string id = 1;
+  string checksum = 2;
+  string canonical_json = 3;
+}
+
+message LocalGraphConsistencyStats {
+  string space_id = 1;
+  string domain_id = 2;
+  uint32 partition_id = 3;
+  uint64 revision = 4;
+  uint64 node_count = 5;
+  uint64 edge_count = 6;
+  string node_checksum = 7;
+  string edge_checksum = 8;
+  string graph_checksum = 9;
+  string checksum_algorithm = 10;
+  string collected_at = 11;
+  string source = 12;
 }
 
 message GetClusterStatusRequest {}

@@ -142,6 +142,9 @@ message GraphSession {
 }
 
 // GraphTransaction is an atomic read or write unit inside a GraphSession.
+// In the current daemon, read-only transactions are linearizable current-read
+// contexts, not historical repeatable snapshots: base_revision records the
+// revision observed at begin time, while later reads may observe newer commits.
 message GraphTransaction {
   string transaction_id = 1;
   string session_id = 2;
@@ -150,9 +153,10 @@ message GraphTransaction {
   TransactionMode mode = 5;
   TransactionState state = 6;
 
-  // Domain revision from which the transaction began. The daemon is
-  // authoritative for this value. Connectors track it for consistency, retry,
-  // and cache validation.
+  // Domain revision observed when the transaction began. The daemon is
+  // authoritative for this value. For read-only transactions this is a
+  // freshness floor and diagnostic/cache-validation value, not a pinned
+  // historical snapshot revision.
   int64 base_revision = 7;
 
   google.protobuf.Timestamp create_time = 8;

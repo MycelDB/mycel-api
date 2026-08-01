@@ -37,21 +37,25 @@ service GraphService {
 message GetNodeRequest {
   string transaction_id = 1;
   string node_id = 2;
+  ReadOptions read_options = 3;
 }
 
 message GetNodeResponse {
   Node node = 1;
+  ReadMetadata read_metadata = 2;
 }
 
 message ListNodesRequest {
   string transaction_id = 1;
   int32 page_size = 2;
   string page_token = 3;
+  ReadOptions read_options = 4;
 }
 
 message ListNodesResponse {
   repeated Node nodes = 1;
   string next_page_token = 2;
+  ReadMetadata read_metadata = 3;
 }
 
 message CreateNodeRequest {
@@ -125,21 +129,25 @@ message DeleteNodeResponse {
 message GetEdgeRequest {
   string transaction_id = 1;
   string edge_id = 2;
+  ReadOptions read_options = 3;
 }
 
 message GetEdgeResponse {
   Edge edge = 1;
+  ReadMetadata read_metadata = 2;
 }
 
 message ListEdgesRequest {
   string transaction_id = 1;
   int32 page_size = 2;
   string page_token = 3;
+  ReadOptions read_options = 4;
 }
 
 message ListEdgesResponse {
   repeated Edge edges = 1;
   string next_page_token = 2;
+  ReadMetadata read_metadata = 3;
 }
 
 message CreateEdgeRequest {
@@ -175,22 +183,26 @@ message DeleteEdgeResponse {
 message ListChildrenRequest {
   string transaction_id = 1;
   string parent_node_id = 2;
+  ReadOptions read_options = 3;
 }
 
 message ListChildrenResponse {
   // Contains edges from the parent to its children, ordered according to the
   // domain/template child ordering policy.
   repeated Edge contains_edges = 1;
+  ReadMetadata read_metadata = 2;
 }
 
 message GetParentRequest {
   string transaction_id = 1;
   string child_node_id = 2;
+  ReadOptions read_options = 3;
 }
 
 message GetParentResponse {
   // Empty when the node has no parent contains edge.
   optional Edge contains_edge = 1;
+  ReadMetadata read_metadata = 2;
 }
 
 message MoveSubtreeRequest {
@@ -229,6 +241,25 @@ message ApplyGraphOperationsRequest {
 
 message ApplyGraphOperationsResponse {
   repeated GraphOperationResult results = 1;
+}
+
+// ReadOptions carries explicit read-consistency options. Stale reads require
+// daemon support and are rejected unless both request and daemon config opt in.
+message ReadOptions {
+  bool allow_stale = 1;
+}
+
+// ReadMetadata describes the consistency proof/context for graph-derived reads.
+message ReadMetadata {
+  // Consistency mode for the read: "strong", "overlay", or "stale".
+  string consistency = 1;
+  string raft_group_id = 2;
+  uint64 leader_node_id = 3;
+  uint64 read_index = 4;
+  uint64 applied_index = 5;
+  int64 observed_revision = 6;
+  bool stale = 7;
+  string stale_reason = 8;
 }
 
 // Node is the client-visible graph node representation.

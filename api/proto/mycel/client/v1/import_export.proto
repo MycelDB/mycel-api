@@ -11,7 +11,7 @@ import "mycel/client/v1/graph.proto";
 // Logseq importers convert source data into Mycel-native import streams before
 // calling this service.
 service ImportExportService {
-  // ExportDomain streams graph/domain data from a transaction snapshot.
+  // ExportDomain streams graph/domain data from a transaction read context.
   rpc ExportDomain(ExportDomainRequest) returns (stream ExportDomainResponse);
 
   // ImportDomain streams Mycel-native records into a read-write transaction.
@@ -19,8 +19,9 @@ service ImportExportService {
 }
 
 message ExportDomainRequest {
-  // Readable transaction id. The transaction determines space/domain and
-  // snapshot consistency.
+  // Readable transaction id. The transaction determines space/domain and read
+  // consistency. Read-only exports are current reads in V1, not pinned
+  // historical snapshots.
   string transaction_id = 1;
   DomainExportFormat format = 2;
   DomainExportOptions options = 3;

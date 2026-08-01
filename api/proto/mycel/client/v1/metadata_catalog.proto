@@ -2,17 +2,18 @@ syntax = "proto3";
 
 package mycel.client.v1;
 
+import "mycel/client/v1/graph.proto";
 
 // MetadataCatalogService provides transaction-scoped metadata catalog discovery.
 // It is intentionally limited to summaries such as known tags and property
 // names. Metadata filtering/search belongs in QueryService so graph traversal
 // and metadata predicates can be composed in one query.
 service MetadataCatalogService {
-  // ListTags lists known canonical tags visible in the transaction snapshot.
+  // ListTags lists known canonical tags visible in the transaction read context.
   rpc ListTags(ListTagsRequest) returns (ListTagsResponse);
 
   // ListPropertyNames lists known canonical custom property names visible in the
-  // transaction snapshot.
+  // transaction read context.
   rpc ListPropertyNames(ListPropertyNamesRequest) returns (ListPropertyNamesResponse);
 }
 
@@ -24,11 +25,13 @@ message ListTagsRequest {
 
   // Opaque continuation token returned by a previous list call.
   string page_token = 3;
+  ReadOptions read_options = 4;
 }
 
 message ListTagsResponse {
   repeated TagSummary tags = 1;
   string next_page_token = 2;
+  ReadMetadata read_metadata = 3;
 }
 
 message ListPropertyNamesRequest {
@@ -39,11 +42,13 @@ message ListPropertyNamesRequest {
 
   // Opaque continuation token returned by a previous list call.
   string page_token = 3;
+  ReadOptions read_options = 4;
 }
 
 message ListPropertyNamesResponse {
   repeated PropertySummary properties = 1;
   string next_page_token = 2;
+  ReadMetadata read_metadata = 3;
 }
 
 message TagSummary {
