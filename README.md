@@ -22,6 +22,21 @@ Admin auth exposes short-lived access tokens plus durable refresh sessions throu
 
 Admin backup control is part of this public API surface through `mycel.admin.v1.AdminBackupService`. Backup policy supports interval schedules for compatibility plus calendar-style daily/weekly schedules using `schedule_kind`, `time_of_day`, `timezone`, `weekdays`, and `run_missed`. Backup archive format is represented by the `BackupArchiveFormat` enum via `archive_format`; supported values are ZIP, TAR, TAR_GZ, and TAR_ZST, while UNSPECIFIED defaults to ZIP. The legacy string `compression` field is deprecated for compatibility. The daemon remains the only component that reads, quiesces, snapshots, or restores Mycel storage; applications should call the Admin API instead of copying a live data directory.
 
+## Operation ID helper contract
+
+Client SDKs should expose a small helper for transaction operation correlation:
+
+- Generate UUID v4 strings for `mycel.client.v1.BeginTransactionRequest.operation_id`.
+- Accept caller-provided operation IDs when beginning transactions.
+- Return or expose `GraphTransaction.operation_id` and `TransactionCommit.operation_id` from begin/commit responses.
+
+Recommended helper names:
+
+- Go SDK: `NewOperationID() string` and a transaction-begin helper that accepts an operation ID.
+- Rust SDK: `new_operation_id() -> String` and a transaction-begin helper that accepts an operation ID.
+
+The API contract treats operation IDs as correlation metadata only. They are not idempotency keys, authorization credentials, replay protection, or commit ordering guarantees. The daemon validates non-empty client-provided values as UUID strings and generates one when omitted.
+
 ## Validate the contract
 
 Install Buf or run it through your preferred toolchain, then validate:
