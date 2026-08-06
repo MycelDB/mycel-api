@@ -92,6 +92,12 @@ message CloseSessionResponse {
 message BeginTransactionRequest {
   string session_id = 1;
   TransactionMode mode = 2;
+
+  // Optional client-generated operation UUID used to correlate committed graph
+  // change events with the logical client write that produced them. If omitted,
+  // the daemon generates one and returns it on GraphTransaction and
+  // TransactionCommit.
+  string operation_id = 3;
 }
 
 message BeginTransactionResponse {
@@ -162,6 +168,9 @@ message GraphTransaction {
   google.protobuf.Timestamp create_time = 8;
   google.protobuf.Timestamp last_seen_time = 9;
   google.protobuf.Timestamp expire_time = 10;
+
+  // Client write correlation UUID associated with this transaction.
+  string operation_id = 11;
 }
 
 // TransactionCommit describes a committed read-write transaction. It is the
@@ -176,6 +185,9 @@ message TransactionCommit {
   int64 committed_revision = 7;
   int32 operation_count = 8;
   google.protobuf.Timestamp commit_time = 9;
+
+  // Client write correlation UUID associated with this commit.
+  string operation_id = 10;
 }
 
 enum SessionState {
