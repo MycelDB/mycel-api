@@ -21,8 +21,9 @@ message WatchGraphChangesRequest {
   // sends a GraphChangeGap response and closes the stream successfully.
   optional int64 after_revision = 3;
 
-  // When true, the daemon should first send a checkpoint containing the current
-  // observed domain revision.
+  // When true, the daemon first sends a checkpoint containing the current
+  // observed domain revision. If after_revision is also set, replayed events
+  // after that revision may follow the checkpoint.
   bool include_current = 4;
 
   // Optional event filters. Empty means all supported event types and objects.
@@ -82,6 +83,7 @@ message GraphObjectChange {
   string edge_id = 3;
   repeated string affected_node_ids = 4;
   repeated string affected_edge_ids = 5;
+  // Best-effort changed field names when the producer can determine them.
   repeated string changed_fields = 6;
   Node old_node = 7;
   Node new_node = 8;
@@ -94,6 +96,8 @@ message GraphChangeFilter {
   repeated string node_ids = 2;
   repeated string edge_ids = 3;
   repeated string labels = 4;
+  // Best-effort field-name filter. Producers that cannot determine changed
+  // field names may not match this filter.
   repeated string changed_fields = 5;
 }
 
