@@ -1,0 +1,133 @@
+syntax = "proto3";
+
+package mycel.client.v1;
+
+import "google/protobuf/timestamp.proto";
+import "mycel/client/v1/graph.proto";
+
+// GraphChangeService streams committed graph changes to clients and connectors.
+// It does not stream uncommitted transaction operations.
+service GraphChangeService {
+  // WatchGraphChanges watches committed graph changes for one space/domain.
+  rpc WatchGraphChanges(WatchGraphChangesRequest) returns (stream WatchGraphChangesResponse);
+}
+
+message WatchGraphChangesRequest {
+  string space_id = 1;
+  string domain_id = 2;
+
+  // Optional resume position. When set, the daemon streams changes after this
+  // domain revision. If the revision is older than retained history, the daemon
+  // sends a GraphChangeGap response and closes the stream successfully.
+  optional int64 after_revision = 3;
+
+  // When true, the daemon should first send a checkpoint containing the current
+  // observed domain revision.
+  bool include_current = 4;
+
+  // Optional event filters. Empty means all supported event types and objects.
+  GraphChangeFilter filter = 5;
+
+  // Optional event projection. If omitted, the daemon may use compact defaults
+  // suitable for UI/cache invalidation: origin, affected ids, and changed fields
+  // without full old/new snapshots.
+  GraphChangeProjection projection = 6;
+}
+
+message WatchGraphChangesResponse {
+  oneof message {
+    GraphChangeCheckpoint checkpoint = 1;
+    GraphChangeEvent event = 2;
+    GraphChangeGap gap = 3;
+    GraphChangeHeartbeat heartbeat = 4;
+  }
+}
+
+message GraphChangeCheckpoint {
+  string space_id = 1;
+  string domain_id = 2;
+  int64 current_revision = 3;
+  google.protobuf.Timestamp checkpoint_time = 4;
+}
+
+// GraphChangeEvent describes one committed transaction/revision event. The
+// event may contain multiple graph object changes from the same commit.
+message GraphChangeEvent {
+  string event_id = 1;
+  string space_id = 2;
+  string domain_id = 3;
+  int64 revision = 4;
+  string commit_id = 5;
+  string transaction_id = 6;
+  google.protobuf.Timestamp commit_time = 7;
+  GraphChangeOrigin origin = 8;
+  repeated GraphObjectChange changes = 9;
+  repeated string affected_node_ids = 10;
+  repeated string affected_edge_ids = 11;
+}
+
+// GraphChangeOrigin contains public write-origin correlation metadata. It is
+// advisory metadata only, not authorization, idempotency, replay protection, or
+// commit ordering.
+message GraphChangeOrigin {
+  string operation_id = 1;
+}
+
+// GraphObjectChange describes one object-level mutation inside a committed graph
+// event. Snapshot fields are populated according to GraphChangeProjection.
+message GraphObjectChange {
+  GraphChangeType type = 1;
+  string node_id = 2;
+  string edge_id = 3;
+  repeated string affected_node_ids = 4;
+  repeated string affected_edge_ids = 5;
+  repeated string changed_fields = 6;
+  Node old_node = 7;
+  Node new_node = 8;
+  Edge old_edge = 9;
+  Edge new_edge = 10;
+}
+
+message GraphChangeFilter {
+  repeated GraphChangeType event_types = 1;
+  repeated string node_ids = 2;
+  repeated string edge_ids = 3;
+  repeated string labels = 4;
+  repeated string changed_fields = 5;
+}
+
+message GraphChangeProjection {
+  bool include_origin = 1;
+  bool include_affected_node_ids = 2;
+  bool include_affected_edge_ids = 3;
+  bool include_changed_fields = 4;
+  bool include_old_node_snapshot = 5;
+  bool include_new_node_snapshot = 6;
+  bool include_old_edge_snapshot = 7;
+  bool include_new_edge_snapshot = 8;
+}
+
+// GraphChangeGap reports that a requested resume position is older than retained
+// graph-change history. The daemon does not automatically skip ahead after a gap.
+message GraphChangeGap {
+  string space_id = 1;
+  string domain_id = 2;
+  int64 requested_after_revision = 3;
+  int64 oldest_available_revision = 4;
+  int64 current_revision = 5;
+}
+
+message GraphChangeHeartbeat {
+  google.protobuf.Timestamp heartbeat_time = 1;
+}
+
+enum GraphChangeType {
+  GRAPH_CHANGE_TYPE_UNSPECIFIED = 0;
+  GRAPH_CHANGE_TYPE_NODE_CREATED = 1;
+  GRAPH_CHANGE_TYPE_NODE_UPDATED = 2;
+  GRAPH_CHANGE_TYPE_NODE_DELETED = 3;
+  GRAPH_CHANGE_TYPE_EDGE_CREATED = 4;
+  GRAPH_CHANGE_TYPE_EDGE_UPDATED = 5;
+  GRAPH_CHANGE_TYPE_EDGE_DELETED = 6;
+  GRAPH_CHANGE_TYPE_REVISION_ADVANCED = 7;
+}
