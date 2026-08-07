@@ -22,6 +22,27 @@ Admin auth exposes short-lived access tokens plus durable refresh sessions throu
 
 Admin backup control is part of this public API surface through `mycel.admin.v1.AdminBackupService`. Backup policy supports interval schedules for compatibility plus calendar-style daily/weekly schedules using `schedule_kind`, `time_of_day`, `timezone`, `weekdays`, and `run_missed`. Backup archive format is represented by the `BackupArchiveFormat` enum via `archive_format`; supported values are ZIP, TAR, TAR_GZ, and TAR_ZST, while UNSPECIFIED defaults to ZIP. The legacy string `compression` field is deprecated for compatibility. The daemon remains the only component that reads, quiesces, snapshots, or restores Mycel storage; applications should call the Admin API instead of copying a live data directory.
 
+## Graph change watch migration
+
+The `add_callbacks` branch replaces the old public Client change-stream surface
+with `mycel.client.v1.GraphChangeService.WatchGraphChanges` in
+`api/proto/mycel/client/v1/graph_change.proto`.
+
+Breaking migration notes:
+
+- `ChangeStreamService.WatchDomainChanges` and related `WatchDomainChanges*`
+  messages are removed.
+- `GraphChangeService.WatchGraphChanges` streams committed graph-change
+  envelopes for one space/domain.
+- `WatchGraphChangesRequest.after_revision` resumes after the last processed
+  event revision.
+- `include_current` sends an initial checkpoint with the current observed
+  revision before live events.
+- `GraphChangeGap` means the requested history is unavailable; clients should
+  rebuild or resync derived state and reconnect from a fresh checkpoint.
+- `GraphChangeOrigin.operation_id` echoes transaction operation correlation
+  metadata so clients can identify their own writes.
+
 ## Operation ID helper contract
 
 Client SDKs should expose a small helper for transaction operation correlation:
