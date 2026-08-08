@@ -10,6 +10,10 @@ service AdminBackupService {
   rpc GetBackupStatus(GetBackupStatusRequest) returns (GetBackupStatusResponse);
   rpc ListBackups(ListBackupsRequest) returns (ListBackupsResponse);
   rpc DeleteBackup(DeleteBackupRequest) returns (DeleteBackupResponse);
+  rpc TriggerClusterBackup(TriggerClusterBackupRequest) returns (TriggerClusterBackupResponse);
+  rpc GetClusterBackupStatus(GetClusterBackupStatusRequest) returns (GetClusterBackupStatusResponse);
+  rpc ListClusterBackups(ListClusterBackupsRequest) returns (ListClusterBackupsResponse);
+  rpc ValidateClusterBackupSet(ValidateClusterBackupSetRequest) returns (ValidateClusterBackupSetResponse);
 }
 
 // BackupArchiveFormat identifies the archive/container format used for a backup.
@@ -136,4 +140,84 @@ message DeleteBackupRequest {
 
 message DeleteBackupResponse {
   string backup_id = 1;
+}
+
+message TriggerClusterBackupRequest {
+  string reason = 1;
+  string output_dir = 2;
+  BackupArchiveFormat archive_format = 3;
+}
+
+message TriggerClusterBackupResponse {
+  ClusterBackupStatus status = 1;
+  ClusterBackupSetSummary backup_set = 2;
+}
+
+message GetClusterBackupStatusRequest {
+  string backup_set_id = 1;
+}
+
+message GetClusterBackupStatusResponse {
+  ClusterBackupStatus status = 1;
+}
+
+message ListClusterBackupsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListClusterBackupsResponse {
+  repeated ClusterBackupSetSummary backup_sets = 1;
+  string next_page_token = 2;
+}
+
+message ValidateClusterBackupSetRequest {
+  string backup_set_path = 1;
+}
+
+message ValidateClusterBackupSetResponse {
+  bool valid = 1;
+  repeated string errors = 2;
+  ClusterBackupSetSummary backup_set = 3;
+}
+
+message ClusterBackupStatus {
+  string backup_set_id = 1;
+  string state = 2;
+  string cluster_id = 3;
+  string reason = 4;
+  string created_at = 5;
+  string updated_at = 6;
+  string completed_at = 7;
+  int32 expected_nodes = 8;
+  string manifest_uri = 9;
+  repeated ClusterBackupNodeArtifact nodes = 10;
+  string failed_phase = 11;
+  string error = 12;
+  map<string, uint64> raft_barriers = 13;
+}
+
+message ClusterBackupSetSummary {
+  string backup_set_id = 1;
+  string state = 2;
+  string cluster_id = 3;
+  string created_at = 4;
+  string completed_at = 5;
+  int32 expected_nodes = 6;
+  string manifest_uri = 7;
+  repeated ClusterBackupNodeArtifact nodes = 8;
+}
+
+message ClusterBackupNodeArtifact {
+  string pod_name = 1;
+  string node_id = 2;
+  int32 ordinal = 3;
+  uint64 raft_node_id = 4;
+  string archive_name = 5;
+  string archive_uri = 6;
+  string manifest_name = 7;
+  string manifest_uri = 8;
+  int64 size_bytes = 9;
+  string checksum_sha256 = 10;
+  map<string, uint64> applied_indexes = 11;
 }
