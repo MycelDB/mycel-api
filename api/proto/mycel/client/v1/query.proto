@@ -113,6 +113,13 @@ message QueryDiagnostics {
   string next_cursor_kind = 8;
   string rejected_reason = 9;
   string required_index = 10;
+  int32 root_count = 11;
+  bool truncated = 12;
+  string truncation_reason = 13;
+  int64 root_scan_millis = 14;
+  int64 expansion_millis = 15;
+  int32 adjacency_scan_calls = 16;
+  int32 node_read_calls = 17;
 }
 
 message GraphQuery {
@@ -121,9 +128,16 @@ message GraphQuery {
   repeated ReturnProjection returns = 3;
   repeated OrderSpec order_by = 4;
 
-  // Optional row limit. A value of 0 means no explicit query-level limit; daemon
-  // policy may still impose limits.
+  // Optional row/root limit. A value of 0 means no explicit query-level limit;
+  // daemon policy may still impose limits. For indexed-root subtree plans this
+  // limit applies to root nodes before traversal expansion.
   int32 limit = 5;
+
+  // Optional safety caps for traversal/result graph expansion. A value of 0
+  // uses daemon defaults. If a cap is hit, the response diagnostics mark the
+  // result as truncated rather than falling back to a broad scan.
+  int32 max_nodes = 6;
+  int32 max_edges = 7;
 }
 
 // GraphPattern describes a single linear graph traversal pattern.
