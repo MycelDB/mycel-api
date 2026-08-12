@@ -7,8 +7,8 @@ import "google/protobuf/timestamp.proto";
 
 // Principal identifies an actor that can own resources or receive access.
 //
-// Initial v1 principal types are user, operator, and system. Apps/service
-// accounts are represented as users for the initial daemon API.
+// Principal types describe the actor shape. Administration is represented by
+// roles and capabilities, not by a separate operator identity species.
 message Principal {
   PrincipalType type = 1;
   string id = 2;
@@ -19,10 +19,13 @@ message Principal {
 }
 
 enum PrincipalType {
+  reserved 1, 3;
+  reserved "PRINCIPAL_TYPE_USER", "PRINCIPAL_TYPE_OPERATOR";
+
   PRINCIPAL_TYPE_UNSPECIFIED = 0;
-  PRINCIPAL_TYPE_USER = 1;
   PRINCIPAL_TYPE_SYSTEM = 2;
-  PRINCIPAL_TYPE_OPERATOR = 3;
+  PRINCIPAL_TYPE_HUMAN = 4;
+  PRINCIPAL_TYPE_SERVICE = 5;
 }
 
 // Capability is the unit the daemon enforces for authorization decisions.
@@ -65,14 +68,19 @@ enum Capability {
   CAPABILITY_QUERY_RUN = 120;
   CAPABILITY_SEMANTIC_SEARCH = 121;
 
-  // Admin capabilities.
-  CAPABILITY_USER_CREATE = 140;
-  CAPABILITY_USER_MANAGE = 141;
-  CAPABILITY_OPERATOR_CREATE = 142;
-  CAPABILITY_OPERATOR_MANAGE = 143;
+  reserved 140 to 143, 146;
+  reserved "CAPABILITY_USER_CREATE", "CAPABILITY_USER_MANAGE", "CAPABILITY_OPERATOR_CREATE", "CAPABILITY_OPERATOR_MANAGE", "CAPABILITY_USER_SESSION_DELEGATE";
+
+  // Identity/control-plane capabilities.
   CAPABILITY_DAEMON_CONFIGURE = 144;
   CAPABILITY_MESH_MANAGE = 145;
-  CAPABILITY_USER_SESSION_DELEGATE = 146;
+  CAPABILITY_IDENTITY_PRINCIPAL_READ = 147;
+  CAPABILITY_IDENTITY_PRINCIPAL_CREATE = 148;
+  CAPABILITY_IDENTITY_PRINCIPAL_UPDATE = 149;
+  CAPABILITY_IDENTITY_CREDENTIAL_SET = 150;
+  CAPABILITY_IDENTITY_SESSION_DELEGATE = 151;
+  CAPABILITY_IDENTITY_SESSION_MANAGE = 152;
+  CAPABILITY_IDENTITY_GRANT_MANAGE = 153;
 
   // System capabilities used by daemon/system internals.
   CAPABILITY_SYSTEM_COMPACT_SPACE = 160;
