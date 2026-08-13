@@ -39,6 +39,7 @@ message ExecuteQueryResponse {
   // Normalized result envelope shared with textual GQL responses.
   QueryResult result = 3;
   ReadMetadata read_metadata = 4;
+  QueryDiagnostics diagnostics = 5;
 }
 
 message ExecuteGQLRequest {
@@ -53,6 +54,7 @@ message ExecuteGQLRequest {
 message ExecuteGQLResponse {
   QueryResult result = 1;
   ReadMetadata read_metadata = 2;
+  QueryDiagnostics diagnostics = 3;
 }
 
 message ExecuteGQLScriptRequest {
@@ -100,15 +102,42 @@ message QueryCounters {
   int32 edges_deleted = 6;
 }
 
+message QueryDiagnostics {
+  string plan = 1;
+  repeated string indexes = 2;
+  bool full_scan = 3;
+  int32 index_entries_scanned = 4;
+  int32 nodes_loaded = 5;
+  int32 edges_loaded = 6;
+  int32 rows_returned = 7;
+  string next_cursor_kind = 8;
+  string rejected_reason = 9;
+  string required_index = 10;
+  int32 root_count = 11;
+  bool truncated = 12;
+  string truncation_reason = 13;
+  int64 root_scan_millis = 14;
+  int64 expansion_millis = 15;
+  int32 adjacency_scan_calls = 16;
+  int32 node_read_calls = 17;
+}
+
 message GraphQuery {
   GraphPattern match = 1;
   optional Expr where = 2;
   repeated ReturnProjection returns = 3;
   repeated OrderSpec order_by = 4;
 
-  // Optional row limit. A value of 0 means no explicit query-level limit; daemon
-  // policy may still impose limits.
+  // Optional row/root limit. A value of 0 means no explicit query-level limit;
+  // daemon policy may still impose limits. For indexed-root subtree plans this
+  // limit applies to root nodes before traversal expansion.
   int32 limit = 5;
+
+  // Optional safety caps for traversal/result graph expansion. A value of 0
+  // uses daemon defaults. If a cap is hit, the response diagnostics mark the
+  // result as truncated rather than falling back to a broad scan.
+  int32 max_nodes = 6;
+  int32 max_edges = 7;
 }
 
 // GraphPattern describes a single linear graph traversal pattern.
@@ -120,6 +149,9 @@ message GraphPattern {
 message NodePattern {
   string alias = 1;
 
+  // Optional exact node IDs to match. When present, the planner should use
+  // direct node lookups or adjacency indexes instead of broad node scans.
+  repeated string node_ids = 2;
 
   // Required labels for the matched node.
   repeated string labels = 3;
@@ -130,6 +162,10 @@ message TraversalStep {
   string edge_kind = 2;
   DepthSpec depth = 3;
   NodePattern target = 4;
+
+  // Optional alias for the traversed edge. This lets callers project the edge
+  // and evaluate edge property predicates such as ref.normalized_target.
+  string edge_alias = 5;
 }
 
 enum TraversalDirection {
@@ -152,6 +188,7 @@ message Expr {
     HasTagExpr has_tag = 3;
     PropertyExistsExpr property_exists = 4;
     PropertyEqualsExpr property_equals = 5;
+    LessThanExpr less_than = 6;
   }
 }
 
@@ -159,6 +196,12 @@ message BetweenExpr {
   ValueExpr value = 1;
   ValueExpr low = 2;
   ValueExpr high = 3;
+}
+
+// LessThanExpr compares two value expressions and matches when left < right.
+message LessThanExpr {
+  ValueExpr left = 1;
+  ValueExpr right = 2;
 }
 
 message AndExpr {
@@ -229,6 +272,7 @@ enum ReturnProjectionKind {
   RETURN_PROJECTION_KIND_NODE = 1;
   RETURN_PROJECTION_KIND_TREE = 2;
   RETURN_PROJECTION_KIND_SCALAR = 3;
+  RETURN_PROJECTION_KIND_EDGE = 4;
 }
 
 message OrderSpec {

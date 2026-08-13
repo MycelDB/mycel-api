@@ -1,0 +1,233 @@
+syntax = "proto3";
+
+package mycel.admin.v1;
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "mycel/common/v1/access.proto";
+import "mycel/common/v1/auth.proto";
+
+// AdminPrincipalService manages all mycel principals. Administration is granted
+// with roles/capabilities rather than a separate operator identity model.
+service AdminPrincipalService {
+  rpc ListPrincipals(ListPrincipalsRequest) returns (ListPrincipalsResponse);
+  rpc GetPrincipal(GetPrincipalRequest) returns (GetPrincipalResponse);
+  rpc FindPrincipal(FindPrincipalRequest) returns (FindPrincipalResponse);
+  rpc CreatePrincipal(CreatePrincipalRequest) returns (CreatePrincipalResponse);
+  rpc UpdatePrincipal(UpdatePrincipalRequest) returns (UpdatePrincipalResponse);
+  rpc DisablePrincipal(DisablePrincipalRequest) returns (DisablePrincipalResponse);
+  rpc EnablePrincipal(EnablePrincipalRequest) returns (EnablePrincipalResponse);
+  rpc DeletePrincipal(DeletePrincipalRequest) returns (DeletePrincipalResponse);
+  rpc SetPrincipalPassword(SetPrincipalPasswordRequest) returns (SetPrincipalPasswordResponse);
+  rpc CreatePrincipalSession(CreatePrincipalSessionRequest) returns (CreatePrincipalSessionResponse);
+  rpc ListPrincipalSessions(ListPrincipalSessionsRequest) returns (ListPrincipalSessionsResponse);
+  rpc RevokePrincipalSession(RevokePrincipalSessionRequest) returns (RevokePrincipalSessionResponse);
+  rpc RevokePrincipalSessions(RevokePrincipalSessionsRequest) returns (RevokePrincipalSessionsResponse);
+  rpc ListPrincipalRoles(ListPrincipalRolesRequest) returns (ListPrincipalRolesResponse);
+  rpc GrantPrincipalRole(GrantPrincipalRoleRequest) returns (GrantPrincipalRoleResponse);
+  rpc RevokePrincipalRole(RevokePrincipalRoleRequest) returns (RevokePrincipalRoleResponse);
+  rpc ListPrincipalCapabilities(ListPrincipalCapabilitiesRequest) returns (ListPrincipalCapabilitiesResponse);
+  rpc GrantPrincipalCapability(GrantPrincipalCapabilityRequest) returns (GrantPrincipalCapabilityResponse);
+  rpc RevokePrincipalCapability(RevokePrincipalCapabilityRequest) returns (RevokePrincipalCapabilityResponse);
+}
+
+message ListPrincipalsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  bool include_disabled = 3;
+  bool include_deleted = 4;
+}
+
+message ListPrincipalsResponse {
+  repeated Principal principals = 1;
+  string next_page_token = 2;
+}
+
+message GetPrincipalRequest { string principal_id = 1; }
+message GetPrincipalResponse { Principal principal = 1; }
+
+message FindPrincipalRequest {
+  oneof lookup {
+    string username = 1;
+    string email = 2;
+  }
+}
+message FindPrincipalResponse { Principal principal = 1; }
+
+message CreatePrincipalRequest {
+  string username = 1;
+  string display_name = 2;
+  string email = 3;
+  optional string password = 4;
+  mycel.common.v1.PrincipalType type = 5;
+  bool login_enabled = 6;
+  bool disabled = 7;
+  repeated string roles = 8;
+  repeated InitialPrincipalCapabilityGrant capability_grants = 9;
+}
+
+message CreatePrincipalResponse {
+  Principal principal = 1;
+  repeated PrincipalRoleGrant role_grants = 2;
+  repeated PrincipalCapabilityGrant capability_grants = 3;
+  repeated mycel.common.v1.Capability effective_capabilities = 4;
+}
+
+message UpdatePrincipalRequest {
+  Principal principal = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+message UpdatePrincipalResponse { Principal principal = 1; }
+
+message DisablePrincipalRequest {
+  string principal_id = 1;
+  string reason = 2;
+  bool revoke_sessions = 3;
+}
+message DisablePrincipalResponse { Principal principal = 1; }
+
+message EnablePrincipalRequest { string principal_id = 1; }
+message EnablePrincipalResponse { Principal principal = 1; }
+
+message DeletePrincipalRequest {
+  string principal_id = 1;
+  bool revoke_sessions = 2;
+}
+message DeletePrincipalResponse { Principal principal = 1; }
+
+message SetPrincipalPasswordRequest {
+  string principal_id = 1;
+  string password = 2;
+  bool revoke_sessions = 3;
+}
+message SetPrincipalPasswordResponse { Principal principal = 1; }
+
+message CreatePrincipalSessionRequest {
+  string principal_id = 1;
+  mycel.common.v1.ClientInfo client = 2;
+}
+message CreatePrincipalSessionResponse {
+  string access_token = 1;
+  google.protobuf.Timestamp access_token_expire_time = 2;
+  optional string refresh_token = 3;
+  Principal principal = 4;
+  string auth_session_id = 5;
+}
+
+message ListPrincipalSessionsRequest {
+  string principal_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+  bool include_inactive = 4;
+}
+message ListPrincipalSessionsResponse {
+  repeated mycel.common.v1.AuthSessionSummary sessions = 1;
+  string next_page_token = 2;
+}
+
+message RevokePrincipalSessionRequest {
+  string principal_id = 1;
+  string auth_session_id = 2;
+}
+message RevokePrincipalSessionResponse {}
+
+message RevokePrincipalSessionsRequest { string principal_id = 1; }
+message RevokePrincipalSessionsResponse { int32 revoked_count = 1; }
+
+message ListPrincipalRolesRequest { string principal_id = 1; }
+message ListPrincipalRolesResponse {
+  repeated PrincipalRoleGrant grants = 1;
+  repeated string effective_roles = 2;
+}
+
+message GrantPrincipalRoleRequest {
+  string principal_id = 1;
+  string role = 2;
+  mycel.common.v1.AccessScope scope = 3;
+  string reason = 4;
+}
+message GrantPrincipalRoleResponse {
+  PrincipalRoleGrant grant = 1;
+  repeated mycel.common.v1.Capability effective_capabilities = 2;
+}
+
+message RevokePrincipalRoleRequest {
+  string principal_id = 1;
+  string role_grant_id = 2;
+  string reason = 3;
+}
+message RevokePrincipalRoleResponse {
+  repeated mycel.common.v1.Capability effective_capabilities = 1;
+}
+
+message ListPrincipalCapabilitiesRequest { string principal_id = 1; }
+message ListPrincipalCapabilitiesResponse {
+  repeated PrincipalCapabilityGrant grants = 1;
+  repeated mycel.common.v1.Capability effective_capabilities = 2;
+}
+
+message GrantPrincipalCapabilityRequest {
+  string principal_id = 1;
+  mycel.common.v1.Capability capability = 2;
+  mycel.common.v1.AccessScope scope = 3;
+  string reason = 4;
+}
+message GrantPrincipalCapabilityResponse {
+  PrincipalCapabilityGrant grant = 1;
+  repeated mycel.common.v1.Capability effective_capabilities = 2;
+}
+
+message RevokePrincipalCapabilityRequest {
+  string principal_id = 1;
+  string capability_grant_id = 2;
+  string reason = 3;
+}
+message RevokePrincipalCapabilityResponse {
+  repeated mycel.common.v1.Capability effective_capabilities = 1;
+}
+
+message Principal {
+  string principal_id = 1;
+  string username = 2;
+  string display_name = 3;
+  string email = 4;
+  mycel.common.v1.PrincipalType type = 5;
+  PrincipalState state = 6;
+  bool login_enabled = 7;
+  google.protobuf.Timestamp create_time = 8;
+  google.protobuf.Timestamp update_time = 9;
+}
+
+enum PrincipalState {
+  PRINCIPAL_STATE_UNSPECIFIED = 0;
+  PRINCIPAL_STATE_ACTIVE = 1;
+  PRINCIPAL_STATE_DISABLED = 2;
+  PRINCIPAL_STATE_DELETED = 3;
+}
+
+message PrincipalRoleGrant {
+  string role_grant_id = 1;
+  string principal_id = 2;
+  string role = 3;
+  mycel.common.v1.AccessScope scope = 4;
+  string reason = 5;
+  string granted_by_principal_id = 6;
+  google.protobuf.Timestamp create_time = 7;
+}
+
+message InitialPrincipalCapabilityGrant {
+  mycel.common.v1.Capability capability = 1;
+  mycel.common.v1.AccessScope scope = 2;
+  string reason = 3;
+}
+
+message PrincipalCapabilityGrant {
+  string capability_grant_id = 1;
+  string principal_id = 2;
+  mycel.common.v1.Capability capability = 3;
+  mycel.common.v1.AccessScope scope = 4;
+  string reason = 5;
+  string granted_by_principal_id = 6;
+  google.protobuf.Timestamp create_time = 7;
+}
+

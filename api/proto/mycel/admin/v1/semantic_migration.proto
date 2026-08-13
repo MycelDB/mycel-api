@@ -14,7 +14,7 @@ message MigrateLegacyEmbeddingsRequest {
   string domain_id = 2;
 
   // Optional. Defaults to the space owner when omitted.
-  string owner_user_id = 3;
+  string owner_principal_id = 3;
 
   // Optional legacy profile UUID or name.
   string profile_ref = 4;

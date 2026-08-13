@@ -12,7 +12,7 @@ service AdminSpaceService {
   rpc GetSpace(AdminSpaceServiceGetSpaceRequest) returns (AdminSpaceServiceGetSpaceResponse);
   rpc CreateSpace(CreateSpaceRequest) returns (CreateSpaceResponse);
   rpc DeleteSpace(DeleteSpaceRequest) returns (DeleteSpaceResponse);
-  rpc GrantSpaceUser(GrantSpaceUserRequest) returns (GrantSpaceUserResponse);
+  rpc GrantSpacePrincipal(GrantSpacePrincipalRequest) returns (GrantSpacePrincipalResponse);
 }
 
 message AdminSpaceServiceListSpacesRequest {
@@ -36,7 +36,7 @@ message AdminSpaceServiceGetSpaceResponse {
 
 message CreateSpaceRequest {
   string name = 1;
-  string owner_user_id = 2;
+  string owner_principal_id = 2;
   string owner_username = 3;
   string default_domain_key = 4;
   string default_domain_name = 5;
@@ -53,13 +53,13 @@ message DeleteSpaceRequest {
 
 message DeleteSpaceResponse {}
 
-message GrantSpaceUserRequest {
+message GrantSpacePrincipalRequest {
   string space_id = 1;
-  string user_id = 2;
+  string principal_id = 2;
   string username = 3;
   mycel.common.v1.SpaceRole role = 4;
 }
 
-message GrantSpaceUserResponse {
+message GrantSpacePrincipalResponse {
   mycel.common.v1.AccessGrant grant = 1;
 }
