@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package mycel.client.v1;
 
+import "mycel/common/v1/inference.proto";
+
 // AutomationService manages domain-scoped graph automation definitions and run history.
 service AutomationService {
   rpc ValidateAutomation(ValidateAutomationRequest) returns (ValidateAutomationResponse);
@@ -27,6 +29,7 @@ message ValidateAutomationResponse {
   bool valid = 1;
   string error = 2;
   string normalized_definition_json = 3;
+  repeated AutomationInferenceRef inference_refs = 4;
 }
 
 message CreateAutomationRequest {
@@ -99,6 +102,7 @@ message AutomationDefinitionSummary {
   repeated string events = 5;
   repeated string labels = 6;
   string updated_at = 7;
+  repeated string inference_profiles = 8;
 }
 
 message ListAutomationInvocationsRequest {
@@ -132,6 +136,7 @@ message GetAutomationRunRequest {
 
 message GetAutomationRunResponse {
   string run_json = 1;
+  repeated string inference_usage_event_ids = 2;
 }
 
 message RetryAutomationInvocationRequest {
@@ -150,4 +155,9 @@ message CancelAutomationInvocationRequest {
 
 message CancelAutomationInvocationResponse {
   AutomationInvocationSummary invocation = 1;
+}
+
+message AutomationInferenceRef {
+  string step_id = 1;
+  mycel.common.v1.InferenceRef inference = 2;
 }

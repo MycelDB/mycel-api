@@ -4,39 +4,69 @@ package mycel.admin.v1;
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "mycel/common/v1/inference.proto";
 
 
-// AdminInferenceService manages daemon inference catalog/configuration resources
-// used by AdminSemanticService and Client SemanticService.
-service AdminInferenceService {
-  rpc ApplyInferencePackage(AdminInferenceServiceApplyInferencePackageRequest) returns (AdminInferenceServiceApplyInferencePackageResponse);
-  rpc ListInferencePackages(AdminInferenceServiceListInferencePackagesRequest) returns (AdminInferenceServiceListInferencePackagesResponse);
-  rpc ListModelEndpoints(AdminInferenceServiceListModelEndpointsRequest) returns (AdminInferenceServiceListModelEndpointsResponse);
-  rpc ListModels(AdminInferenceServiceListModelsRequest) returns (AdminInferenceServiceListModelsResponse);
-  rpc ListVectorStores(AdminInferenceServiceListVectorStoresRequest) returns (AdminInferenceServiceListVectorStoresResponse);
-  rpc ListModelEndpointCapabilities(AdminInferenceServiceListModelEndpointCapabilitiesRequest) returns (AdminInferenceServiceListModelEndpointCapabilitiesResponse);
-  rpc CreateCredential(AdminInferenceServiceCreateCredentialRequest) returns (AdminInferenceServiceCreateCredentialResponse);
-  rpc ListCredentials(AdminInferenceServiceListCredentialsRequest) returns (AdminInferenceServiceListCredentialsResponse);
-  rpc CreateCredentialGrant(AdminInferenceServiceCreateCredentialGrantRequest) returns (AdminInferenceServiceCreateCredentialGrantResponse);
-  rpc ListCredentialGrants(AdminInferenceServiceListCredentialGrantsRequest) returns (AdminInferenceServiceListCredentialGrantsResponse);
-  rpc CreateInferencePolicy(AdminInferenceServiceCreateInferencePolicyRequest) returns (AdminInferenceServiceCreateInferencePolicyResponse);
-  rpc ListInferencePolicies(AdminInferenceServiceListInferencePoliciesRequest) returns (AdminInferenceServiceListInferencePoliciesResponse);
-  rpc SetModelEndpointEnabled(AdminInferenceServiceSetModelEndpointEnabledRequest) returns (AdminInferenceServiceSetModelEndpointEnabledResponse);
-  rpc SetVectorStoreEnabled(AdminInferenceServiceSetVectorStoreEnabledRequest) returns (AdminInferenceServiceSetVectorStoreEnabledResponse);
-  rpc SetModelEndpointCapabilityEnabled(AdminInferenceServiceSetModelEndpointCapabilityEnabledRequest) returns (AdminInferenceServiceSetModelEndpointCapabilityEnabledResponse);
-  rpc SetCredentialStatus(AdminInferenceServiceSetCredentialStatusRequest) returns (AdminInferenceServiceSetCredentialStatusResponse);
-  rpc ExpireCredentialGrant(AdminInferenceServiceExpireCredentialGrantRequest) returns (AdminInferenceServiceExpireCredentialGrantResponse);
-  rpc ExpireInferencePolicy(AdminInferenceServiceExpireInferencePolicyRequest) returns (AdminInferenceServiceExpireInferencePolicyResponse);
-  rpc DeleteModelEndpoint(AdminInferenceServiceDeleteModelEndpointRequest) returns (AdminInferenceServiceDeleteModelEndpointResponse);
-  rpc DeleteModel(AdminInferenceServiceDeleteModelRequest) returns (AdminInferenceServiceDeleteModelResponse);
-  rpc DeleteVectorStore(AdminInferenceServiceDeleteVectorStoreRequest) returns (AdminInferenceServiceDeleteVectorStoreResponse);
-  rpc DeleteModelEndpointCapability(AdminInferenceServiceDeleteModelEndpointCapabilityRequest) returns (AdminInferenceServiceDeleteModelEndpointCapabilityResponse);
-  rpc DeleteCredential(AdminInferenceServiceDeleteCredentialRequest) returns (AdminInferenceServiceDeleteCredentialResponse);
-  rpc DeleteCredentialGrant(AdminInferenceServiceDeleteCredentialGrantRequest) returns (AdminInferenceServiceDeleteCredentialGrantResponse);
-  rpc DeleteInferencePolicy(AdminInferenceServiceDeleteInferencePolicyRequest) returns (AdminInferenceServiceDeleteInferencePolicyResponse);
+// AdminInferenceCatalogService manages system-level inference catalog resources
+// used by semantic indexes, semantic search, and graph automations.
+service AdminInferenceCatalogService {
+  rpc ApplyInferencePackage(AdminInferenceCatalogServiceApplyInferencePackageRequest) returns (AdminInferenceCatalogServiceApplyInferencePackageResponse);
+  rpc ListInferencePackages(AdminInferenceCatalogServiceListInferencePackagesRequest) returns (AdminInferenceCatalogServiceListInferencePackagesResponse);
+  rpc ListModelEndpoints(AdminInferenceCatalogServiceListModelEndpointsRequest) returns (AdminInferenceCatalogServiceListModelEndpointsResponse);
+  rpc ListModels(AdminInferenceCatalogServiceListModelsRequest) returns (AdminInferenceCatalogServiceListModelsResponse);
+  rpc ListVectorStores(AdminInferenceCatalogServiceListVectorStoresRequest) returns (AdminInferenceCatalogServiceListVectorStoresResponse);
+  rpc ListModelEndpointCapabilities(AdminInferenceCatalogServiceListModelEndpointCapabilitiesRequest) returns (AdminInferenceCatalogServiceListModelEndpointCapabilitiesResponse);
+  rpc SetModelEndpointEnabled(AdminInferenceCatalogServiceSetModelEndpointEnabledRequest) returns (AdminInferenceCatalogServiceSetModelEndpointEnabledResponse);
+  rpc SetVectorStoreEnabled(AdminInferenceCatalogServiceSetVectorStoreEnabledRequest) returns (AdminInferenceCatalogServiceSetVectorStoreEnabledResponse);
+  rpc SetModelEndpointCapabilityEnabled(AdminInferenceCatalogServiceSetModelEndpointCapabilityEnabledRequest) returns (AdminInferenceCatalogServiceSetModelEndpointCapabilityEnabledResponse);
+  rpc DeleteModelEndpoint(AdminInferenceCatalogServiceDeleteModelEndpointRequest) returns (AdminInferenceCatalogServiceDeleteModelEndpointResponse);
+  rpc DeleteModel(AdminInferenceCatalogServiceDeleteModelRequest) returns (AdminInferenceCatalogServiceDeleteModelResponse);
+  rpc DeleteVectorStore(AdminInferenceCatalogServiceDeleteVectorStoreRequest) returns (AdminInferenceCatalogServiceDeleteVectorStoreResponse);
+  rpc DeleteModelEndpointCapability(AdminInferenceCatalogServiceDeleteModelEndpointCapabilityRequest) returns (AdminInferenceCatalogServiceDeleteModelEndpointCapabilityResponse);
 }
 
-message AdminInferenceServiceApplyInferencePackageRequest {
+// AdminInferenceProfileService manages space-scoped inference profiles.
+service AdminInferenceProfileService {
+  rpc CreateInferenceProfile(AdminInferenceProfileServiceCreateInferenceProfileRequest) returns (AdminInferenceProfileServiceCreateInferenceProfileResponse);
+  rpc ListInferenceProfiles(AdminInferenceProfileServiceListInferenceProfilesRequest) returns (AdminInferenceProfileServiceListInferenceProfilesResponse);
+  rpc GetInferenceProfile(AdminInferenceProfileServiceGetInferenceProfileRequest) returns (AdminInferenceProfileServiceGetInferenceProfileResponse);
+  rpc SetInferenceProfileEnabled(AdminInferenceProfileServiceSetInferenceProfileEnabledRequest) returns (AdminInferenceProfileServiceSetInferenceProfileEnabledResponse);
+  rpc DeleteInferenceProfile(AdminInferenceProfileServiceDeleteInferenceProfileRequest) returns (AdminInferenceProfileServiceDeleteInferenceProfileResponse);
+}
+
+// AdminInferenceCredentialService manages inference credentials and secret refs.
+service AdminInferenceCredentialService {
+  rpc CreateCredential(AdminInferenceCredentialServiceCreateCredentialRequest) returns (AdminInferenceCredentialServiceCreateCredentialResponse);
+  rpc ListCredentials(AdminInferenceCredentialServiceListCredentialsRequest) returns (AdminInferenceCredentialServiceListCredentialsResponse);
+  rpc SetCredentialStatus(AdminInferenceCredentialServiceSetCredentialStatusRequest) returns (AdminInferenceCredentialServiceSetCredentialStatusResponse);
+  rpc RotateCredential(AdminInferenceCredentialServiceRotateCredentialRequest) returns (AdminInferenceCredentialServiceRotateCredentialResponse);
+  rpc DeleteCredential(AdminInferenceCredentialServiceDeleteCredentialRequest) returns (AdminInferenceCredentialServiceDeleteCredentialResponse);
+}
+
+// AdminInferenceGrantService manages credential grants.
+service AdminInferenceGrantService {
+  rpc CreateCredentialGrant(AdminInferenceGrantServiceCreateCredentialGrantRequest) returns (AdminInferenceGrantServiceCreateCredentialGrantResponse);
+  rpc ListCredentialGrants(AdminInferenceGrantServiceListCredentialGrantsRequest) returns (AdminInferenceGrantServiceListCredentialGrantsResponse);
+  rpc ExpireCredentialGrant(AdminInferenceGrantServiceExpireCredentialGrantRequest) returns (AdminInferenceGrantServiceExpireCredentialGrantResponse);
+  rpc DeleteCredentialGrant(AdminInferenceGrantServiceDeleteCredentialGrantRequest) returns (AdminInferenceGrantServiceDeleteCredentialGrantResponse);
+}
+
+// AdminInferencePolicyService manages inference policies and policy decisions.
+service AdminInferencePolicyService {
+  rpc CreateInferencePolicy(AdminInferencePolicyServiceCreateInferencePolicyRequest) returns (AdminInferencePolicyServiceCreateInferencePolicyResponse);
+  rpc ListInferencePolicies(AdminInferencePolicyServiceListInferencePoliciesRequest) returns (AdminInferencePolicyServiceListInferencePoliciesResponse);
+  rpc ExpireInferencePolicy(AdminInferencePolicyServiceExpireInferencePolicyRequest) returns (AdminInferencePolicyServiceExpireInferencePolicyResponse);
+  rpc DeleteInferencePolicy(AdminInferencePolicyServiceDeleteInferencePolicyRequest) returns (AdminInferencePolicyServiceDeleteInferencePolicyResponse);
+  rpc GetPolicyDecision(AdminInferencePolicyServiceGetPolicyDecisionRequest) returns (AdminInferencePolicyServiceGetPolicyDecisionResponse);
+}
+
+// AdminInferenceUsageService exposes neutral inference usage telemetry.
+service AdminInferenceUsageService {
+  rpc ListUsageEvents(AdminInferenceUsageServiceListUsageEventsRequest) returns (AdminInferenceUsageServiceListUsageEventsResponse);
+  rpc SummarizeUsage(AdminInferenceUsageServiceSummarizeUsageRequest) returns (AdminInferenceUsageServiceSummarizeUsageResponse);
+}
+
+message AdminInferenceCatalogServiceApplyInferencePackageRequest {
   string name = 1;
   string version = 2;
   string source = 3;
@@ -47,7 +77,7 @@ message AdminInferenceServiceApplyInferencePackageRequest {
   repeated ModelEndpointCapabilityDefinition model_endpoint_capabilities = 8;
 }
 
-message AdminInferenceServiceApplyInferencePackageResponse {
+message AdminInferenceCatalogServiceApplyInferencePackageResponse {
   InferencePackage package = 1;
   repeated ModelEndpoint model_endpoints = 2;
   repeated InferenceModel models = 3;
@@ -55,50 +85,50 @@ message AdminInferenceServiceApplyInferencePackageResponse {
   repeated ModelEndpointCapability model_endpoint_capabilities = 5;
 }
 
-message AdminInferenceServiceListInferencePackagesRequest {
+message AdminInferenceCatalogServiceListInferencePackagesRequest {
   int32 page_size = 1;
   string page_token = 2;
 }
 
-message AdminInferenceServiceListInferencePackagesResponse {
+message AdminInferenceCatalogServiceListInferencePackagesResponse {
   repeated InferencePackage packages = 1;
   string next_page_token = 2;
 }
 
-message AdminInferenceServiceListModelEndpointsRequest {
+message AdminInferenceCatalogServiceListModelEndpointsRequest {
   int32 page_size = 1;
   string page_token = 2;
   bool include_disabled = 3;
 }
 
-message AdminInferenceServiceListModelEndpointsResponse {
+message AdminInferenceCatalogServiceListModelEndpointsResponse {
   repeated ModelEndpoint model_endpoints = 1;
   string next_page_token = 2;
 }
 
-message AdminInferenceServiceListModelsRequest {
+message AdminInferenceCatalogServiceListModelsRequest {
   int32 page_size = 1;
   string page_token = 2;
   string operation = 3;
 }
 
-message AdminInferenceServiceListModelsResponse {
+message AdminInferenceCatalogServiceListModelsResponse {
   repeated InferenceModel models = 1;
   string next_page_token = 2;
 }
 
-message AdminInferenceServiceListVectorStoresRequest {
+message AdminInferenceCatalogServiceListVectorStoresRequest {
   int32 page_size = 1;
   string page_token = 2;
   bool include_disabled = 3;
 }
 
-message AdminInferenceServiceListVectorStoresResponse {
+message AdminInferenceCatalogServiceListVectorStoresResponse {
   repeated VectorStore vector_stores = 1;
   string next_page_token = 2;
 }
 
-message AdminInferenceServiceListModelEndpointCapabilitiesRequest {
+message AdminInferenceCatalogServiceListModelEndpointCapabilitiesRequest {
   int32 page_size = 1;
   string page_token = 2;
   optional string model_endpoint_id = 3;
@@ -107,12 +137,80 @@ message AdminInferenceServiceListModelEndpointCapabilitiesRequest {
   bool include_disabled = 6;
 }
 
-message AdminInferenceServiceListModelEndpointCapabilitiesResponse {
+message AdminInferenceCatalogServiceListModelEndpointCapabilitiesResponse {
   repeated ModelEndpointCapability model_endpoint_capabilities = 1;
   string next_page_token = 2;
 }
 
-message AdminInferenceServiceCreateCredentialRequest {
+message AdminInferenceProfileServiceCreateInferenceProfileRequest {
+  string space_id = 1;
+  string key = 2;
+  string display_name = 3;
+  string description = 4;
+  mycel.common.v1.InferenceOperation operation = 5;
+  string purpose = 6;
+  repeated string domain_ids = 7;
+  repeated string capability_refs = 8;
+  repeated string endpoint_refs = 9;
+  repeated string model_refs = 10;
+  repeated string required_features = 11;
+  mycel.common.v1.InferencePrivacyRequirement privacy_requirement = 12;
+  mycel.common.v1.InferenceParameters default_parameters = 13;
+  bool enabled = 14;
+  google.protobuf.Struct metadata = 15;
+}
+
+message AdminInferenceProfileServiceCreateInferenceProfileResponse {
+  InferenceProfile inference_profile = 1;
+}
+
+message AdminInferenceProfileServiceListInferenceProfilesRequest {
+  string space_id = 1;
+  string domain_id = 2;
+  mycel.common.v1.InferenceOperation operation = 3;
+  string purpose = 4;
+  bool include_disabled = 5;
+  int32 page_size = 6;
+  string page_token = 7;
+}
+
+message AdminInferenceProfileServiceListInferenceProfilesResponse {
+  repeated InferenceProfile inference_profiles = 1;
+  string next_page_token = 2;
+}
+
+message AdminInferenceProfileServiceGetInferenceProfileRequest {
+  string space_id = 1;
+  string inference_profile = 2;
+  string inference_profile_id = 3;
+}
+
+message AdminInferenceProfileServiceGetInferenceProfileResponse {
+  InferenceProfile inference_profile = 1;
+}
+
+message AdminInferenceProfileServiceSetInferenceProfileEnabledRequest {
+  string space_id = 1;
+  string inference_profile = 2;
+  string inference_profile_id = 3;
+  bool enabled = 4;
+}
+
+message AdminInferenceProfileServiceSetInferenceProfileEnabledResponse {
+  InferenceProfile inference_profile = 1;
+}
+
+message AdminInferenceProfileServiceDeleteInferenceProfileRequest {
+  string space_id = 1;
+  string inference_profile = 2;
+  string inference_profile_id = 3;
+}
+
+message AdminInferenceProfileServiceDeleteInferenceProfileResponse {
+  string inference_profile_id = 1;
+}
+
+message AdminInferenceCredentialServiceCreateCredentialRequest {
   string key = 1;
   string display_name = 2;
   string model_endpoint = 3;
@@ -128,12 +226,12 @@ message AdminInferenceServiceCreateCredentialRequest {
   bool is_default = 10;
 }
 
-message AdminInferenceServiceCreateCredentialResponse {
+message AdminInferenceCredentialServiceCreateCredentialResponse {
   Secret secret = 1;
   InferenceCredential credential = 2;
 }
 
-message AdminInferenceServiceListCredentialsRequest {
+message AdminInferenceCredentialServiceListCredentialsRequest {
   int32 page_size = 1;
   string page_token = 2;
   string owner_type = 3;
@@ -142,12 +240,12 @@ message AdminInferenceServiceListCredentialsRequest {
   bool include_inactive = 6;
 }
 
-message AdminInferenceServiceListCredentialsResponse {
+message AdminInferenceCredentialServiceListCredentialsResponse {
   repeated InferenceCredential credentials = 1;
   string next_page_token = 2;
 }
 
-message AdminInferenceServiceCreateCredentialGrantRequest {
+message AdminInferenceGrantServiceCreateCredentialGrantRequest {
   string space_id = 1;
   string credential = 2;
   string credential_id = 3;
@@ -163,11 +261,11 @@ message AdminInferenceServiceCreateCredentialGrantRequest {
   google.protobuf.Timestamp expires_at = 13;
 }
 
-message AdminInferenceServiceCreateCredentialGrantResponse {
+message AdminInferenceGrantServiceCreateCredentialGrantResponse {
   CredentialGrant credential_grant = 1;
 }
 
-message AdminInferenceServiceListCredentialGrantsRequest {
+message AdminInferenceGrantServiceListCredentialGrantsRequest {
   string space_id = 1;
   int32 page_size = 2;
   string page_token = 3;
@@ -175,12 +273,12 @@ message AdminInferenceServiceListCredentialGrantsRequest {
   bool include_expired = 5;
 }
 
-message AdminInferenceServiceListCredentialGrantsResponse {
+message AdminInferenceGrantServiceListCredentialGrantsResponse {
   repeated CredentialGrant credential_grants = 1;
   string next_page_token = 2;
 }
 
-message AdminInferenceServiceCreateInferencePolicyRequest {
+message AdminInferencePolicyServiceCreateInferencePolicyRequest {
   string space_id = 1;
   ProcessingScope scope = 2;
   string effect = 3;
@@ -193,11 +291,11 @@ message AdminInferenceServiceCreateInferencePolicyRequest {
   google.protobuf.Timestamp expires_at = 10;
 }
 
-message AdminInferenceServiceCreateInferencePolicyResponse {
+message AdminInferencePolicyServiceCreateInferencePolicyResponse {
   InferencePolicy inference_policy = 1;
 }
 
-message AdminInferenceServiceListInferencePoliciesRequest {
+message AdminInferencePolicyServiceListInferencePoliciesRequest {
   string space_id = 1;
   int32 page_size = 2;
   string page_token = 3;
@@ -205,32 +303,32 @@ message AdminInferenceServiceListInferencePoliciesRequest {
   bool include_expired = 5;
 }
 
-message AdminInferenceServiceListInferencePoliciesResponse {
+message AdminInferencePolicyServiceListInferencePoliciesResponse {
   repeated InferencePolicy inference_policies = 1;
   string next_page_token = 2;
 }
 
-message AdminInferenceServiceSetModelEndpointEnabledRequest {
+message AdminInferenceCatalogServiceSetModelEndpointEnabledRequest {
   string model_endpoint = 1;
   string model_endpoint_id = 2;
   bool enabled = 3;
 }
 
-message AdminInferenceServiceSetModelEndpointEnabledResponse {
+message AdminInferenceCatalogServiceSetModelEndpointEnabledResponse {
   ModelEndpoint model_endpoint = 1;
 }
 
-message AdminInferenceServiceSetVectorStoreEnabledRequest {
+message AdminInferenceCatalogServiceSetVectorStoreEnabledRequest {
   string vector_store = 1;
   string vector_store_id = 2;
   bool enabled = 3;
 }
 
-message AdminInferenceServiceSetVectorStoreEnabledResponse {
+message AdminInferenceCatalogServiceSetVectorStoreEnabledResponse {
   VectorStore vector_store = 1;
 }
 
-message AdminInferenceServiceSetModelEndpointCapabilityEnabledRequest {
+message AdminInferenceCatalogServiceSetModelEndpointCapabilityEnabledRequest {
   string model_endpoint_capability_id = 1;
   string model_endpoint = 2;
   string model_endpoint_id = 3;
@@ -240,102 +338,165 @@ message AdminInferenceServiceSetModelEndpointCapabilityEnabledRequest {
   bool enabled = 7;
 }
 
-message AdminInferenceServiceSetModelEndpointCapabilityEnabledResponse {
+message AdminInferenceCatalogServiceSetModelEndpointCapabilityEnabledResponse {
   ModelEndpointCapability model_endpoint_capability = 1;
 }
 
-message AdminInferenceServiceSetCredentialStatusRequest {
+message AdminInferenceCredentialServiceSetCredentialStatusRequest {
   string credential = 1;
   string credential_id = 2;
   string status = 3;
 }
 
-message AdminInferenceServiceSetCredentialStatusResponse {
+message AdminInferenceCredentialServiceSetCredentialStatusResponse {
   InferenceCredential credential = 1;
 }
 
-message AdminInferenceServiceExpireCredentialGrantRequest {
+message AdminInferenceCredentialServiceRotateCredentialRequest {
+  string credential = 1;
+  string credential_id = 2;
+  oneof secret_material {
+    InlineSecret inline_secret = 3;
+    string external_ref = 4;
+    string secret_value = 5;
+  }
+  string reason = 6;
+}
+
+message AdminInferenceCredentialServiceRotateCredentialResponse {
+  Secret secret = 1;
+  InferenceCredential credential = 2;
+}
+
+message AdminInferenceGrantServiceExpireCredentialGrantRequest {
   string space_id = 1;
   string credential_grant_id = 2;
 }
 
-message AdminInferenceServiceExpireCredentialGrantResponse {
+message AdminInferenceGrantServiceExpireCredentialGrantResponse {
   CredentialGrant credential_grant = 1;
 }
 
-message AdminInferenceServiceExpireInferencePolicyRequest {
+message AdminInferencePolicyServiceExpireInferencePolicyRequest {
   string space_id = 1;
   string inference_policy_id = 2;
 }
 
-message AdminInferenceServiceExpireInferencePolicyResponse {
+message AdminInferencePolicyServiceExpireInferencePolicyResponse {
   InferencePolicy inference_policy = 1;
 }
 
-message AdminInferenceServiceDeleteModelEndpointRequest {
+message AdminInferenceCatalogServiceDeleteModelEndpointRequest {
   string model_endpoint = 1;
   string model_endpoint_id = 2;
 }
 
-message AdminInferenceServiceDeleteModelEndpointResponse {
+message AdminInferenceCatalogServiceDeleteModelEndpointResponse {
   string model_endpoint_id = 1;
 }
 
-message AdminInferenceServiceDeleteModelRequest {
+message AdminInferenceCatalogServiceDeleteModelRequest {
   string model = 1;
   string model_id = 2;
 }
 
-message AdminInferenceServiceDeleteModelResponse {
+message AdminInferenceCatalogServiceDeleteModelResponse {
   string model_id = 1;
 }
 
-message AdminInferenceServiceDeleteVectorStoreRequest {
+message AdminInferenceCatalogServiceDeleteVectorStoreRequest {
   string vector_store = 1;
   string vector_store_id = 2;
 }
 
-message AdminInferenceServiceDeleteVectorStoreResponse {
+message AdminInferenceCatalogServiceDeleteVectorStoreResponse {
   string vector_store_id = 1;
 }
 
-message AdminInferenceServiceDeleteModelEndpointCapabilityRequest {
+message AdminInferenceCatalogServiceDeleteModelEndpointCapabilityRequest {
   string model_endpoint_capability_id = 1;
 }
 
-message AdminInferenceServiceDeleteModelEndpointCapabilityResponse {
+message AdminInferenceCatalogServiceDeleteModelEndpointCapabilityResponse {
   string model_endpoint_capability_id = 1;
 }
 
-message AdminInferenceServiceDeleteCredentialRequest {
+message AdminInferenceCredentialServiceDeleteCredentialRequest {
   string credential = 1;
   string credential_id = 2;
   bool delete_grants = 3;
   bool delete_secret = 4;
 }
 
-message AdminInferenceServiceDeleteCredentialResponse {
+message AdminInferenceCredentialServiceDeleteCredentialResponse {
   string credential_id = 1;
   int32 credential_grants_deleted = 2;
   bool secret_deleted = 3;
 }
 
-message AdminInferenceServiceDeleteCredentialGrantRequest {
+message AdminInferenceGrantServiceDeleteCredentialGrantRequest {
   string space_id = 1;
   string credential_grant_id = 2;
 }
 
-message AdminInferenceServiceDeleteCredentialGrantResponse {
+message AdminInferenceGrantServiceDeleteCredentialGrantResponse {
   string credential_grant_id = 1;
 }
 
-message AdminInferenceServiceDeleteInferencePolicyRequest {
+message AdminInferencePolicyServiceDeleteInferencePolicyRequest {
   string space_id = 1;
   string inference_policy_id = 2;
 }
 
-message AdminInferenceServiceDeleteInferencePolicyResponse {
+message AdminInferencePolicyServiceDeleteInferencePolicyResponse {
   string inference_policy_id = 1;
+}
+
+message AdminInferencePolicyServiceGetPolicyDecisionRequest {
+  string space_id = 1;
+  string policy_decision_id = 2;
+}
+
+message AdminInferencePolicyServiceGetPolicyDecisionResponse {
+  PolicyDecision policy_decision = 1;
+}
+
+message AdminInferenceUsageServiceListUsageEventsRequest {
+  string space_id = 1;
+  mycel.common.v1.InferenceScope scope = 2;
+  mycel.common.v1.InferenceOperation operation = 3;
+  mycel.common.v1.InferenceUsageMode usage_mode = 4;
+  mycel.common.v1.InferenceUsageStatus status = 5;
+  string inference_profile_id = 6;
+  string model_endpoint_id = 7;
+  string model_id = 8;
+  string credential_grant_id = 9;
+  string automation_id = 10;
+  string automation_run_id = 11;
+  string semantic_index_id = 12;
+  string actor_principal_id = 13;
+  string on_behalf_of_principal_id = 14;
+  google.protobuf.Timestamp since = 15;
+  google.protobuf.Timestamp until = 16;
+  int32 page_size = 17;
+  string page_token = 18;
+}
+
+message AdminInferenceUsageServiceListUsageEventsResponse {
+  repeated InferenceUsageEvent usage_events = 1;
+  string next_page_token = 2;
+}
+
+message AdminInferenceUsageServiceSummarizeUsageRequest {
+  string space_id = 1;
+  mycel.common.v1.InferenceScope scope = 2;
+  google.protobuf.Timestamp since = 3;
+  google.protobuf.Timestamp until = 4;
+  repeated string group_by = 5;
+}
+
+message AdminInferenceUsageServiceSummarizeUsageResponse {
+  repeated InferenceUsageSummary summaries = 1;
 }
 
 message InferencePackage {
@@ -361,6 +522,10 @@ message ModelEndpoint {
   repeated string operations = 9;
   bool enabled = 10;
   google.protobuf.Struct metadata = 11;
+  mycel.common.v1.InferenceNetworkClass network_class_value = 12;
+  mycel.common.v1.InferencePrivacyClass privacy_class_value = 13;
+  repeated mycel.common.v1.InferenceCredentialAuthType auth_type_values = 14;
+  repeated mycel.common.v1.InferenceOperation operation_values = 15;
 }
 
 message InferenceModel {
@@ -373,6 +538,12 @@ message InferenceModel {
   string modality = 7;
   string vector_space_key = 8;
   google.protobuf.Struct metadata = 9;
+  mycel.common.v1.InferenceOperation operation_value = 10;
+  repeated string input_modalities = 11;
+  repeated string output_modalities = 12;
+  int32 context_tokens = 13;
+  int32 max_output_tokens = 14;
+  bool enabled = 15;
 }
 
 message VectorStore {
@@ -383,6 +554,7 @@ message VectorStore {
   string privacy_class = 5;
   bool enabled = 6;
   google.protobuf.Struct config = 7;
+  mycel.common.v1.InferencePrivacyClass privacy_class_value = 8;
 }
 
 message ModelEndpointCapability {
@@ -393,6 +565,13 @@ message ModelEndpointCapability {
   bool enabled = 5;
   string model_name_override = 6;
   google.protobuf.Struct metadata = 7;
+  mycel.common.v1.InferenceOperation operation_value = 8;
+  string capability_key = 9;
+  bool supports_json_mode = 10;
+  bool supports_tool_calls = 11;
+  int32 max_input_tokens = 12;
+  int32 max_output_tokens = 13;
+  google.protobuf.Struct default_parameters = 14;
 }
 
 message ModelEndpointCapabilityDefinition {
@@ -437,6 +616,11 @@ message InferenceCredential {
   google.protobuf.Timestamp create_time = 11;
   google.protobuf.Timestamp update_time = 12;
   google.protobuf.Timestamp last_used_time = 13;
+  mycel.common.v1.InferenceCredentialOwnerType owner_type_value = 14;
+  mycel.common.v1.InferenceCredentialAuthType auth_type_value = 15;
+  mycel.common.v1.InferenceCredentialStatus status_value = 16;
+  string secret_version = 17;
+  google.protobuf.Timestamp rotated_at = 18;
 }
 
 message ProcessingScope {
@@ -445,6 +629,28 @@ message ProcessingScope {
   string semantic_index_id = 3;
   string node_id = 4;
   bool include_descendants = 5;
+}
+
+message InferenceProfile {
+  string inference_profile_id = 1;
+  string space_id = 2;
+  string key = 3;
+  string display_name = 4;
+  string description = 5;
+  mycel.common.v1.InferenceOperation operation = 6;
+  string purpose = 7;
+  repeated string domain_ids = 8;
+  repeated string capability_refs = 9;
+  repeated string endpoint_refs = 10;
+  repeated string model_refs = 11;
+  repeated string required_features = 12;
+  mycel.common.v1.InferencePrivacyRequirement privacy_requirement = 13;
+  mycel.common.v1.InferenceParameters default_parameters = 14;
+  bool enabled = 15;
+  string created_by = 16;
+  google.protobuf.Timestamp create_time = 17;
+  google.protobuf.Timestamp update_time = 18;
+  google.protobuf.Struct metadata = 19;
 }
 
 message CredentialGrant {
@@ -460,6 +666,17 @@ message CredentialGrant {
   string granted_by = 10;
   google.protobuf.Timestamp create_time = 11;
   google.protobuf.Timestamp expire_time = 12;
+  mycel.common.v1.InferenceScope inference_scope = 13;
+  repeated mycel.common.v1.InferenceOperation operation_values = 14;
+  repeated string inference_profile_ids = 15;
+  repeated string model_endpoint_capability_ids = 16;
+  repeated mycel.common.v1.InferenceUsageMode usage_modes = 17;
+  repeated string grantee_principal_ids = 18;
+  repeated string allow_on_behalf_of_principal_ids = 19;
+  mycel.common.v1.InferenceGrantState state = 20;
+  string revoked_by = 21;
+  google.protobuf.Timestamp revoked_at = 22;
+  string reason = 23;
 }
 
 message InferencePolicy {
@@ -475,4 +692,84 @@ message InferencePolicy {
   string created_by = 10;
   google.protobuf.Timestamp create_time = 11;
   google.protobuf.Timestamp expire_time = 12;
+  mycel.common.v1.InferenceScope inference_scope = 13;
+  mycel.common.v1.InferencePolicyAction action = 14;
+  repeated mycel.common.v1.InferenceOperation operation_values = 15;
+  repeated mycel.common.v1.InferencePrivacyClass allowed_privacy_class_values = 16;
+  repeated string inference_profile_ids = 17;
+  int32 max_input_tokens = 18;
+  int32 max_output_tokens = 19;
+  int32 max_requests_per_run = 20;
+  repeated string data_classes = 21;
+  int32 priority = 22;
+  mycel.common.v1.InferencePolicyState state = 23;
+  string revoked_by = 24;
+  google.protobuf.Timestamp revoked_at = 25;
+}
+
+message PolicyDecision {
+  string policy_decision_id = 1;
+  string space_id = 2;
+  string domain_id = 3;
+  string node_id = 4;
+  mycel.common.v1.InferenceOperation operation = 5;
+  mycel.common.v1.InferenceUsageMode usage_mode = 6;
+  string inference_profile_id = 7;
+  string model_endpoint_capability_id = 8;
+  string model_endpoint_id = 9;
+  string model_id = 10;
+  string credential_id = 11;
+  string credential_grant_id = 12;
+  string actor_principal_id = 13;
+  string on_behalf_of_principal_id = 14;
+  mycel.common.v1.InferencePolicyDecisionAction action = 15;
+  repeated string matched_policy_ids = 16;
+  string reason = 17;
+  google.protobuf.Timestamp decided_at = 18;
+  google.protobuf.Struct metadata = 19;
+}
+
+message InferenceUsageEvent {
+  string usage_event_id = 1;
+  string request_id = 2;
+  mycel.common.v1.InferenceOperation operation = 3;
+  mycel.common.v1.InferenceUsageMode usage_mode = 4;
+  mycel.common.v1.InferenceUsageStatus status = 5;
+  string space_id = 6;
+  string domain_id = 7;
+  string node_id = 8;
+  string automation_id = 9;
+  string automation_run_id = 10;
+  string semantic_index_id = 11;
+  string actor_principal_id = 12;
+  string on_behalf_of_principal_id = 13;
+  string inference_profile_id = 14;
+  string model_endpoint_id = 15;
+  string model_id = 16;
+  string model_endpoint_capability_id = 17;
+  string credential_id = 18;
+  string credential_grant_id = 19;
+  string policy_decision_id = 20;
+  string provider_request_id = 21;
+  int64 input_tokens = 22;
+  int64 output_tokens = 23;
+  int64 total_tokens = 24;
+  int64 latency_millis = 25;
+  string error_code = 26;
+  string error_message = 27;
+  google.protobuf.Timestamp started_at = 28;
+  google.protobuf.Timestamp completed_at = 29;
+  google.protobuf.Struct metadata = 30;
+}
+
+message InferenceUsageSummary {
+  map<string, string> group = 1;
+  int64 request_count = 2;
+  int64 succeeded_count = 3;
+  int64 failed_count = 4;
+  int64 denied_count = 5;
+  int64 input_tokens = 6;
+  int64 output_tokens = 7;
+  int64 total_tokens = 8;
+  int64 total_latency_millis = 9;
 }
