@@ -259,6 +259,8 @@ message AdminInferenceGrantServiceCreateCredentialGrantRequest {
   bool is_default = 11;
   bool allow_background_use = 12;
   google.protobuf.Timestamp expires_at = 13;
+  repeated string grantee_principal_ids = 14;
+  repeated string allow_on_behalf_of_principal_ids = 15;
 }
 
 message AdminInferenceGrantServiceCreateCredentialGrantResponse {
