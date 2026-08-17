@@ -16,6 +16,12 @@ service QueryService {
   // ExecuteGQL executes textual Mycel GQL inside an existing transaction.
   rpc ExecuteGQL(ExecuteGQLRequest) returns (ExecuteGQLResponse);
 
+  // ExplainQuery plans a structured graph query without executing graph reads or mutations.
+  rpc ExplainQuery(ExplainQueryRequest) returns (ExplainQueryResponse);
+
+  // ExplainGQL plans textual Mycel GQL without executing graph reads or mutations.
+  rpc ExplainGQL(ExplainGQLRequest) returns (ExplainGQLResponse);
+
   // ExecuteGQLScript executes multiple semicolon-separated Mycel GQL statements.
   rpc ExecuteGQLScript(ExecuteGQLScriptRequest) returns (ExecuteGQLScriptResponse);
 }
@@ -55,6 +61,27 @@ message ExecuteGQLResponse {
   QueryResult result = 1;
   ReadMetadata read_metadata = 2;
   QueryDiagnostics diagnostics = 3;
+}
+
+message ExplainQueryRequest {
+  string transaction_id = 1;
+  GraphQuery query = 2;
+  ReadOptions read_options = 3;
+}
+
+message ExplainQueryResponse {
+  QueryDiagnostics diagnostics = 1;
+}
+
+message ExplainGQLRequest {
+  string transaction_id = 1;
+  string query = 2;
+  map<string, google.protobuf.Value> params = 3;
+  ReadOptions read_options = 4;
+}
+
+message ExplainGQLResponse {
+  QueryDiagnostics diagnostics = 1;
 }
 
 message ExecuteGQLScriptRequest {
@@ -120,6 +147,19 @@ message QueryDiagnostics {
   int64 expansion_millis = 15;
   int32 adjacency_scan_calls = 16;
   int32 node_read_calls = 17;
+  string planner = 18;
+  string planner_version = 19;
+  string plan_kind = 20;
+  repeated string pushed_predicates = 21;
+  repeated string residual_predicates = 22;
+  int32 rows_scanned = 23;
+  int32 rows_produced = 24;
+  int32 candidate_count = 25;
+  bool explain_only = 26;
+  int64 planning_millis = 27;
+  int64 execution_millis = 28;
+  int64 shaping_millis = 29;
+  string fallback_mode = 30;
 }
 
 message GraphQuery {
@@ -138,6 +178,22 @@ message GraphQuery {
   // result as truncated rather than falling back to a broad scan.
   int32 max_nodes = 6;
   int32 max_edges = 7;
+
+  // Optional path alias for callers that project the full ordered traversal.
+  // Path rows are returned with RETURN_PROJECTION_KIND_PATH / QueryValue.path.
+  string path_alias = 8;
+
+  // Aggregate projections are evaluated after matching/filtering and before
+  // final result-shaping pagination.
+  repeated AggregateProjection aggregate_returns = 9;
+
+  // Deduplicate projected rows before offset/limit pagination. Initial daemon
+  // support is intended for scalar projections and aggregate grouping keys.
+  bool distinct = 10;
+
+  // Number of shaped rows to skip after ordering/distinct and before limit/page
+  // pagination. Negative values are rejected by the daemon.
+  int32 offset = 11;
 }
 
 // GraphPattern describes a single linear graph traversal pattern.
@@ -189,6 +245,11 @@ message Expr {
     PropertyExistsExpr property_exists = 4;
     PropertyEqualsExpr property_equals = 5;
     LessThanExpr less_than = 6;
+    OrExpr or = 7;
+    NullExpr null = 8;
+    StringPredicateExpr string_predicate = 9;
+    TextSearchExpr text = 10;
+    SemanticSearchExpr semantic = 11;
   }
 }
 
@@ -205,6 +266,10 @@ message LessThanExpr {
 }
 
 message AndExpr {
+  repeated Expr exprs = 1;
+}
+
+message OrExpr {
   repeated Expr exprs = 1;
 }
 
@@ -228,6 +293,41 @@ message PropertyEqualsExpr {
   string alias = 1;
   string name = 2;
   google.protobuf.Value value = 3;
+}
+
+// NullExpr matches whether a node or edge property/payload/meta field is null
+// or absent. name uses the same field spelling as PropExpr.
+message NullExpr {
+  string alias = 1;
+  string name = 2;
+  bool is_null = 3;
+}
+
+enum StringPredicateMode {
+  STRING_PREDICATE_MODE_UNSPECIFIED = 0;
+  STRING_PREDICATE_MODE_CONTAINS = 1;
+  STRING_PREDICATE_MODE_STARTS_WITH = 2;
+  STRING_PREDICATE_MODE_ENDS_WITH = 3;
+}
+
+message StringPredicateExpr {
+  ValueExpr value = 1;
+  string query = 2;
+  StringPredicateMode mode = 3;
+}
+
+message TextSearchExpr {
+  string alias = 1;
+  string field = 2;
+  string query = 3;
+}
+
+message SemanticSearchExpr {
+  string alias = 1;
+  string field = 2;
+  string query = 3;
+  string index_ref = 4;
+  int32 limit = 5;
 }
 
 message ValueExpr {
@@ -267,12 +367,36 @@ message ReturnProjection {
   ReturnProjectionKind kind = 3;
 }
 
+enum AggregateFunction {
+  AGGREGATE_FUNCTION_UNSPECIFIED = 0;
+  AGGREGATE_FUNCTION_COUNT = 1;
+  AGGREGATE_FUNCTION_SUM = 2;
+  AGGREGATE_FUNCTION_AVG = 3;
+  AGGREGATE_FUNCTION_MIN = 4;
+  AGGREGATE_FUNCTION_MAX = 5;
+}
+
+message AggregateArgument {
+  oneof argument {
+    bool star = 1;
+    string alias = 2;
+    ValueExpr value = 3;
+  }
+}
+
+message AggregateProjection {
+  string output_name = 1;
+  AggregateFunction function = 2;
+  AggregateArgument argument = 3;
+}
+
 enum ReturnProjectionKind {
   RETURN_PROJECTION_KIND_UNSPECIFIED = 0;
   RETURN_PROJECTION_KIND_NODE = 1;
   RETURN_PROJECTION_KIND_TREE = 2;
   RETURN_PROJECTION_KIND_SCALAR = 3;
   RETURN_PROJECTION_KIND_EDGE = 4;
+  RETURN_PROJECTION_KIND_PATH = 5;
 }
 
 message OrderSpec {
@@ -296,7 +420,13 @@ message QueryValue {
     Tree tree = 2;
     google.protobuf.Value scalar = 3;
     Edge edge = 4;
+    PathValue path = 5;
   }
+}
+
+message PathValue {
+  repeated Node nodes = 1;
+  repeated Edge edges = 2;
 }
 
 message Tree {
