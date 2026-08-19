@@ -26,9 +26,11 @@ service AdminPrincipalService {
   rpc ListPrincipalRoles(ListPrincipalRolesRequest) returns (ListPrincipalRolesResponse);
   rpc GrantPrincipalRole(GrantPrincipalRoleRequest) returns (GrantPrincipalRoleResponse);
   rpc RevokePrincipalRole(RevokePrincipalRoleRequest) returns (RevokePrincipalRoleResponse);
+  rpc SetPrincipalRolesForScope(SetPrincipalRolesForScopeRequest) returns (SetPrincipalRolesForScopeResponse);
   rpc ListPrincipalCapabilities(ListPrincipalCapabilitiesRequest) returns (ListPrincipalCapabilitiesResponse);
   rpc GrantPrincipalCapability(GrantPrincipalCapabilityRequest) returns (GrantPrincipalCapabilityResponse);
   rpc RevokePrincipalCapability(RevokePrincipalCapabilityRequest) returns (RevokePrincipalCapabilityResponse);
+  rpc SetPrincipalCapabilitiesForScope(SetPrincipalCapabilitiesForScopeRequest) returns (SetPrincipalCapabilitiesForScopeResponse);
 }
 
 message ListPrincipalsRequest {
@@ -160,6 +162,18 @@ message RevokePrincipalRoleResponse {
   repeated mycel.common.v1.Capability effective_capabilities = 1;
 }
 
+message SetPrincipalRolesForScopeRequest {
+  string principal_id = 1;
+  mycel.common.v1.AccessScope scope = 2;
+  repeated string roles = 3;
+  string reason = 4;
+}
+message SetPrincipalRolesForScopeResponse {
+  repeated PrincipalRoleGrant grants = 1;
+  repeated string effective_roles = 2;
+  repeated mycel.common.v1.Capability effective_capabilities = 3;
+}
+
 message ListPrincipalCapabilitiesRequest { string principal_id = 1; }
 message ListPrincipalCapabilitiesResponse {
   repeated PrincipalCapabilityGrant grants = 1;
@@ -184,6 +198,17 @@ message RevokePrincipalCapabilityRequest {
 }
 message RevokePrincipalCapabilityResponse {
   repeated mycel.common.v1.Capability effective_capabilities = 1;
+}
+
+message SetPrincipalCapabilitiesForScopeRequest {
+  string principal_id = 1;
+  mycel.common.v1.AccessScope scope = 2;
+  repeated mycel.common.v1.Capability capabilities = 3;
+  string reason = 4;
+}
+message SetPrincipalCapabilitiesForScopeResponse {
+  repeated PrincipalCapabilityGrant grants = 1;
+  repeated mycel.common.v1.Capability effective_capabilities = 2;
 }
 
 message Principal {

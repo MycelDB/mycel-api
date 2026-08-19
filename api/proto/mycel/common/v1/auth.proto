@@ -14,6 +14,7 @@ service AuthService {
   rpc Refresh(mycel.common.v1.RefreshRequest) returns (mycel.common.v1.RefreshResponse);
   rpc Logout(mycel.common.v1.LogoutRequest) returns (mycel.common.v1.LogoutResponse);
   rpc WhoAmI(mycel.common.v1.WhoAmIRequest) returns (mycel.common.v1.WhoAmIResponse);
+  rpc GetMyAccess(mycel.common.v1.GetMyAccessRequest) returns (mycel.common.v1.GetMyAccessResponse);
   rpc ListAuthSessions(mycel.common.v1.ListAuthSessionsRequest) returns (mycel.common.v1.ListAuthSessionsResponse);
   rpc RevokeAuthSession(mycel.common.v1.RevokeAuthSessionRequest) returns (mycel.common.v1.RevokeAuthSessionResponse);
   rpc RevokeOtherAuthSessions(mycel.common.v1.RevokeOtherAuthSessionsRequest) returns (mycel.common.v1.RevokeOtherAuthSessionsResponse);
@@ -110,6 +111,47 @@ message WhoAmIRequest {}
 // WhoAmIResponse returns the identity associated with the current access token.
 message WhoAmIResponse {
   mycel.common.v1.AuthPrincipal principal = 1;
+}
+
+// GetMyAccessRequest asks the daemon for access effective for the current
+// authenticated principal. This is a self-service endpoint: callers may inspect
+// their own access without principal-management capabilities.
+message GetMyAccessRequest {
+  // Optional scope filter. When empty, the daemon returns all active grants it
+  // can resolve for the current principal.
+  mycel.common.v1.AccessScope scope = 1;
+}
+
+// GetMyAccessResponse reports current-principal access for diagnostics and UX.
+// Clients may use this for navigation hints, but daemon authorization remains
+// authoritative for every request.
+message GetMyAccessResponse {
+  mycel.common.v1.AuthPrincipal principal = 1;
+
+  // Compact effective labels for simple clients and navigation gates. Values are
+  // canonical strings such as "space.owner", "query.run", or "automation.read".
+  repeated string effective_roles = 2;
+  repeated string effective_capabilities = 3;
+
+  // Scoped details for diagnostics and explainable UX.
+  repeated mycel.common.v1.EffectiveRole roles = 4;
+  repeated mycel.common.v1.EffectiveCapability capabilities = 5;
+
+  repeated string warnings = 6;
+  bool complete = 7;
+}
+
+message EffectiveRole {
+  string role = 1;
+  mycel.common.v1.AccessScope scope = 2;
+  string source = 3;
+}
+
+message EffectiveCapability {
+  string capability = 1;
+  mycel.common.v1.AccessScope scope = 2;
+  string source = 3;
+  string role = 4;
 }
 
 // ListAuthSessionsRequest lists durable auth sessions for the selected view.
