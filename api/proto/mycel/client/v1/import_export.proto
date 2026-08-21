@@ -70,10 +70,10 @@ message ImportDomainMetadata {
 message DomainExportOptions {
   bool include_blobs = 2;
 
-  // Semantic index configuration/content is not exported by the Client API in
-  // v1. This field is reserved as an explicit, currently unsupported request
-  // flag so clients can receive a clear error if they ask for it.
-  bool include_semantic_indexes = 3;
+  // Semantic generation rule configuration/content is not exported by the Client
+  // API in v1. This field is reserved as an explicit, currently unsupported
+  // request flag so clients can receive a clear error if they ask for it.
+  bool include_semantic_rules = 3;
 }
 
 message DomainImportOptions {

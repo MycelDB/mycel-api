@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package mycel.common.v1;
+
+// IntelligenceAccessUsageMode describes why mycel is invoking an intelligence
+// workload.
+enum IntelligenceAccessUsageMode {
+  INTELLIGENCE_ACCESS_USAGE_MODE_UNSPECIFIED = 0;
+  INTELLIGENCE_ACCESS_USAGE_MODE_INTERACTIVE = 1;
+  INTELLIGENCE_ACCESS_USAGE_MODE_AUTOMATION = 2;
+  INTELLIGENCE_ACCESS_USAGE_MODE_BACKGROUND = 3;
+  INTELLIGENCE_ACCESS_USAGE_MODE_SEMANTIC = 4;
+}
+
+// IntelligenceAccessCredentialOwnerType identifies the owner of an intelligence
+// access credential.
+enum IntelligenceAccessCredentialOwnerType {
+  INTELLIGENCE_ACCESS_CREDENTIAL_OWNER_TYPE_UNSPECIFIED = 0;
+  INTELLIGENCE_ACCESS_CREDENTIAL_OWNER_TYPE_PRINCIPAL = 1;
+  INTELLIGENCE_ACCESS_CREDENTIAL_OWNER_TYPE_SPACE = 2;
+  INTELLIGENCE_ACCESS_CREDENTIAL_OWNER_TYPE_SYSTEM = 3;
+}
+
+// IntelligenceAccessCredentialAuthType identifies the authentication scheme for
+// an intelligence access credential.
+enum IntelligenceAccessCredentialAuthType {
+  INTELLIGENCE_ACCESS_CREDENTIAL_AUTH_TYPE_UNSPECIFIED = 0;
+  INTELLIGENCE_ACCESS_CREDENTIAL_AUTH_TYPE_NONE = 1;
+  INTELLIGENCE_ACCESS_CREDENTIAL_AUTH_TYPE_API_KEY = 2;
+  INTELLIGENCE_ACCESS_CREDENTIAL_AUTH_TYPE_BEARER = 3;
+  INTELLIGENCE_ACCESS_CREDENTIAL_AUTH_TYPE_BASIC = 4;
+}
+
+// IntelligenceAccessCredentialStatus is the lifecycle state of a credential.
+enum IntelligenceAccessCredentialStatus {
+  INTELLIGENCE_ACCESS_CREDENTIAL_STATUS_UNSPECIFIED = 0;
+  INTELLIGENCE_ACCESS_CREDENTIAL_STATUS_ACTIVE = 1;
+  INTELLIGENCE_ACCESS_CREDENTIAL_STATUS_DISABLED = 2;
+  INTELLIGENCE_ACCESS_CREDENTIAL_STATUS_REVOKED = 3;
+}
+
+// IntelligenceAccessPolicyAction is the effective policy action.
+enum IntelligenceAccessPolicyAction {
+  INTELLIGENCE_ACCESS_POLICY_ACTION_UNSPECIFIED = 0;
+  INTELLIGENCE_ACCESS_POLICY_ACTION_ALLOW = 1;
+  INTELLIGENCE_ACCESS_POLICY_ACTION_RESTRICT = 2;
+  INTELLIGENCE_ACCESS_POLICY_ACTION_DENY = 3;
+}
+
+// IntelligenceAccessPolicyDecisionAction is the result of policy evaluation.
+enum IntelligenceAccessPolicyDecisionAction {
+  INTELLIGENCE_ACCESS_POLICY_DECISION_ACTION_UNSPECIFIED = 0;
+  INTELLIGENCE_ACCESS_POLICY_DECISION_ACTION_ALLOWED = 1;
+  INTELLIGENCE_ACCESS_POLICY_DECISION_ACTION_DENIED = 2;
+}
+
+// IntelligenceAccessGrantState is the lifecycle state of a credential grant.
+enum IntelligenceAccessGrantState {
+  INTELLIGENCE_ACCESS_GRANT_STATE_UNSPECIFIED = 0;
+  INTELLIGENCE_ACCESS_GRANT_STATE_ACTIVE = 1;
+  INTELLIGENCE_ACCESS_GRANT_STATE_EXPIRED = 2;
+  INTELLIGENCE_ACCESS_GRANT_STATE_REVOKED = 3;
+}
+
+// IntelligenceAccessPolicyState is the lifecycle state of an access policy.
+enum IntelligenceAccessPolicyState {
+  INTELLIGENCE_ACCESS_POLICY_STATE_UNSPECIFIED = 0;
+  INTELLIGENCE_ACCESS_POLICY_STATE_ACTIVE = 1;
+  INTELLIGENCE_ACCESS_POLICY_STATE_EXPIRED = 2;
+  INTELLIGENCE_ACCESS_POLICY_STATE_REVOKED = 3;
+}
+
+// IntelligenceAccessUsageStatus is the terminal status of an intelligence
+// workload inference attempt.
+enum IntelligenceAccessUsageStatus {
+  INTELLIGENCE_ACCESS_USAGE_STATUS_UNSPECIFIED = 0;
+  INTELLIGENCE_ACCESS_USAGE_STATUS_SUCCEEDED = 1;
+  INTELLIGENCE_ACCESS_USAGE_STATUS_FAILED = 2;
+  INTELLIGENCE_ACCESS_USAGE_STATUS_DENIED = 3;
+  INTELLIGENCE_ACCESS_USAGE_STATUS_CANCELED = 4;
+}
+
+// IntelligenceAccessScope scopes grants, policies, decisions, and usage
+// telemetry across automations, semantic generation rules, and future
+// intelligence workloads.
+message IntelligenceAccessScope {
+  string space_id = 1;
+  string domain_id = 2;
+  string semantic_rule_id = 3;
+  string node_id = 4;
+  bool include_descendants = 5;
+  string embedding_binding_key = 6;
+}

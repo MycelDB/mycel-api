@@ -326,8 +326,9 @@ message SemanticSearchExpr {
   string alias = 1;
   string field = 2;
   string query = 3;
-  string index_ref = 4;
+  string rule_ref = 4;
   int32 limit = 5;
+  string embedding_binding_key = 6;
 }
 
 message ValueExpr {

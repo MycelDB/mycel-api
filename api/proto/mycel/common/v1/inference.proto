@@ -14,15 +14,6 @@ enum InferenceOperation {
   INFERENCE_OPERATION_CLASSIFY = 5;
 }
 
-// InferenceUsageMode describes why mycel is invoking inference.
-enum InferenceUsageMode {
-  INFERENCE_USAGE_MODE_UNSPECIFIED = 0;
-  INFERENCE_USAGE_MODE_INTERACTIVE = 1;
-  INFERENCE_USAGE_MODE_AUTOMATION = 2;
-  INFERENCE_USAGE_MODE_BACKGROUND = 3;
-  INFERENCE_USAGE_MODE_SEMANTIC = 4;
-}
-
 // InferencePrivacyClass describes where data is allowed to flow.
 enum InferencePrivacyClass {
   INFERENCE_PRIVACY_CLASS_UNSPECIFIED = 0;
@@ -37,80 +28,6 @@ enum InferenceNetworkClass {
   INFERENCE_NETWORK_CLASS_LOCAL = 1;
   INFERENCE_NETWORK_CLASS_PRIVATE_NETWORK = 2;
   INFERENCE_NETWORK_CLASS_PUBLIC_INTERNET = 3;
-}
-
-// InferenceCredentialOwnerType identifies the owner of an inference credential.
-enum InferenceCredentialOwnerType {
-  INFERENCE_CREDENTIAL_OWNER_TYPE_UNSPECIFIED = 0;
-  INFERENCE_CREDENTIAL_OWNER_TYPE_PRINCIPAL = 1;
-  INFERENCE_CREDENTIAL_OWNER_TYPE_SPACE = 2;
-  INFERENCE_CREDENTIAL_OWNER_TYPE_SYSTEM = 3;
-}
-
-// InferenceCredentialAuthType identifies the authentication scheme for a credential.
-enum InferenceCredentialAuthType {
-  INFERENCE_CREDENTIAL_AUTH_TYPE_UNSPECIFIED = 0;
-  INFERENCE_CREDENTIAL_AUTH_TYPE_NONE = 1;
-  INFERENCE_CREDENTIAL_AUTH_TYPE_API_KEY = 2;
-  INFERENCE_CREDENTIAL_AUTH_TYPE_BEARER = 3;
-  INFERENCE_CREDENTIAL_AUTH_TYPE_BASIC = 4;
-}
-
-// InferenceCredentialStatus is the lifecycle state of a credential.
-enum InferenceCredentialStatus {
-  INFERENCE_CREDENTIAL_STATUS_UNSPECIFIED = 0;
-  INFERENCE_CREDENTIAL_STATUS_ACTIVE = 1;
-  INFERENCE_CREDENTIAL_STATUS_DISABLED = 2;
-  INFERENCE_CREDENTIAL_STATUS_REVOKED = 3;
-}
-
-// InferencePolicyAction is the effective policy action.
-enum InferencePolicyAction {
-  INFERENCE_POLICY_ACTION_UNSPECIFIED = 0;
-  INFERENCE_POLICY_ACTION_ALLOW = 1;
-  INFERENCE_POLICY_ACTION_RESTRICT = 2;
-  INFERENCE_POLICY_ACTION_DENY = 3;
-}
-
-// InferencePolicyDecisionAction is the result of policy evaluation.
-enum InferencePolicyDecisionAction {
-  INFERENCE_POLICY_DECISION_ACTION_UNSPECIFIED = 0;
-  INFERENCE_POLICY_DECISION_ACTION_ALLOWED = 1;
-  INFERENCE_POLICY_DECISION_ACTION_DENIED = 2;
-}
-
-// InferenceGrantState is the lifecycle state of a credential grant.
-enum InferenceGrantState {
-  INFERENCE_GRANT_STATE_UNSPECIFIED = 0;
-  INFERENCE_GRANT_STATE_ACTIVE = 1;
-  INFERENCE_GRANT_STATE_EXPIRED = 2;
-  INFERENCE_GRANT_STATE_REVOKED = 3;
-}
-
-// InferencePolicyState is the lifecycle state of an inference policy.
-enum InferencePolicyState {
-  INFERENCE_POLICY_STATE_UNSPECIFIED = 0;
-  INFERENCE_POLICY_STATE_ACTIVE = 1;
-  INFERENCE_POLICY_STATE_EXPIRED = 2;
-  INFERENCE_POLICY_STATE_REVOKED = 3;
-}
-
-// InferenceUsageStatus is the terminal status of an inference attempt.
-enum InferenceUsageStatus {
-  INFERENCE_USAGE_STATUS_UNSPECIFIED = 0;
-  INFERENCE_USAGE_STATUS_SUCCEEDED = 1;
-  INFERENCE_USAGE_STATUS_FAILED = 2;
-  INFERENCE_USAGE_STATUS_DENIED = 3;
-  INFERENCE_USAGE_STATUS_CANCELED = 4;
-}
-
-// InferenceScope scopes grants, policies, decisions, and usage telemetry.
-message InferenceScope {
-  string space_id = 1;
-  string domain_id = 2;
-  string semantic_index_id = 3;
-  string node_id = 4;
-  bool include_descendants = 5;
 }
 
 // InferenceParameters contains provider-neutral runtime parameters.

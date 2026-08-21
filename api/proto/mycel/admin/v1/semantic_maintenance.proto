@@ -3,7 +3,8 @@ syntax = "proto3";
 package mycel.admin.v1;
 
 
-// AdminSemanticMaintenanceService runs daemon-owned semantic maintenance work.
+// AdminSemanticMaintenanceService runs daemon-owned semantic generation rule
+// maintenance work.
 service AdminSemanticMaintenanceService {
   rpc GetSemanticMaintenanceStatus(GetSemanticMaintenanceStatusRequest) returns (GetSemanticMaintenanceStatusResponse);
   rpc ListSemanticMaintenanceWork(ListSemanticMaintenanceWorkRequest) returns (ListSemanticMaintenanceWorkResponse);
@@ -11,7 +12,7 @@ service AdminSemanticMaintenanceService {
   rpc CancelSemanticMaintenanceWork(CancelSemanticMaintenanceWorkRequest) returns (CancelSemanticMaintenanceWorkResponse);
   rpc AnalyzeSemanticDirtyWork(AnalyzeSemanticDirtyWorkRequest) returns (AnalyzeSemanticDirtyWorkResponse);
   rpc ProcessSemanticDirtyWork(ProcessSemanticDirtyWorkRequest) returns (ProcessSemanticDirtyWorkResponse);
-  rpc BackfillSemanticIndex(BackfillSemanticIndexRequest) returns (BackfillSemanticIndexResponse);
+  rpc BackfillSemanticRule(BackfillSemanticRuleRequest) returns (BackfillSemanticRuleResponse);
 }
 
 message GetSemanticMaintenanceStatusRequest {
@@ -40,6 +41,8 @@ message ListSemanticMaintenanceWorkRequest {
   string space_id = 1;
   string status = 2;
   int32 limit = 3;
+  string semantic_rule_id = 4;
+  string embedding_binding_key = 5;
 }
 
 message ListSemanticMaintenanceWorkResponse {
@@ -50,17 +53,18 @@ message SemanticMaintenanceWorkItem {
   string work_item_id = 1;
   string space_id = 2;
   string domain_id = 3;
-  string semantic_index_id = 4;
-  string target_node_id = 5;
-  string action = 6;
-  string status = 7;
-  int32 attempt_count = 8;
-  string not_before = 9;
-  string claimed_until = 10;
-  string last_error_category = 11;
-  string last_error_message_sanitized = 12;
-  string created_at = 13;
-  string updated_at = 14;
+  string semantic_rule_id = 4;
+  string embedding_binding_key = 5;
+  string target_node_id = 6;
+  string action = 7;
+  string status = 8;
+  int32 attempt_count = 9;
+  string not_before = 10;
+  string claimed_until = 11;
+  string last_error_category = 12;
+  string last_error_message_sanitized = 13;
+  string created_at = 14;
+  string updated_at = 15;
 }
 
 message RetrySemanticMaintenanceWorkRequest {
@@ -83,8 +87,9 @@ message CancelSemanticMaintenanceWorkResponse {
 
 message AnalyzeSemanticDirtyWorkRequest {
   string space_id = 1;
-  string semantic_index_id = 2;
-  int32 limit = 3;
+  string semantic_rule_id = 2;
+  string embedding_binding_key = 3;
+  int32 limit = 4;
 }
 
 message AnalyzeSemanticDirtyWorkResponse {
@@ -103,23 +108,25 @@ message ProcessSemanticDirtyWorkResponse {
   int32 failed_items = 3;
 }
 
-message BackfillSemanticIndexRequest {
+message BackfillSemanticRuleRequest {
   string space_id = 1;
-  string semantic_index_id = 2;
-  repeated string node_ids = 3;
-  bool force = 4;
-  int32 limit = 5;
-  bool continue_on_error = 6;
+  string semantic_rule_id = 2;
+  string embedding_binding_key = 3;
+  repeated string node_ids = 4;
+  bool force = 5;
+  int32 limit = 6;
+  bool continue_on_error = 7;
 }
 
-message BackfillSemanticIndexResponse {
-  string semantic_index_id = 1;
-  int32 selected_count = 2;
-  int32 generated_count = 3;
-  int32 skipped_count = 4;
-  int32 failed_count = 5;
-  repeated BackfillSkipped skipped = 6;
-  repeated BackfillFailure failures = 7;
+message BackfillSemanticRuleResponse {
+  string semantic_rule_id = 1;
+  string embedding_binding_key = 2;
+  int32 selected_count = 3;
+  int32 generated_count = 4;
+  int32 skipped_count = 5;
+  int32 failed_count = 6;
+  repeated BackfillSkipped skipped = 7;
+  repeated BackfillFailure failures = 8;
 }
 
 message BackfillSkipped {

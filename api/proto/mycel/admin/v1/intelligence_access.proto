@@ -1,0 +1,514 @@
+syntax = "proto3";
+
+package mycel.admin.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "mycel/common/v1/inference.proto";
+import "mycel/common/v1/intelligence_access.proto";
+
+
+// AdminIntelligenceAccessProfileService manages space-scoped intelligence
+// profiles used by semantic generation rules, semantic search, graph
+// automations, and future intelligence workloads.
+service AdminIntelligenceAccessProfileService {
+  rpc CreateIntelligenceProfile(AdminIntelligenceAccessProfileServiceCreateIntelligenceProfileRequest) returns (AdminIntelligenceAccessProfileServiceCreateIntelligenceProfileResponse);
+  rpc ListIntelligenceProfiles(AdminIntelligenceAccessProfileServiceListIntelligenceProfilesRequest) returns (AdminIntelligenceAccessProfileServiceListIntelligenceProfilesResponse);
+  rpc GetIntelligenceProfile(AdminIntelligenceAccessProfileServiceGetIntelligenceProfileRequest) returns (AdminIntelligenceAccessProfileServiceGetIntelligenceProfileResponse);
+  rpc SetIntelligenceProfileEnabled(AdminIntelligenceAccessProfileServiceSetIntelligenceProfileEnabledRequest) returns (AdminIntelligenceAccessProfileServiceSetIntelligenceProfileEnabledResponse);
+  rpc DeleteIntelligenceProfile(AdminIntelligenceAccessProfileServiceDeleteIntelligenceProfileRequest) returns (AdminIntelligenceAccessProfileServiceDeleteIntelligenceProfileResponse);
+}
+
+// AdminIntelligenceAccessCredentialService manages intelligence access
+// credentials and secret refs.
+service AdminIntelligenceAccessCredentialService {
+  rpc CreateCredential(AdminIntelligenceAccessCredentialServiceCreateCredentialRequest) returns (AdminIntelligenceAccessCredentialServiceCreateCredentialResponse);
+  rpc ListCredentials(AdminIntelligenceAccessCredentialServiceListCredentialsRequest) returns (AdminIntelligenceAccessCredentialServiceListCredentialsResponse);
+  rpc SetCredentialStatus(AdminIntelligenceAccessCredentialServiceSetCredentialStatusRequest) returns (AdminIntelligenceAccessCredentialServiceSetCredentialStatusResponse);
+  rpc RotateCredential(AdminIntelligenceAccessCredentialServiceRotateCredentialRequest) returns (AdminIntelligenceAccessCredentialServiceRotateCredentialResponse);
+  rpc DeleteCredential(AdminIntelligenceAccessCredentialServiceDeleteCredentialRequest) returns (AdminIntelligenceAccessCredentialServiceDeleteCredentialResponse);
+}
+
+// AdminIntelligenceAccessGrantService manages credential grants.
+service AdminIntelligenceAccessGrantService {
+  rpc CreateCredentialGrant(AdminIntelligenceAccessGrantServiceCreateCredentialGrantRequest) returns (AdminIntelligenceAccessGrantServiceCreateCredentialGrantResponse);
+  rpc ListCredentialGrants(AdminIntelligenceAccessGrantServiceListCredentialGrantsRequest) returns (AdminIntelligenceAccessGrantServiceListCredentialGrantsResponse);
+  rpc ExpireCredentialGrant(AdminIntelligenceAccessGrantServiceExpireCredentialGrantRequest) returns (AdminIntelligenceAccessGrantServiceExpireCredentialGrantResponse);
+  rpc DeleteCredentialGrant(AdminIntelligenceAccessGrantServiceDeleteCredentialGrantRequest) returns (AdminIntelligenceAccessGrantServiceDeleteCredentialGrantResponse);
+}
+
+// AdminIntelligenceAccessPolicyService manages intelligence access policies and
+// policy decisions.
+service AdminIntelligenceAccessPolicyService {
+  rpc CreateAccessPolicy(AdminIntelligenceAccessPolicyServiceCreateAccessPolicyRequest) returns (AdminIntelligenceAccessPolicyServiceCreateAccessPolicyResponse);
+  rpc ListAccessPolicies(AdminIntelligenceAccessPolicyServiceListAccessPoliciesRequest) returns (AdminIntelligenceAccessPolicyServiceListAccessPoliciesResponse);
+  rpc ExpireAccessPolicy(AdminIntelligenceAccessPolicyServiceExpireAccessPolicyRequest) returns (AdminIntelligenceAccessPolicyServiceExpireAccessPolicyResponse);
+  rpc DeleteAccessPolicy(AdminIntelligenceAccessPolicyServiceDeleteAccessPolicyRequest) returns (AdminIntelligenceAccessPolicyServiceDeleteAccessPolicyResponse);
+  rpc GetPolicyDecision(AdminIntelligenceAccessPolicyServiceGetPolicyDecisionRequest) returns (AdminIntelligenceAccessPolicyServiceGetPolicyDecisionResponse);
+}
+
+// AdminIntelligenceAccessUsageService exposes neutral usage telemetry for
+// intelligence workloads.
+service AdminIntelligenceAccessUsageService {
+  rpc ListUsageEvents(AdminIntelligenceAccessUsageServiceListUsageEventsRequest) returns (AdminIntelligenceAccessUsageServiceListUsageEventsResponse);
+  rpc SummarizeUsage(AdminIntelligenceAccessUsageServiceSummarizeUsageRequest) returns (AdminIntelligenceAccessUsageServiceSummarizeUsageResponse);
+}
+
+message AdminIntelligenceAccessProfileServiceCreateIntelligenceProfileRequest {
+  string space_id = 1;
+  string key = 2;
+  string display_name = 3;
+  string description = 4;
+  mycel.common.v1.InferenceOperation operation = 5;
+  string purpose = 6;
+  repeated string domain_ids = 7;
+  repeated string capability_refs = 8;
+  repeated string endpoint_refs = 9;
+  repeated string model_refs = 10;
+  repeated string required_features = 11;
+  mycel.common.v1.InferencePrivacyRequirement privacy_requirement = 12;
+  mycel.common.v1.InferenceParameters default_parameters = 13;
+  bool enabled = 14;
+  google.protobuf.Struct metadata = 15;
+}
+
+message AdminIntelligenceAccessProfileServiceCreateIntelligenceProfileResponse {
+  IntelligenceProfile intelligence_profile = 1;
+}
+
+message AdminIntelligenceAccessProfileServiceListIntelligenceProfilesRequest {
+  string space_id = 1;
+  string domain_id = 2;
+  mycel.common.v1.InferenceOperation operation = 3;
+  string purpose = 4;
+  bool include_disabled = 5;
+  int32 page_size = 6;
+  string page_token = 7;
+}
+
+message AdminIntelligenceAccessProfileServiceListIntelligenceProfilesResponse {
+  repeated IntelligenceProfile intelligence_profiles = 1;
+  string next_page_token = 2;
+}
+
+message AdminIntelligenceAccessProfileServiceGetIntelligenceProfileRequest {
+  string space_id = 1;
+  string intelligence_profile = 2;
+  string intelligence_profile_id = 3;
+}
+
+message AdminIntelligenceAccessProfileServiceGetIntelligenceProfileResponse {
+  IntelligenceProfile intelligence_profile = 1;
+}
+
+message AdminIntelligenceAccessProfileServiceSetIntelligenceProfileEnabledRequest {
+  string space_id = 1;
+  string intelligence_profile = 2;
+  string intelligence_profile_id = 3;
+  bool enabled = 4;
+}
+
+message AdminIntelligenceAccessProfileServiceSetIntelligenceProfileEnabledResponse {
+  IntelligenceProfile intelligence_profile = 1;
+}
+
+message AdminIntelligenceAccessProfileServiceDeleteIntelligenceProfileRequest {
+  string space_id = 1;
+  string intelligence_profile = 2;
+  string intelligence_profile_id = 3;
+}
+
+message AdminIntelligenceAccessProfileServiceDeleteIntelligenceProfileResponse {
+  string intelligence_profile_id = 1;
+}
+
+message AdminIntelligenceAccessCredentialServiceCreateCredentialRequest {
+  string key = 1;
+  string display_name = 2;
+  string model_endpoint = 3;
+  string model_endpoint_id = 4;
+  string owner_type = 5;
+  string owner_id = 6;
+  string auth_type = 7;
+  bool is_default = 10;
+  string secret_value = 11;
+}
+
+message AdminIntelligenceAccessCredentialServiceCreateCredentialResponse {
+  IntelligenceSecret secret = 1;
+  IntelligenceCredential credential = 2;
+}
+
+message AdminIntelligenceAccessCredentialServiceListCredentialsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  string owner_type = 3;
+  string owner_id = 4;
+  optional string model_endpoint_id = 5;
+  bool include_inactive = 6;
+}
+
+message AdminIntelligenceAccessCredentialServiceListCredentialsResponse {
+  repeated IntelligenceCredential credentials = 1;
+  string next_page_token = 2;
+}
+
+message AdminIntelligenceAccessCredentialServiceSetCredentialStatusRequest {
+  string credential = 1;
+  string credential_id = 2;
+  string status = 3;
+}
+
+message AdminIntelligenceAccessCredentialServiceSetCredentialStatusResponse {
+  IntelligenceCredential credential = 1;
+}
+
+message AdminIntelligenceAccessCredentialServiceRotateCredentialRequest {
+  string credential = 1;
+  string credential_id = 2;
+  string secret_value = 5;
+  string reason = 6;
+}
+
+message AdminIntelligenceAccessCredentialServiceRotateCredentialResponse {
+  IntelligenceSecret secret = 1;
+  IntelligenceCredential credential = 2;
+}
+
+message AdminIntelligenceAccessCredentialServiceDeleteCredentialRequest {
+  string credential = 1;
+  string credential_id = 2;
+  bool delete_grants = 3;
+  bool delete_secret = 4;
+}
+
+message AdminIntelligenceAccessCredentialServiceDeleteCredentialResponse {
+  string credential_id = 1;
+  int32 credential_grants_deleted = 2;
+  bool secret_deleted = 3;
+}
+
+message AdminIntelligenceAccessGrantServiceCreateCredentialGrantRequest {
+  string space_id = 1;
+  string credential = 2;
+  string credential_id = 3;
+  mycel.common.v1.IntelligenceAccessScope scope = 4;
+  repeated string operations = 5;
+  string model_endpoint = 6;
+  string model_endpoint_id = 7;
+  string model = 8;
+  string model_id = 9;
+  int32 priority = 10;
+  bool is_default = 11;
+  bool allow_background_use = 12;
+  google.protobuf.Timestamp expires_at = 13;
+  repeated string grantee_principal_ids = 14;
+  repeated string allow_on_behalf_of_principal_ids = 15;
+}
+
+message AdminIntelligenceAccessGrantServiceCreateCredentialGrantResponse {
+  IntelligenceCredentialGrant credential_grant = 1;
+}
+
+message AdminIntelligenceAccessGrantServiceListCredentialGrantsRequest {
+  string space_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+  optional string credential_id = 4;
+  bool include_expired = 5;
+}
+
+message AdminIntelligenceAccessGrantServiceListCredentialGrantsResponse {
+  repeated IntelligenceCredentialGrant credential_grants = 1;
+  string next_page_token = 2;
+}
+
+message AdminIntelligenceAccessGrantServiceExpireCredentialGrantRequest {
+  string space_id = 1;
+  string credential_grant_id = 2;
+}
+
+message AdminIntelligenceAccessGrantServiceExpireCredentialGrantResponse {
+  IntelligenceCredentialGrant credential_grant = 1;
+}
+
+message AdminIntelligenceAccessGrantServiceDeleteCredentialGrantRequest {
+  string space_id = 1;
+  string credential_grant_id = 2;
+}
+
+message AdminIntelligenceAccessGrantServiceDeleteCredentialGrantResponse {
+  string credential_grant_id = 1;
+}
+
+message AdminIntelligenceAccessPolicyServiceCreateAccessPolicyRequest {
+  string space_id = 1;
+  mycel.common.v1.IntelligenceAccessScope scope = 2;
+  string effect = 3;
+  repeated string operations = 4;
+  bool no_intelligence = 5;
+  repeated string allowed_privacy_classes = 6;
+  bool disallow_third_party = 7;
+  bool require_local_endpoint = 8;
+  string reason = 9;
+  google.protobuf.Timestamp expires_at = 10;
+}
+
+message AdminIntelligenceAccessPolicyServiceCreateAccessPolicyResponse {
+  IntelligenceAccessPolicy access_policy = 1;
+}
+
+message AdminIntelligenceAccessPolicyServiceListAccessPoliciesRequest {
+  string space_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+  string effect = 4;
+  bool include_expired = 5;
+}
+
+message AdminIntelligenceAccessPolicyServiceListAccessPoliciesResponse {
+  repeated IntelligenceAccessPolicy access_policies = 1;
+  string next_page_token = 2;
+}
+
+message AdminIntelligenceAccessPolicyServiceExpireAccessPolicyRequest {
+  string space_id = 1;
+  string access_policy_id = 2;
+}
+
+message AdminIntelligenceAccessPolicyServiceExpireAccessPolicyResponse {
+  IntelligenceAccessPolicy access_policy = 1;
+}
+
+message AdminIntelligenceAccessPolicyServiceDeleteAccessPolicyRequest {
+  string space_id = 1;
+  string access_policy_id = 2;
+}
+
+message AdminIntelligenceAccessPolicyServiceDeleteAccessPolicyResponse {
+  string access_policy_id = 1;
+}
+
+message AdminIntelligenceAccessPolicyServiceGetPolicyDecisionRequest {
+  string space_id = 1;
+  string policy_decision_id = 2;
+}
+
+message AdminIntelligenceAccessPolicyServiceGetPolicyDecisionResponse {
+  IntelligenceAccessPolicyDecision policy_decision = 1;
+}
+
+message AdminIntelligenceAccessUsageServiceListUsageEventsRequest {
+  string space_id = 1;
+  mycel.common.v1.IntelligenceAccessScope scope = 2;
+  mycel.common.v1.InferenceOperation operation = 3;
+  mycel.common.v1.IntelligenceAccessUsageMode usage_mode = 4;
+  mycel.common.v1.IntelligenceAccessUsageStatus status = 5;
+  string intelligence_profile_id = 6;
+  string model_endpoint_id = 7;
+  string model_id = 8;
+  string credential_grant_id = 9;
+  string automation_id = 10;
+  string automation_run_id = 11;
+  string semantic_rule_id = 12;
+  string actor_principal_id = 13;
+  string on_behalf_of_principal_id = 14;
+  google.protobuf.Timestamp since = 15;
+  google.protobuf.Timestamp until = 16;
+  int32 page_size = 17;
+  string page_token = 18;
+  string embedding_binding_key = 19;
+}
+
+message AdminIntelligenceAccessUsageServiceListUsageEventsResponse {
+  repeated IntelligenceAccessUsageEvent usage_events = 1;
+  string next_page_token = 2;
+}
+
+message AdminIntelligenceAccessUsageServiceSummarizeUsageRequest {
+  string space_id = 1;
+  mycel.common.v1.IntelligenceAccessScope scope = 2;
+  google.protobuf.Timestamp since = 3;
+  google.protobuf.Timestamp until = 4;
+  repeated string group_by = 5;
+}
+
+message AdminIntelligenceAccessUsageServiceSummarizeUsageResponse {
+  repeated IntelligenceAccessUsageSummary summaries = 1;
+}
+
+message IntelligenceSecret {
+  string secret_id = 1;
+  string owner_type = 2;
+  string owner_id = 3;
+  string kind = 4;
+  google.protobuf.Timestamp create_time = 7;
+  google.protobuf.Timestamp update_time = 8;
+  string secret_suffix = 9;
+}
+
+message IntelligenceCredential {
+  string credential_id = 1;
+  string key = 2;
+  string display_name = 3;
+  string model_endpoint_id = 4;
+  string owner_type = 5;
+  string owner_id = 6;
+  string auth_type = 7;
+  string secret_id = 8;
+  string status = 9;
+  bool is_default = 10;
+  google.protobuf.Timestamp create_time = 11;
+  google.protobuf.Timestamp update_time = 12;
+  google.protobuf.Timestamp last_used_time = 13;
+  mycel.common.v1.IntelligenceAccessCredentialOwnerType owner_type_value = 14;
+  mycel.common.v1.IntelligenceAccessCredentialAuthType auth_type_value = 15;
+  mycel.common.v1.IntelligenceAccessCredentialStatus status_value = 16;
+  string secret_version = 17;
+  google.protobuf.Timestamp rotated_at = 18;
+  string secret_suffix = 19;
+}
+
+message IntelligenceProfile {
+  string intelligence_profile_id = 1;
+  string space_id = 2;
+  string key = 3;
+  string display_name = 4;
+  string description = 5;
+  mycel.common.v1.InferenceOperation operation = 6;
+  string purpose = 7;
+  repeated string domain_ids = 8;
+  repeated string capability_refs = 9;
+  repeated string endpoint_refs = 10;
+  repeated string model_refs = 11;
+  repeated string required_features = 12;
+  mycel.common.v1.InferencePrivacyRequirement privacy_requirement = 13;
+  mycel.common.v1.InferenceParameters default_parameters = 14;
+  bool enabled = 15;
+  string created_by = 16;
+  google.protobuf.Timestamp create_time = 17;
+  google.protobuf.Timestamp update_time = 18;
+  google.protobuf.Struct metadata = 19;
+}
+
+message IntelligenceCredentialGrant {
+  string credential_grant_id = 1;
+  string credential_id = 2;
+  mycel.common.v1.IntelligenceAccessScope scope = 3;
+  repeated string operations = 4;
+  string model_endpoint_id = 5;
+  string model_id = 6;
+  int32 priority = 7;
+  bool is_default = 8;
+  bool allow_background_use = 9;
+  string granted_by = 10;
+  google.protobuf.Timestamp create_time = 11;
+  google.protobuf.Timestamp expire_time = 12;
+  repeated mycel.common.v1.InferenceOperation operation_values = 14;
+  repeated string intelligence_profile_ids = 15;
+  repeated string model_endpoint_capability_ids = 16;
+  repeated mycel.common.v1.IntelligenceAccessUsageMode usage_modes = 17;
+  repeated string grantee_principal_ids = 18;
+  repeated string allow_on_behalf_of_principal_ids = 19;
+  mycel.common.v1.IntelligenceAccessGrantState state = 20;
+  string revoked_by = 21;
+  google.protobuf.Timestamp revoked_at = 22;
+  string reason = 23;
+}
+
+message IntelligenceAccessPolicy {
+  string access_policy_id = 1;
+  mycel.common.v1.IntelligenceAccessScope scope = 2;
+  string effect = 3;
+  repeated string operations = 4;
+  bool no_intelligence = 5;
+  repeated string allowed_privacy_classes = 6;
+  bool disallow_third_party = 7;
+  bool require_local_endpoint = 8;
+  string reason = 9;
+  string created_by = 10;
+  google.protobuf.Timestamp create_time = 11;
+  google.protobuf.Timestamp expire_time = 12;
+  mycel.common.v1.IntelligenceAccessPolicyAction action = 14;
+  repeated mycel.common.v1.InferenceOperation operation_values = 15;
+  repeated mycel.common.v1.InferencePrivacyClass allowed_privacy_class_values = 16;
+  repeated string intelligence_profile_ids = 17;
+  int32 max_input_tokens = 18;
+  int32 max_output_tokens = 19;
+  int32 max_requests_per_run = 20;
+  repeated string data_classes = 21;
+  int32 priority = 22;
+  mycel.common.v1.IntelligenceAccessPolicyState state = 23;
+  string revoked_by = 24;
+  google.protobuf.Timestamp revoked_at = 25;
+}
+
+message IntelligenceAccessPolicyDecision {
+  string policy_decision_id = 1;
+  string space_id = 2;
+  string domain_id = 3;
+  string node_id = 4;
+  mycel.common.v1.InferenceOperation operation = 5;
+  mycel.common.v1.IntelligenceAccessUsageMode usage_mode = 6;
+  string intelligence_profile_id = 7;
+  string model_endpoint_capability_id = 8;
+  string model_endpoint_id = 9;
+  string model_id = 10;
+  string credential_id = 11;
+  string credential_grant_id = 12;
+  string actor_principal_id = 13;
+  string on_behalf_of_principal_id = 14;
+  mycel.common.v1.IntelligenceAccessPolicyDecisionAction action = 15;
+  repeated string matched_access_policy_ids = 16;
+  string reason = 17;
+  google.protobuf.Timestamp decided_at = 18;
+  google.protobuf.Struct metadata = 19;
+  string semantic_rule_id = 20;
+  string embedding_binding_key = 21;
+}
+
+message IntelligenceAccessUsageEvent {
+  string usage_event_id = 1;
+  string request_id = 2;
+  mycel.common.v1.InferenceOperation operation = 3;
+  mycel.common.v1.IntelligenceAccessUsageMode usage_mode = 4;
+  mycel.common.v1.IntelligenceAccessUsageStatus status = 5;
+  string space_id = 6;
+  string domain_id = 7;
+  string node_id = 8;
+  string automation_id = 9;
+  string automation_run_id = 10;
+  string semantic_rule_id = 11;
+  string actor_principal_id = 12;
+  string on_behalf_of_principal_id = 13;
+  string intelligence_profile_id = 14;
+  string model_endpoint_id = 15;
+  string model_id = 16;
+  string model_endpoint_capability_id = 17;
+  string credential_id = 18;
+  string credential_grant_id = 19;
+  string policy_decision_id = 20;
+  string provider_request_id = 21;
+  int64 input_tokens = 22;
+  int64 output_tokens = 23;
+  int64 total_tokens = 24;
+  int64 latency_millis = 25;
+  string error_code = 26;
+  string error_message = 27;
+  google.protobuf.Timestamp started_at = 28;
+  google.protobuf.Timestamp completed_at = 29;
+  google.protobuf.Struct metadata = 30;
+  string embedding_binding_key = 31;
+}
+
+message IntelligenceAccessUsageSummary {
+  map<string, string> group = 1;
+  int64 request_count = 2;
+  int64 succeeded_count = 3;
+  int64 failed_count = 4;
+  int64 denied_count = 5;
+  int64 input_tokens = 6;
+  int64 output_tokens = 7;
+  int64 total_tokens = 8;
+  int64 total_latency_millis = 9;
+}
