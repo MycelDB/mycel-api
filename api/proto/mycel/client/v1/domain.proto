@@ -128,7 +128,7 @@ message Domain {
   // Controls whether the domain participates in graph query/search operations.
   DomainSearchMode search_mode = 13;
 
-  // Controls whether the domain participates in semantic indexing and search.
+  // Controls whether the domain participates in semantic generation and search.
   DomainSemanticMode semantic_mode = 14;
 
   // Read-only domains reject normal client/user graph mutations. Admin/import

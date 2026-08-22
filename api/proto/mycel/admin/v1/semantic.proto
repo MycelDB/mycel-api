@@ -2,19 +2,25 @@ syntax = "proto3";
 
 package mycel.admin.v1;
 
+import "google/protobuf/struct.proto";
 import "mycel/client/v1/semantic.proto";
 
 
-// AdminSemanticService manages semantic index configuration through the
-// operator-facing Admin API. Provider credentials/policies and maintenance are
-// handled by separate Admin Inference and Admin Semantic Maintenance services.
+// AdminSemanticService manages semantic generation rule configuration through
+// the operator-facing Admin API. Provider credentials/policies and maintenance
+// are handled by separate Admin Inference and Admin Semantic Maintenance
+// services.
 service AdminSemanticService {
-  rpc ListSemanticIndexes(AdminSemanticServiceListSemanticIndexesRequest) returns (AdminSemanticServiceListSemanticIndexesResponse);
-  rpc UpsertSemanticIndex(UpsertSemanticIndexRequest) returns (UpsertSemanticIndexResponse);
-  rpc DeleteSemanticIndex(DeleteSemanticIndexRequest) returns (DeleteSemanticIndexResponse);
+  rpc ListSemanticRules(ListSemanticRulesRequest) returns (ListSemanticRulesResponse);
+  rpc GetSemanticRule(GetSemanticRuleRequest) returns (GetSemanticRuleResponse);
+  rpc ValidateSemanticRule(ValidateSemanticRuleRequest) returns (ValidateSemanticRuleResponse);
+  rpc CreateSemanticRule(CreateSemanticRuleRequest) returns (CreateSemanticRuleResponse);
+  rpc UpdateSemanticRule(UpdateSemanticRuleRequest) returns (UpdateSemanticRuleResponse);
+  rpc SetSemanticRuleEnabled(SetSemanticRuleEnabledRequest) returns (SetSemanticRuleEnabledResponse);
+  rpc DeleteSemanticRule(DeleteSemanticRuleRequest) returns (DeleteSemanticRuleResponse);
 }
 
-message AdminSemanticServiceListSemanticIndexesRequest {
+message ListSemanticRulesRequest {
   string space_id = 1;
   string domain_id = 2;
   int32 page_size = 3;
@@ -22,53 +28,153 @@ message AdminSemanticServiceListSemanticIndexesRequest {
   bool include_disabled = 5;
 }
 
-message AdminSemanticServiceListSemanticIndexesResponse {
-  repeated mycel.client.v1.SemanticIndex indexes = 1;
+message ListSemanticRulesResponse {
+  repeated mycel.client.v1.SemanticGenerationRuleSummary rules = 1;
   string next_page_token = 2;
 }
 
-message UpsertSemanticIndexRequest {
-  // Optional. If set, updates the existing index with this id. If omitted,
-  // key+space+domain determine idempotent upsert behavior.
-  string semantic_index_id = 1;
+message GetSemanticRuleRequest {
+  string space_id = 1;
+  string semantic_rule_id = 2;
+}
 
+message GetSemanticRuleResponse {
+  SemanticGenerationRule rule = 1;
+  mycel.client.v1.SemanticGenerationRuleSummary summary = 2;
+}
+
+message ValidateSemanticRuleRequest {
+  SemanticGenerationRule rule = 1;
+}
+
+message ValidateSemanticRuleResponse {
+  bool valid = 1;
+  repeated SemanticRuleValidationDiagnostic diagnostics = 2;
+  SemanticGenerationRule normalized_rule = 3;
+}
+
+message CreateSemanticRuleRequest {
+  SemanticGenerationRule rule = 1;
+}
+
+message CreateSemanticRuleResponse {
+  SemanticGenerationRule rule = 1;
+  mycel.client.v1.SemanticGenerationRuleSummary summary = 2;
+}
+
+message UpdateSemanticRuleRequest {
+  string space_id = 1;
+  string semantic_rule_id = 2;
+  SemanticGenerationRule rule = 3;
+}
+
+message UpdateSemanticRuleResponse {
+  SemanticGenerationRule rule = 1;
+  mycel.client.v1.SemanticGenerationRuleSummary summary = 2;
+}
+
+message SetSemanticRuleEnabledRequest {
+  string space_id = 1;
+  string semantic_rule_id = 2;
+  bool enabled = 3;
+}
+
+message SetSemanticRuleEnabledResponse {
+  SemanticGenerationRule rule = 1;
+  mycel.client.v1.SemanticGenerationRuleSummary summary = 2;
+}
+
+message DeleteSemanticRuleRequest {
+  string space_id = 1;
+  string semantic_rule_id = 2;
+  bool purge_vectors = 3;
+}
+
+message DeleteSemanticRuleResponse {
+  string semantic_rule_id = 1;
+  bool vectors_purged = 2;
+  int32 work_items_deleted = 3;
+  int32 policy_decisions_deleted = 4;
+}
+
+message SemanticGenerationRule {
+  // Optional on create. If set on update, must match the target rule id.
+  string semantic_rule_id = 1;
   string space_id = 2;
   string domain_id = 3;
   string key = 4;
   string display_name = 5;
-  string purpose = 6;
-
-  SemanticSourcePolicy source_policy = 7;
-
-  string model_endpoint_id = 8;
-  string model_id = 9;
-  string vector_store_id = 10;
-
-  bool enabled = 11;
+  string description = 6;
+  bool enabled = 7;
+  SemanticTriggerPolicy trigger = 8;
+  SemanticTargetSelector selector = 9;
+  SemanticSourceAssemblyPolicy source = 10;
+  repeated SemanticEmbeddingBinding embeddings = 11;
+  SemanticMaintenancePolicy maintenance = 12;
+  SemanticStoragePolicy storage = 13;
+  string owner_principal_id = 14;
+  string created_by_principal_id = 15;
+  string created_at = 16;
+  string updated_at = 17;
 }
 
-message UpsertSemanticIndexResponse {
-  mycel.client.v1.SemanticIndex index = 1;
+message SemanticTriggerPolicy {
+  repeated string events = 1;
+  repeated string labels = 2;
+
+  // Go duration string such as "120s". Empty uses daemon default.
+  string debounce = 3;
 }
 
-message DeleteSemanticIndexRequest {
-  string space_id = 1;
-  string semantic_index_id = 2;
-  bool purge_vectors = 3;
-  bool purge_references = 4;
+message SemanticTargetSelector {
+  // node_type | gql | explicit_nodes
+  string mode = 1;
+  repeated string labels = 2;
+  string gql = 3;
+  string target_alias = 4;
+  int32 max_results = 5;
+  repeated string node_ids = 6;
 }
 
-message DeleteSemanticIndexResponse {
-  string semantic_index_id = 1;
-  int32 credential_grants_deleted = 2;
-  int32 inference_policies_deleted = 3;
-  bool vectors_purged = 4;
-  int32 policy_decisions_deleted = 5;
-}
-
-message SemanticSourcePolicy {
-  string extraction = 1;
-  repeated string include_props = 3;
+message SemanticSourceAssemblyPolicy {
+  // self | subtree | context_query
+  string mode = 1;
+  repeated string include_properties = 2;
+  repeated string exclude_properties = 3;
   optional int32 max_depth = 4;
   int32 minimum_text_length = 5;
+  string context_gql = 6;
+}
+
+message SemanticEmbeddingBinding {
+  string key = 1;
+  string purpose = 2;
+  string intelligence_profile = 3;
+  string intelligence_profile_id = 4;
+  string vector_store = 5;
+  string vector_store_id = 6;
+  bool enabled = 7;
+  google.protobuf.Struct metadata = 8;
+}
+
+message SemanticMaintenancePolicy {
+  // Go duration string such as "120s". Empty uses daemon default.
+  string dirty_cooldown = 1;
+  int32 max_batch_size = 2;
+  int32 worker_concurrency = 3;
+}
+
+message SemanticStoragePolicy {
+  bool searchable = 1;
+
+  // exact for the first physical search-index implementation; future values may
+  // include ANN variants.
+  string physical_index = 2;
+}
+
+message SemanticRuleValidationDiagnostic {
+  // error | warning | info
+  string severity = 1;
+  string path = 2;
+  string message = 3;
 }

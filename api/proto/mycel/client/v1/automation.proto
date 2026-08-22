@@ -102,7 +102,7 @@ message AutomationDefinitionSummary {
   repeated string events = 5;
   repeated string labels = 6;
   string updated_at = 7;
-  repeated string inference_profiles = 8;
+  repeated string intelligence_profiles = 8;
 }
 
 message ListAutomationInvocationsRequest {

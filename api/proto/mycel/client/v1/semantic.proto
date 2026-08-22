@@ -5,27 +5,29 @@ package mycel.client.v1;
 import "mycel/client/v1/graph.proto";
 
 
-// SemanticService exposes client-facing semantic search. Semantic index
-// creation/configuration, provider credentials, policies, maintenance, and
-// backfill controls belong to the Admin API.
+// SemanticService exposes client-facing semantic generation rule discovery and
+// semantic search. Rule authoring, provider credentials, policies, maintenance,
+// and backfill controls belong to the Admin API.
 service SemanticService {
-  // ListSemanticIndexes lists searchable semantic indexes available to the
-  // authenticated caller for a space/domain.
-  rpc ListSemanticIndexes(ListSemanticIndexesRequest) returns (ListSemanticIndexesResponse);
+  // ListSemanticRules lists searchable semantic generation rules available to
+  // the authenticated caller for a space/domain.
+  rpc ListSemanticRules(ListSemanticRulesRequest) returns (ListSemanticRulesResponse);
 
-  // SemanticSearch searches committed semantic index state for a space/domain.
+  // SemanticSearch searches committed semantic rule binding state for a
+  // space/domain.
   rpc SemanticSearch(SemanticSearchRequest) returns (SemanticSearchResponse);
 }
 
-message ListSemanticIndexesRequest {
+message ListSemanticRulesRequest {
   string space_id = 1;
   string domain_id = 2;
   int32 page_size = 3;
   string page_token = 4;
+  bool include_disabled = 5;
 }
 
-message ListSemanticIndexesResponse {
-  repeated SemanticIndex indexes = 1;
+message ListSemanticRulesResponse {
+  repeated SemanticGenerationRuleSummary rules = 1;
   string next_page_token = 2;
 }
 
@@ -33,59 +35,100 @@ message SemanticSearchRequest {
   string space_id = 1;
   string domain_id = 2;
 
-  // Optional. If omitted, the daemon uses the default searchable semantic index
-  // for the domain when one is available.
-  optional string semantic_index_id = 3;
+  // Optional. If omitted, the daemon searches all enabled searchable semantic
+  // rule bindings for the domain that the caller can read.
+  optional string semantic_rule_id = 3;
 
-  string query = 4;
-  int32 limit = 5;
+  // Optional. Requires semantic_rule_id when set.
+  optional string embedding_binding_key = 4;
 
-  // Optional minimum score threshold. Score meaning is index/model dependent but
+  string query = 5;
+  int32 limit = 6;
+
+  // Optional minimum score threshold. Score meaning is model dependent but
   // higher scores should represent more relevant results.
-  optional double min_score = 6;
+  optional double min_score = 7;
 }
 
 message SemanticSearchResponse {
   repeated SemanticSearchResult results = 1;
 
-  // Non-fatal search warnings such as stale index state, unavailable vector
-  // spaces, or skipped providers. Warnings must not include secrets.
+  // Non-fatal search warnings such as stale rule state, degraded physical
+  // search indexes, unavailable vector spaces, or skipped providers. Warnings
+  // must not include secrets.
   repeated string warnings = 2;
 }
 
 message SemanticSearchResult {
-  string node_id = 1;
-  double score = 2;
+  string semantic_rule_id = 1;
+  string embedding_binding_key = 2;
+  string record_id = 3;
+  string node_id = 4;
+  double score = 5;
 
   // Included for client convenience. Result visibility still requires graph.read
   // and semantic.search authorization.
-  Node node = 3;
+  Node node = 6;
 
-  repeated string matched_chunk_ids = 4;
-  string snippet = 5;
+  repeated string matched_chunk_ids = 7;
+  string snippet = 8;
 }
 
-message SemanticIndex {
-  string semantic_index_id = 1;
+message SemanticGenerationRuleSummary {
+  string semantic_rule_id = 1;
   string key = 2;
   string display_name = 3;
   string description = 4;
   string space_id = 5;
   string domain_id = 6;
-
-  // Safe display labels only. Provider secrets, credential ids, and raw policy
-  // internals are intentionally not exposed through the Client API.
-  string model_label = 7;
-  string vector_store_label = 8;
-
-  SemanticIndexState state = 9;
+  bool enabled = 7;
+  SemanticRuleState state = 8;
+  repeated SemanticEmbeddingBindingSummary bindings = 9;
+  SemanticRuleStatus status = 10;
 }
 
-enum SemanticIndexState {
-  SEMANTIC_INDEX_STATE_UNSPECIFIED = 0;
-  SEMANTIC_INDEX_STATE_ACTIVE = 1;
-  SEMANTIC_INDEX_STATE_BUILDING = 2;
-  SEMANTIC_INDEX_STATE_STALE = 3;
-  SEMANTIC_INDEX_STATE_DISABLED = 4;
-  SEMANTIC_INDEX_STATE_ERROR = 5;
+enum SemanticRuleState {
+  SEMANTIC_RULE_STATE_UNSPECIFIED = 0;
+  SEMANTIC_RULE_STATE_ACTIVE = 1;
+  SEMANTIC_RULE_STATE_BUILDING = 2;
+  SEMANTIC_RULE_STATE_STALE = 3;
+  SEMANTIC_RULE_STATE_DISABLED = 4;
+  SEMANTIC_RULE_STATE_ERROR = 5;
+}
+
+message SemanticEmbeddingBindingSummary {
+  string key = 1;
+  string purpose = 2;
+  string intelligence_profile_id = 3;
+  string intelligence_profile_key = 4;
+  string vector_store_id = 5;
+  string vector_store_key = 6;
+  bool enabled = 7;
+  SearchIndexStatus search_index = 8;
+}
+
+message SearchIndexStatus {
+  SearchIndexState state = 1;
+  int64 live_record_count = 2;
+  string last_rebuild_at = 3;
+  string last_error = 4;
+}
+
+enum SearchIndexState {
+  SEARCH_INDEX_STATE_UNSPECIFIED = 0;
+  SEARCH_INDEX_STATE_READY = 1;
+  SEARCH_INDEX_STATE_BUILDING = 2;
+  SEARCH_INDEX_STATE_DEGRADED = 3;
+  SEARCH_INDEX_STATE_MISSING = 4;
+  SEARCH_INDEX_STATE_ERROR = 5;
+}
+
+message SemanticRuleStatus {
+  int32 queue_depth_pending = 1;
+  int32 queue_depth_running = 2;
+  int32 queue_depth_failed_retryable = 3;
+  int32 queue_depth_failed_permanent = 4;
+  string last_refresh_at = 5;
+  string last_backfill_at = 6;
+  string last_error = 7;
 }
