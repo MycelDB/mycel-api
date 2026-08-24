@@ -4,7 +4,8 @@ package mycel.common.v1;
 
 import "google/protobuf/struct.proto";
 
-// InferenceOperation identifies the kind of model operation requested.
+// InferenceOperation identifies the workload operation requested and governed
+// by Intelligence Access grants, policies, decisions, and usage telemetry.
 enum InferenceOperation {
   INFERENCE_OPERATION_UNSPECIFIED = 0;
   INFERENCE_OPERATION_EMBEDDINGS = 1;
@@ -12,6 +13,16 @@ enum InferenceOperation {
   INFERENCE_OPERATION_RERANK = 3;
   INFERENCE_OPERATION_SUMMARIZE = 4;
   INFERENCE_OPERATION_CLASSIFY = 5;
+  INFERENCE_OPERATION_IMAGE_ANALYSIS = 6;
+}
+
+// InferenceModelKind identifies the broad category of a model independent of
+// the workload operations exposed by endpoint capabilities.
+enum InferenceModelKind {
+  INFERENCE_MODEL_KIND_UNSPECIFIED = 0;
+  INFERENCE_MODEL_KIND_GENERATIVE = 1;
+  INFERENCE_MODEL_KIND_EMBEDDING = 2;
+  INFERENCE_MODEL_KIND_RERANKER = 3;
 }
 
 // InferencePrivacyClass describes where data is allowed to flow.
