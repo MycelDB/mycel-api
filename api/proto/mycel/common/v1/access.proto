@@ -109,6 +109,10 @@ enum Capability {
 
   // Cluster read-only capability.
   CAPABILITY_CLUSTER_READ = 220;
+
+  // Activity/audit event capabilities.
+  CAPABILITY_AUDIT_READ = 240;
+  CAPABILITY_AUDIT_WRITE = 241;
 }
 
 // CapabilityBucket describes the broad context in which a capability is used.
