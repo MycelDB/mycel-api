@@ -78,9 +78,16 @@ message ListActivityEventsRequest {
   string page_token = 15;
 }
 
+message ActivityEventSummary {
+  uint64 total_count = 1;
+  uint64 warning_count = 2;
+  uint64 error_count = 3;
+}
+
 message ListActivityEventsResponse {
   repeated ActivityEvent events = 1;
   string next_page_token = 2;
+  ActivityEventSummary summary = 3;
 }
 
 message GetActivityEventRequest {
