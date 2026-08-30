@@ -7,7 +7,6 @@ package mycel.client.v1;
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
-
 // SessionService manages daemon-owned graph sessions. A session is a
 // space/domain-scoped working context used for caching, resource pinning, and
 // repeated transactions.

@@ -6,7 +6,6 @@ package mycel.client.v1;
 
 import "mycel/client/v1/graph.proto";
 
-
 // SemanticService exposes client-facing semantic generation rule discovery and
 // semantic search. Rule authoring, provider credentials, policies, maintenance,
 // and backfill controls belong to the Admin API.

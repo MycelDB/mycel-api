@@ -7,7 +7,6 @@ package mycel.admin.v1;
 import "mycel/client/v1/space.proto";
 import "mycel/common/v1/access.proto";
 
-
 // AdminSpaceService manages daemon spaces through the operator-facing Admin API.
 service AdminSpaceService {
   rpc ListSpaces(AdminSpaceServiceListSpacesRequest) returns (AdminSpaceServiceListSpacesResponse);

@@ -6,7 +6,6 @@ package mycel.client.v1;
 
 import "google/protobuf/timestamp.proto";
 
-
 // BlobService manages raw blob content and blob metadata. It does not mutate the
 // graph. Blob-backed node creation belongs to GraphService because it creates a
 // graph node inside a transaction.

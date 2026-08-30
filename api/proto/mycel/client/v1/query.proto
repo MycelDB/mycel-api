@@ -7,7 +7,6 @@ package mycel.client.v1;
 import "google/protobuf/struct.proto";
 import "mycel/client/v1/graph.proto";
 
-
 // QueryService provides transaction-scoped structured graph queries.
 service QueryService {
   // ExecuteQuery executes a read-only structured graph query inside a

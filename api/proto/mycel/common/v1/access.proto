@@ -6,7 +6,6 @@ package mycel.common.v1;
 
 import "google/protobuf/timestamp.proto";
 
-
 // Principal identifies an actor that can own resources or receive access.
 //
 // Principal types describe the actor shape. Administration is represented by

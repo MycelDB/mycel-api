@@ -9,7 +9,6 @@ import "google/protobuf/timestamp.proto";
 import "mycel/common/v1/inference.proto";
 import "mycel/common/v1/intelligence_access.proto";
 
-
 // AdminInferenceCatalogService manages system-level model catalog resources used
 // by intelligence access profiles, semantic generation rules, semantic search,
 // and graph automations.

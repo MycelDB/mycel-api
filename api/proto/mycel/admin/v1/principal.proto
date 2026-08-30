@@ -47,8 +47,12 @@ message ListPrincipalsResponse {
   string next_page_token = 2;
 }
 
-message GetPrincipalRequest { string principal_id = 1; }
-message GetPrincipalResponse { Principal principal = 1; }
+message GetPrincipalRequest {
+  string principal_id = 1;
+}
+message GetPrincipalResponse {
+  Principal principal = 1;
+}
 
 message FindPrincipalRequest {
   oneof lookup {
@@ -56,7 +60,9 @@ message FindPrincipalRequest {
     string email = 2;
   }
 }
-message FindPrincipalResponse { Principal principal = 1; }
+message FindPrincipalResponse {
+  Principal principal = 1;
+}
 
 message CreatePrincipalRequest {
   string username = 1;
@@ -81,30 +87,42 @@ message UpdatePrincipalRequest {
   Principal principal = 1;
   google.protobuf.FieldMask update_mask = 2;
 }
-message UpdatePrincipalResponse { Principal principal = 1; }
+message UpdatePrincipalResponse {
+  Principal principal = 1;
+}
 
 message DisablePrincipalRequest {
   string principal_id = 1;
   string reason = 2;
   bool revoke_sessions = 3;
 }
-message DisablePrincipalResponse { Principal principal = 1; }
+message DisablePrincipalResponse {
+  Principal principal = 1;
+}
 
-message EnablePrincipalRequest { string principal_id = 1; }
-message EnablePrincipalResponse { Principal principal = 1; }
+message EnablePrincipalRequest {
+  string principal_id = 1;
+}
+message EnablePrincipalResponse {
+  Principal principal = 1;
+}
 
 message DeletePrincipalRequest {
   string principal_id = 1;
   bool revoke_sessions = 2;
 }
-message DeletePrincipalResponse { Principal principal = 1; }
+message DeletePrincipalResponse {
+  Principal principal = 1;
+}
 
 message SetPrincipalPasswordRequest {
   string principal_id = 1;
   string password = 2;
   bool revoke_sessions = 3;
 }
-message SetPrincipalPasswordResponse { Principal principal = 1; }
+message SetPrincipalPasswordResponse {
+  Principal principal = 1;
+}
 
 message CreatePrincipalSessionRequest {
   string principal_id = 1;
@@ -135,10 +153,16 @@ message RevokePrincipalSessionRequest {
 }
 message RevokePrincipalSessionResponse {}
 
-message RevokePrincipalSessionsRequest { string principal_id = 1; }
-message RevokePrincipalSessionsResponse { int32 revoked_count = 1; }
+message RevokePrincipalSessionsRequest {
+  string principal_id = 1;
+}
+message RevokePrincipalSessionsResponse {
+  int32 revoked_count = 1;
+}
 
-message ListPrincipalRolesRequest { string principal_id = 1; }
+message ListPrincipalRolesRequest {
+  string principal_id = 1;
+}
 message ListPrincipalRolesResponse {
   repeated PrincipalRoleGrant grants = 1;
   repeated string effective_roles = 2;
@@ -176,7 +200,9 @@ message SetPrincipalRolesForScopeResponse {
   repeated mycel.common.v1.Capability effective_capabilities = 3;
 }
 
-message ListPrincipalCapabilitiesRequest { string principal_id = 1; }
+message ListPrincipalCapabilitiesRequest {
+  string principal_id = 1;
+}
 message ListPrincipalCapabilitiesResponse {
   repeated PrincipalCapabilityGrant grants = 1;
   repeated mycel.common.v1.Capability effective_capabilities = 2;
@@ -257,4 +283,3 @@ message PrincipalCapabilityGrant {
   string granted_by_principal_id = 6;
   google.protobuf.Timestamp create_time = 7;
 }
-
