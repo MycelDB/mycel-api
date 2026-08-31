@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 
 package mycel.client.v1;
@@ -5,7 +7,6 @@ package mycel.client.v1;
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "mycel/common/v1/access.proto";
-
 
 // DomainService manages client-visible domains inside a space. Domains are
 // flat partitions within a space. Graph sessions and graph operations are

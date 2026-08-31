@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 
 package mycel.client.v1;
 
 import "google/protobuf/struct.proto";
 import "mycel/client/v1/graph.proto";
-
 
 // QueryService provides transaction-scoped structured graph queries.
 service QueryService {

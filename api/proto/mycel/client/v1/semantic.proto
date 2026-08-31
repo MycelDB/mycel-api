@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 
 package mycel.client.v1;
 
 import "mycel/client/v1/graph.proto";
-
 
 // SemanticService exposes client-facing semantic generation rule discovery and
 // semantic search. Rule authoring, provider credentials, policies, maintenance,

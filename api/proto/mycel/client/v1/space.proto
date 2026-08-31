@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 
 package mycel.client.v1;
 
 import "google/protobuf/timestamp.proto";
 import "mycel/common/v1/access.proto";
-
 
 // SpaceService lets authenticated clients discover and inspect spaces visible
 // to them. Space creation, archival, deletion, and system-owned space

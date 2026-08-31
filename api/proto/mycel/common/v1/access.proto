@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 
 package mycel.common.v1;
 
 import "google/protobuf/timestamp.proto";
-
 
 // Principal identifies an actor that can own resources or receive access.
 //

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 
 package mycel.admin.v1;
@@ -6,7 +8,6 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "mycel/common/v1/inference.proto";
 import "mycel/common/v1/intelligence_access.proto";
-
 
 // AdminIntelligenceAccessProfileService manages space-scoped intelligence
 // profiles used by semantic generation rules, semantic search, graph

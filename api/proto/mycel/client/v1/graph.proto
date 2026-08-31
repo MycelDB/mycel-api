@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 
 package mycel.client.v1;
@@ -6,7 +8,6 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "mycel/client/v1/blob.proto";
-
 
 // GraphService provides transaction-scoped graph node and edge operations.
 // Every request targets transaction_id; sessions and transactions are managed by

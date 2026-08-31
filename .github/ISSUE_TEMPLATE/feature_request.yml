@@ -1,0 +1,63 @@
+name: Feature request
+description: Suggest an API contract, protobuf convention, or documentation improvement
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an API improvement. Changes here affect every daemon, SDK, console, and application that consumes MycelDB APIs.
+  - type: dropdown
+    id: package
+    attributes:
+      label: API package
+      options:
+        - mycel.common.v1
+        - mycel.client.v1
+        - mycel.admin.v1
+        - New package/version
+        - Buf/configuration
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to accomplish?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed contract change
+      description: What service, RPC, message, field, enum, or convention should be added or changed?
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility impact
+      description: Is this additive, source-compatible, wire-compatible, or breaking? Would it require a new package version?
+    validations:
+      required: true
+  - type: textarea
+    id: semantics
+    attributes:
+      label: Semantics to document
+      description: Authorization, pagination, streaming, concurrency, idempotency, retry, migration, or error-code semantics that should be explicit.
+  - type: textarea
+    id: consumers
+    attributes:
+      label: Downstream consumers
+      description: Expected daemon, SDK, console, generated binding, or application impact.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing workaround or lower-risk approach.
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context

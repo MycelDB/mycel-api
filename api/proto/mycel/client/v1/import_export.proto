@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+
 syntax = "proto3";
 
 package mycel.client.v1;
 
 import "google/protobuf/timestamp.proto";
 import "mycel/client/v1/graph.proto";
-
 
 // ImportExportService provides client/application data portability for a domain.
 // It is distinct from admin backup/restore. Format-specific importers such as
