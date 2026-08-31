@@ -6,16 +6,24 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.9.0] - 2026-08-31
+
 ### Added
 
-- Open-source project documentation: code of conduct, changelog, and issue templates.
+- First public-release baseline for the MycelDB protobuf/gRPC API contract.
+- Open-source project documentation: contributing guide, security policy, code of conduct, changelog, pull request template, and issue templates.
+
+### Changed
+
+- Documented repository boundaries for daemon, SDK, console, and generated binding consumers.
+- Documented protobuf compatibility, authoring, validation, authentication, error, pagination, and streaming conventions.
 
 ## Release notes policy
 
 For each release, add a dated section such as:
 
 ```md
-## [v0.8.0] - YYYY-MM-DD
+## [v0.9.0] - YYYY-MM-DD
 
 ### Added
 ### Changed
