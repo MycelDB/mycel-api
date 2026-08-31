@@ -173,7 +173,7 @@ Keep generated output out of this repository. If generated output is committed a
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for API compatibility rules, protobuf authoring expectations, and the pull request checklist.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for API compatibility rules, protobuf authoring expectations, and the pull request checklist. See [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community standards and [`CHANGELOG.md`](CHANGELOG.md) for release notes.
 
 ## Security
 

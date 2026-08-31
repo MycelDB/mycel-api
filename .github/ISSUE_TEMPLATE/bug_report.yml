@@ -1,0 +1,75 @@
+name: Bug report
+description: Report a reproducible Mycel API contract problem
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. If this involves credentials, tokens, TLS key material, private data, production data, confidential infrastructure, or a suspected vulnerability, stop here and use the private security reporting link instead.
+  - type: input
+    id: version
+    attributes:
+      label: API version
+      description: Release tag, commit SHA, branch, or Buf module reference.
+      placeholder: v0.8.0 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: package
+    attributes:
+      label: API package
+      options:
+        - mycel.common.v1
+        - mycel.client.v1
+        - mycel.admin.v1
+        - Buf/configuration
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is wrong with the API contract?
+    validations:
+      required: true
+  - type: textarea
+    id: affected
+    attributes:
+      label: Affected contract surface
+      description: List affected services, RPCs, messages, fields, enums, or comments.
+      placeholder: mycel.client.v1.GraphService.ExecuteQuery, GraphQuery.limit, ...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction or example
+      description: Provide a minimal proto, generated-code, SDK, or daemon behavior example when possible.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected contract behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual contract behavior
+      description: Include sanitized errors or generated-code symptoms. Do not paste secrets or private data.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility impact
+      description: Describe known impact on daemon, SDKs, console, generated bindings, or existing clients.
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Links, related issues, or notes.

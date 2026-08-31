@@ -2,6 +2,10 @@
 
 Thank you for contributing to the MycelDB API contract. This repository is intentionally small and contract-focused: changes here affect every daemon, SDK, console, and application that consumes MycelDB APIs.
 
+## Code of conduct
+
+Be respectful, constructive, and patient. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards and reporting guidance.
+
 ## Before you start
 
 - Discuss large or breaking API changes in an issue or design discussion before opening a PR.

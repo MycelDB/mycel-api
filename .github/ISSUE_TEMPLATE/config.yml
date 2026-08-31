@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/MycelDB/mycel-api/security/advisories/new
+    about: Please report suspected vulnerabilities privately. Do not open public security issues.
+  - name: Mycel daemon
+    url: https://github.com/MycelDB/mycel/issues
+    about: File daemon implementation or CLI issues in mycel when the API contract is not the source of the problem.
+  - name: Mycel Go SDK
+    url: https://github.com/MycelDB/mycel-go-sdk/issues
+    about: File Go SDK issues in mycel-go-sdk when the API contract is not the source of the problem.
+  - name: Mycel Rust SDK
+    url: https://github.com/MycelDB/mycel-rust-sdk/issues
+    about: File Rust SDK issues in mycel-rust-sdk when the API contract is not the source of the problem.
