@@ -1,0 +1,69 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package mycel.admin.v1;
+
+import "mycel/client/v1/search.proto";
+
+// AdminLexicalMaintenanceService exposes operator-owned lexical index
+// diagnostics and rebuild controls. Lexical indexes are derived state; rebuilds
+// must not mutate graph data.
+service AdminLexicalMaintenanceService {
+  // GetLexicalMaintenanceStatus returns detailed lexical index status for one
+  // space/domain. Admin callers may receive operational details that normal
+  // client status responses redact.
+  rpc GetLexicalMaintenanceStatus(GetLexicalMaintenanceStatusRequest) returns (GetLexicalMaintenanceStatusResponse);
+
+  // RebuildLexicalIndex requests a rebuild of the derived lexical index for one
+  // space/domain. The request is not idempotent with respect to operation
+  // scheduling, but repeated requests must remain safe because rebuilds derive
+  // from committed graph state.
+  rpc RebuildLexicalIndex(RebuildLexicalIndexRequest) returns (RebuildLexicalIndexResponse);
+}
+
+message GetLexicalMaintenanceStatusRequest {
+  string space_id = 1;
+  string domain_id = 2;
+}
+
+message GetLexicalMaintenanceStatusResponse {
+  mycel.client.v1.LexicalIndexStatus status = 1;
+  bool owner = 2;
+  string owner_node_id = 3;
+  bool forwarding_required = 4;
+  int64 queued_change_count = 5;
+  int64 disk_usage_bytes = 6;
+  string cursor_source = 7;
+  repeated string warnings = 8;
+}
+
+message RebuildLexicalIndexRequest {
+  string space_id = 1;
+  string domain_id = 2;
+
+  // Force a rebuild even when the daemon believes the index is already fresh.
+  bool force = 3;
+
+  // If true, validate the request and report what would happen without starting
+  // rebuild work.
+  bool dry_run = 4;
+}
+
+message RebuildLexicalIndexResponse {
+  string space_id = 1;
+  string domain_id = 2;
+  LexicalRebuildState state = 3;
+  bool accepted = 4;
+  bool dry_run = 5;
+  string rebuild_id = 6;
+  repeated string warnings = 7;
+}
+
+enum LexicalRebuildState {
+  LEXICAL_REBUILD_STATE_UNSPECIFIED = 0;
+  LEXICAL_REBUILD_STATE_QUEUED = 1;
+  LEXICAL_REBUILD_STATE_RUNNING = 2;
+  LEXICAL_REBUILD_STATE_SKIPPED_ALREADY_FRESH = 3;
+  LEXICAL_REBUILD_STATE_REJECTED = 4;
+}

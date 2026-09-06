@@ -1,0 +1,168 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package mycel.client.v1;
+
+// SearchService exposes first-class search over graph content. V1 supports
+// lexical search for one space/domain. Future modes may add semantic, metadata,
+// or hybrid orchestration without changing the existing lexical contract.
+service SearchService {
+  // Search runs a search request for the authenticated caller within the target
+  // space/domain. Results are discovery candidates from an eventually
+  // consistent index; callers that require current state should re-read node IDs
+  // through graph APIs.
+  rpc Search(SearchRequest) returns (SearchResponse);
+
+  // GetLexicalIndexStatus returns caller-visible lexical index freshness for a
+  // space/domain. It is safe for applications to use when deciding whether to
+  // show stale/rebuilding/unavailable warnings.
+  rpc GetLexicalIndexStatus(GetLexicalIndexStatusRequest) returns (GetLexicalIndexStatusResponse);
+}
+
+message SearchRequest {
+  string space_id = 1;
+  string domain_id = 2;
+
+  // V1 supports SEARCH_MODE_LEXICAL. Unspecified mode defaults to lexical while
+  // lexical search is the only implemented mode.
+  SearchMode mode = 3;
+
+  // Lucene-style v1 query string. Supported syntax includes terms, quoted
+  // phrases, AND, OR, NOT, unary '-', and parentheses. The implicit operator is
+  // AND. Wildcard, fuzzy, range, and fielded lexical syntax are reserved and
+  // should return structured diagnostics rather than partial matches.
+  string query = 4;
+
+  // Optional filters reserved for future metadata/hybrid search composition.
+  SearchFilters filters = 5;
+
+  // Maximum number of results to return. The daemon may cap this value.
+  int32 page_size = 6;
+
+  // Opaque continuation token returned by a previous Search call.
+  string page_token = 7;
+
+  // Include matched terms/fields and scoring diagnostics when available. The
+  // daemon must redact diagnostics that could leak unauthorized data.
+  bool include_diagnostics = 8;
+
+  // Controls whether stale lexical index results may be returned. If false, the
+  // daemon should fail closed when the index is known to be stale, rebuilding,
+  // missing, or unsafe for the target consistency policy.
+  bool allow_stale = 9;
+
+  // Optional maximum acceptable revision lag when latest graph revision is
+  // known. A value of 0 leaves the limit unset.
+  int64 max_revision_lag = 10;
+}
+
+message SearchResponse {
+  repeated SearchResult results = 1;
+  string next_page_token = 2;
+  SearchFreshness freshness = 3;
+
+  // Non-fatal search warnings such as stale index state, degraded diagnostics,
+  // or capped page sizes. Warnings must not include secrets or unauthorized
+  // graph metadata.
+  repeated string warnings = 4;
+
+  SearchDiagnostics diagnostics = 5;
+}
+
+message SearchResult {
+  string space_id = 1;
+  string domain_id = 2;
+  string node_id = 3;
+  double score = 4;
+  SearchScoreKind score_kind = 5;
+
+  // Graph revision represented by the indexed document when known. A value of 0
+  // means the daemon did not provide revision diagnostics.
+  int64 indexed_graph_revision = 6;
+
+  // Optional diagnostics requested by include_diagnostics. These fields must not
+  // include full source text or unauthorized data.
+  repeated string matched_terms = 7;
+  repeated string matched_field_paths = 8;
+  repeated SearchScoreComponent score_components = 9;
+}
+
+message SearchFilters {
+  // Reserved seam for future structured metadata filters. This empty message is
+  // intentionally present so clients can construct stable request shapes before
+  // hybrid/filter support lands.
+}
+
+message SearchFreshness {
+  SearchFreshnessState state = 1;
+  int64 indexed_graph_revision = 2;
+  int64 latest_known_graph_revision = 3;
+  int64 revision_lag = 4;
+  string updated_at = 5;
+  string last_error = 6;
+}
+
+message SearchDiagnostics {
+  string analyzer_version = 1;
+  string index_format_version = 2;
+  string query_plan = 3;
+  repeated string normalized_terms = 4;
+  repeated string unsupported_syntax = 5;
+  int32 segments_searched = 6;
+  int32 postings_lists_scanned = 7;
+  int32 candidate_count = 8;
+  bool truncated = 9;
+  string rejected_reason = 10;
+}
+
+message SearchScoreComponent {
+  string name = 1;
+  double value = 2;
+  string description = 3;
+}
+
+message GetLexicalIndexStatusRequest {
+  string space_id = 1;
+  string domain_id = 2;
+}
+
+message GetLexicalIndexStatusResponse {
+  LexicalIndexStatus status = 1;
+}
+
+message LexicalIndexStatus {
+  string space_id = 1;
+  string domain_id = 2;
+  SearchFreshnessState state = 3;
+  int64 indexed_graph_revision = 4;
+  int64 latest_known_graph_revision = 5;
+  int64 revision_lag = 6;
+  int64 live_document_count = 7;
+  int64 deleted_document_count = 8;
+  int32 segment_count = 9;
+  string analyzer_version = 10;
+  string index_format_version = 11;
+  string updated_at = 12;
+  string last_rebuild_at = 13;
+  string last_error = 14;
+}
+
+enum SearchMode {
+  SEARCH_MODE_UNSPECIFIED = 0;
+  SEARCH_MODE_LEXICAL = 1;
+}
+
+enum SearchScoreKind {
+  SEARCH_SCORE_KIND_UNSPECIFIED = 0;
+  SEARCH_SCORE_KIND_BM25 = 1;
+}
+
+enum SearchFreshnessState {
+  SEARCH_FRESHNESS_STATE_UNSPECIFIED = 0;
+  SEARCH_FRESHNESS_STATE_FRESH = 1;
+  SEARCH_FRESHNESS_STATE_STALE = 2;
+  SEARCH_FRESHNESS_STATE_REBUILDING = 3;
+  SEARCH_FRESHNESS_STATE_UNAVAILABLE = 4;
+  SEARCH_FRESHNESS_STATE_ERROR = 5;
+}
