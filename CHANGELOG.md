@@ -6,6 +6,10 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+### Added
+
+- Added lexical search API contracts: `mycel.client.v1.SearchService` for lexical search/status and `mycel.admin.v1.AdminLexicalMaintenanceService` for rebuild maintenance.
+
 ## [v0.9.0] - 2026-08-31
 
 ### Added
