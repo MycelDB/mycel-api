@@ -6,6 +6,10 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+### Added
+
+- Added hybrid search API seams to `mycel.client.v1.SearchService`, including `SEARCH_MODE_HYBRID`, lexical/semantic candidate options, weighted reciprocal-rank fusion options, structured metadata filters, and source diagnostics.
+
 ## [v0.11.0] - 2026-09-07
 
 ### Added
