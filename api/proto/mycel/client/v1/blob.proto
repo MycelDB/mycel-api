@@ -35,8 +35,9 @@ message UploadBlobRequest {
 
 message UploadBlobMetadata {
   string space_id = 1;
-  string declared_mime_type = 2;
-  string original_filename = 3;
+  string domain_id = 2;
+  string declared_mime_type = 3;
+  string original_filename = 4;
 }
 
 message UploadBlobResponse {
@@ -45,7 +46,8 @@ message UploadBlobResponse {
 
 message DownloadBlobRequest {
   string space_id = 1;
-  string blob_id = 2;
+  string domain_id = 2;
+  string blob_id = 3;
 }
 
 message DownloadBlobResponse {
@@ -57,7 +59,8 @@ message DownloadBlobResponse {
 
 message GetBlobRequest {
   string space_id = 1;
-  string blob_id = 2;
+  string domain_id = 2;
+  string blob_id = 3;
 }
 
 message GetBlobResponse {
@@ -66,7 +69,8 @@ message GetBlobResponse {
 
 message DeleteBlobRequest {
   string space_id = 1;
-  string blob_id = 2;
+  string domain_id = 2;
+  string blob_id = 3;
 }
 
 message DeleteBlobResponse {
@@ -77,20 +81,21 @@ message DeleteBlobResponse {
 message Blob {
   string blob_id = 1;
   string space_id = 2;
+  string domain_id = 3;
 
   // Content digest, for example sha256:<hex>. The exact digest algorithm is
   // daemon-defined but should be stable enough for deduplication and integrity
   // checks.
-  string digest = 3;
+  string digest = 4;
 
-  int64 size_bytes = 4;
+  int64 size_bytes = 5;
 
   // Authoritative MIME type determined by the daemon when possible.
-  string mime_type = 5;
+  string mime_type = 6;
 
   // Client-declared MIME type, if supplied.
-  string declared_mime_type = 6;
+  string declared_mime_type = 7;
 
-  string original_filename = 7;
-  google.protobuf.Timestamp create_time = 8;
+  string original_filename = 8;
+  google.protobuf.Timestamp create_time = 9;
 }
