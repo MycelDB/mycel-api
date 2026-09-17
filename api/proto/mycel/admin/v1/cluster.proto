@@ -373,6 +373,9 @@ message ClusterPeer {
 }
 
 message ClusterReadiness {
+  // client_ready is the top-level readiness signal intended for service
+  // readiness probes. In clustered Raft mode it is true only when write_ready is
+  // true, so write-heavy dependents do not start before Raft leaders exist.
   bool client_ready = 1;
   bool metadata_applied = 2;
   bool metadata_validated = 3;
@@ -381,6 +384,22 @@ message ClusterReadiness {
   string local_cluster_id = 6;
   int32 expected_member_count = 7;
   repeated string readiness_blockers = 8;
+
+  // process_ready means the daemon process is serving authenticated admin API
+  // requests. It does not imply cluster metadata, Raft, read, or write safety.
+  bool process_ready = 9;
+  // metadata_ready means authoritative cluster metadata is applied and
+  // validated for this node.
+  bool metadata_ready = 10;
+  // raft_ready means local Raft groups needed by this node are started and have
+  // elected/known leaders.
+  bool raft_ready = 11;
+  // read_ready means client reads can safely route through the current cluster
+  // authority/read paths.
+  bool read_ready = 12;
+  // write_ready means schema and graph-partition writes can route to known Raft
+  // leaders. In clustered mode this is stronger than partition_groups_started.
+  bool write_ready = 13;
 }
 
 message ListClusterMembersRequest {}
