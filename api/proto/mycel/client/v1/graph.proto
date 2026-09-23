@@ -322,6 +322,7 @@ message GraphOperation {
     EdgeDelete delete_edge = 7;
     SubtreeMove move_subtree = 8;
     ChildrenReorder reorder_children = 9;
+    ReferencesReplace replace_references = 10;
   }
 }
 
@@ -336,6 +337,7 @@ message GraphOperationResult {
     EdgeDeleteResult deleted_edge = 7;
     Edge moved_subtree_edge = 8;
     ChildrenReorderResult reordered_children = 9;
+    ReferencesReplaceResult replaced_references = 10;
   }
 }
 
@@ -384,4 +386,47 @@ message ChildrenReorder {
 
 message ChildrenReorderResult {
   repeated Edge contains_edges = 1;
+}
+
+// ReferenceReplacementMode controls how ReferencesReplace reconciles outgoing
+// reference edges for source_node_id and labels.
+enum ReferenceReplacementMode {
+  // Defaults to REFERENCE_REPLACEMENT_MODE_REPLACE for backwards-safe clients.
+  REFERENCE_REPLACEMENT_MODE_UNSPECIFIED = 0;
+  // Make the matching outgoing reference set exactly match targets.
+  REFERENCE_REPLACEMENT_MODE_REPLACE = 1;
+  // Add/update only listed targets and leave other matching references intact.
+  REFERENCE_REPLACEMENT_MODE_ADD = 2;
+  // Remove listed targets; if targets is empty, remove all matching references.
+  REFERENCE_REPLACEMENT_MODE_REMOVE = 3;
+}
+
+message ReferencesReplace {
+  string source_node_id = 1;
+
+  // Labels identify the outgoing reference edge set. Existing edges match when
+  // they contain every label. New edges are created with exactly these labels.
+  repeated string labels = 2;
+
+  repeated ReferenceTarget targets = 3;
+  ReferenceReplacementMode mode = 4;
+}
+
+message ReferenceTarget {
+  string target_node_id = 1;
+
+  // Optional client-supplied edge id for newly-created references.
+  optional string edge_id = 2;
+
+  // When present for an existing reference, these fields replace the existing
+  // edge fields. Omit a field to leave that field unchanged on existing edges.
+  google.protobuf.Struct properties = 3;
+  google.protobuf.Struct payload = 4;
+  google.protobuf.Struct meta = 5;
+}
+
+message ReferencesReplaceResult {
+  repeated Edge added_edges = 1;
+  repeated Edge updated_edges = 2;
+  repeated string deleted_edge_ids = 3;
 }

@@ -6,6 +6,12 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.15.0] - 2026-09-18
+
+### Added
+
+- Added dimensioned cluster readiness fields to `mycel.admin.v1.ClusterReadiness`, including process, metadata, Raft, read, and write readiness signals.
+
 ## [v0.12.0] - 2026-09-09
 
 ### Added
