@@ -6,6 +6,12 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.16.0] - 2026-09-24
+
+### Added
+
+- Added the graph `replace_references` operation, including reference replacement modes, targets, and operation results so clients can reconcile relationship edges in one transaction-scoped graph operation.
+
 ## [v0.15.0] - 2026-09-18
 
 ### Added
