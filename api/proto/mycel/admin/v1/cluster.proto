@@ -44,6 +44,15 @@ service AdminClusterService {
   // for one space/domain. The response is intended for forensic diff tooling;
   // it does not repair, merge, delete, or rebalance data.
   rpc GetLocalGraphForensicExport(GetLocalGraphForensicExportRequest) returns (GetLocalGraphForensicExportResponse);
+
+  // CreateGraphCheckpoint writes a local derived graph checkpoint for one
+  // space/domain after the daemon has applied committed graph state. It is a
+  // local storage operation, not a Raft snapshot or backup.
+  rpc CreateGraphCheckpoint(CreateGraphCheckpointRequest) returns (CreateGraphCheckpointResponse);
+
+  // GetGraphCheckpointStatus returns local latest checkpoint status for one
+  // space/domain. It is read-only and does not collect from peers.
+  rpc GetGraphCheckpointStatus(GetGraphCheckpointStatusRequest) returns (GetGraphCheckpointStatusResponse);
 }
 
 // ClusterEngine describes the clustering engine implementation.
@@ -319,6 +328,39 @@ message GraphForensicEntity {
   string id = 1;
   string checksum = 2;
   string canonical_json = 3;
+}
+
+message CreateGraphCheckpointRequest {
+  string space_id = 1;
+  string domain_id = 2;
+}
+
+message CreateGraphCheckpointResponse {
+  GraphCheckpointStatus status = 1;
+}
+
+message GetGraphCheckpointStatusRequest {
+  string space_id = 1;
+  string domain_id = 2;
+}
+
+message GetGraphCheckpointStatusResponse {
+  GraphCheckpointStatus status = 1;
+}
+
+message GraphCheckpointStatus {
+  string space_id = 1;
+  string domain_id = 2;
+  uint64 current_revision = 3;
+  bool checkpoint_present = 4;
+  uint64 checkpoint_revision = 5;
+  string checkpoint_created_at = 6;
+  uint64 node_count = 7;
+  uint64 edge_count = 8;
+  string graph_checksum = 9;
+  string checksum_algorithm = 10;
+  uint64 tail_revisions = 11;
+  string source = 12;
 }
 
 message LocalGraphConsistencyStats {
