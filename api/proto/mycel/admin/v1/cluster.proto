@@ -369,6 +369,28 @@ message GraphCheckpointStatus {
   uint64 last_checkpoint_duration_ms = 18;
   string last_checkpoint_error = 19;
   uint64 checkpoint_age_seconds = 20;
+  GraphPersistentIndexStatus persistent_index = 21;
+}
+
+message GraphPersistentIndexStatus {
+  bool present = 1;
+  string index_set_id = 2;
+  string index_format = 3;
+  uint64 graph_revision = 4;
+  string graph_checksum = 5;
+  string checksum_algorithm = 6;
+  string graph_checkpoint_id = 7;
+  string created_at = 8;
+  string load_result = 9;
+  string fallback_reason = 10;
+  repeated GraphPersistentIndexEntryStatus entries = 11;
+}
+
+message GraphPersistentIndexEntryStatus {
+  string kind = 1;
+  string path = 2;
+  uint64 entry_count = 3;
+  string checksum = 4;
 }
 
 message LocalGraphConsistencyStats {

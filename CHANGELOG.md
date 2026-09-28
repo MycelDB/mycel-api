@@ -6,6 +6,10 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+### Added
+
+- Added persistent graph index visibility to `mycel.admin.v1.GraphCheckpointStatus` so operators can inspect local derived index set presence, load result, fallback reason, and entry counts alongside checkpoint status.
+
 ## [v0.16.0] - 2026-09-24
 
 ### Added
