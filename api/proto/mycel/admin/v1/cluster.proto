@@ -361,6 +361,14 @@ message GraphCheckpointStatus {
   string checksum_algorithm = 10;
   uint64 tail_revisions = 11;
   string source = 12;
+  bool auto_checkpoint_enabled = 13;
+  uint64 auto_checkpoint_revision_threshold = 14;
+  string auto_checkpoint_interval = 15;
+  string last_checkpoint_attempt_at = 16;
+  string last_checkpoint_success_at = 17;
+  uint64 last_checkpoint_duration_ms = 18;
+  string last_checkpoint_error = 19;
+  uint64 checkpoint_age_seconds = 20;
 }
 
 message LocalGraphConsistencyStats {
