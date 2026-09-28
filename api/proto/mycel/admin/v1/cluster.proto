@@ -384,6 +384,7 @@ message GraphPersistentIndexStatus {
   string load_result = 9;
   string fallback_reason = 10;
   repeated GraphPersistentIndexEntryStatus entries = 11;
+  repeated GraphPersistentQueryIndexStatus query_indexes = 12;
 }
 
 message GraphPersistentIndexEntryStatus {
@@ -391,6 +392,26 @@ message GraphPersistentIndexEntryStatus {
   string path = 2;
   uint64 entry_count = 3;
   string checksum = 4;
+}
+
+message GraphPersistentQueryIndexStatus {
+  string identity = 1;
+  string name = 2;
+  string domain_id = 3;
+  string schema_hash = 4;
+  string definition_fingerprint = 5;
+  string target_kind = 6;
+  string target_type = 7;
+  repeated string labels = 8;
+  string field_namespace = 9;
+  string field_name = 10;
+  string index_kind = 11;
+  string direction = 12;
+  string build_state = 13;
+  uint64 last_indexed_graph_revision = 14;
+  int32 key_encoding_version = 15;
+  uint64 entry_count = 16;
+  string load_result = 17;
 }
 
 message LocalGraphConsistencyStats {
