@@ -26,6 +26,11 @@ service AdminClusterService {
   // ListRaftGroups returns read-only status for the local daemon's Raft groups.
   rpc ListRaftGroups(ListRaftGroupsRequest) returns (ListRaftGroupsResponse);
 
+  // CreateRaftSnapshot creates local Raft snapshots on this daemon's groups.
+  // This is an operator/debug operation used to exercise raft snapshot catch-up;
+  // it does not create graph checkpoints, backups, or cross-node snapshots.
+  rpc CreateRaftSnapshot(CreateRaftSnapshotRequest) returns (CreateRaftSnapshotResponse);
+
   // LookupSpaceRoute returns the Raft partition and replica set for a space ID.
   rpc LookupSpaceRoute(LookupSpaceRouteRequest) returns (LookupSpaceRouteResponse);
 
@@ -183,6 +188,26 @@ message ListRaftGroupsRequest {}
 
 message ListRaftGroupsResponse {
   repeated RaftGroupStatus groups = 1;
+}
+
+message CreateRaftSnapshotRequest {
+  // Optional local group IDs to snapshot. When empty, all local raft groups are snapshotted.
+  repeated string group_ids = 1;
+  // Compact raft logs through the snapshot index after successful snapshot creation.
+  bool compact = 2;
+}
+
+message CreateRaftSnapshotResponse {
+  repeated RaftSnapshotResult results = 1;
+}
+
+message RaftSnapshotResult {
+  string group_id = 1;
+  uint64 snapshot_index = 2;
+  bool compacted = 3;
+  string error = 4;
+  RaftGroupStatus before = 5;
+  RaftGroupStatus after = 6;
 }
 
 message RaftGroupStatus {
