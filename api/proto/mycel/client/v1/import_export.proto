@@ -7,8 +7,8 @@ package mycel.client.v1;
 import "google/protobuf/timestamp.proto";
 import "mycel/client/v1/graph.proto";
 
-// ImportExportService provides client/application data portability for a domain.
-// It is distinct from admin backup/restore. Format-specific importers such as
+// ImportExportService provides client/application data portability for domains
+// and space-scoped export artifacts. It is distinct from admin backup/restore. Format-specific importers such as
 // Logseq importers convert source data into Mycel-native import streams before
 // calling this service.
 service ImportExportService {
@@ -17,6 +17,27 @@ service ImportExportService {
 
   // ImportDomain streams Mycel-native records into a read-write transaction.
   rpc ImportDomain(stream ImportDomainRequest) returns (ImportDomainResponse);
+
+  // CreateSpaceExport starts a ZIP export job for one authorized space. The job
+  // can include one or more domains and produces a downloadable artifact stored
+  // by the daemon for a bounded retention window.
+  rpc CreateSpaceExport(CreateSpaceExportRequest) returns (CreateSpaceExportResponse);
+
+  // GetSpaceExport returns status/progress and artifact metadata for a job
+  // created by the authenticated principal.
+  rpc GetSpaceExport(GetSpaceExportRequest) returns (GetSpaceExportResponse);
+
+  // ListSpaceExports lists recent export jobs created by the authenticated
+  // principal, optionally filtered by space.
+  rpc ListSpaceExports(ListSpaceExportsRequest) returns (ListSpaceExportsResponse);
+
+  // DownloadSpaceExport streams a completed artifact created by the
+  // authenticated principal.
+  rpc DownloadSpaceExport(DownloadSpaceExportRequest) returns (stream DownloadSpaceExportResponse);
+
+  // DeleteSpaceExport removes an artifact/job created by the authenticated
+  // principal before automatic expiry.
+  rpc DeleteSpaceExport(DeleteSpaceExportRequest) returns (DeleteSpaceExportResponse);
 }
 
 message ExportDomainRequest {
@@ -54,6 +75,90 @@ message ImportDomainRequest {
 
 message ImportDomainResponse {
   ImportSummary summary = 1;
+}
+
+message CreateSpaceExportRequest {
+  SpaceExportOptions options = 1;
+}
+
+message CreateSpaceExportResponse {
+  SpaceExportJob job = 1;
+}
+
+message GetSpaceExportRequest {
+  string export_id = 1;
+}
+
+message GetSpaceExportResponse {
+  SpaceExportJob job = 1;
+}
+
+message ListSpaceExportsRequest {
+  string space_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListSpaceExportsResponse {
+  repeated SpaceExportJob jobs = 1;
+  string next_page_token = 2;
+}
+
+message DownloadSpaceExportRequest {
+  string export_id = 1;
+}
+
+message DownloadSpaceExportResponse {
+  bytes chunk = 1;
+}
+
+message DeleteSpaceExportRequest {
+  string export_id = 1;
+}
+
+message DeleteSpaceExportResponse {
+  string export_id = 1;
+  bool deleted = 2;
+}
+
+message SpaceExportOptions {
+  // Required target space. The authenticated principal must be allowed to read
+  // the space and every requested domain.
+  string space_id = 1;
+
+  // Optional domain selection. If empty, the export includes all visible
+  // non-system domains in the space, plus system domains when
+  // include_system_domains is true.
+  repeated string domain_ids = 2;
+
+  bool include_blobs = 3;
+  bool include_system_domains = 4;
+}
+
+message SpaceExportJob {
+  string export_id = 1;
+  SpaceExportStatus status = 2;
+  string format_version = 3;
+  string filename = 4;
+  int64 size_bytes = 5;
+  int32 progress_percent = 6;
+  SpaceExportCounts counts = 7;
+  string error_message = 8;
+  google.protobuf.Timestamp create_time = 9;
+  google.protobuf.Timestamp update_time = 10;
+  google.protobuf.Timestamp complete_time = 11;
+  google.protobuf.Timestamp expire_time = 12;
+  SpaceExportOptions options = 13;
+  string requested_by_principal_id = 14;
+}
+
+message SpaceExportCounts {
+  int32 spaces = 1;
+  int32 domains = 2;
+  int32 nodes = 3;
+  int32 edges = 4;
+  int32 blobs = 5;
+  int32 files = 6;
 }
 
 message ImportDomainMetadata {
@@ -143,6 +248,16 @@ message BlobImportMetadata {
 message BlobImportChunk {
   string import_blob_id = 1;
   bytes chunk = 2;
+}
+
+enum SpaceExportStatus {
+  SPACE_EXPORT_STATUS_UNSPECIFIED = 0;
+  SPACE_EXPORT_STATUS_QUEUED = 1;
+  SPACE_EXPORT_STATUS_RUNNING = 2;
+  SPACE_EXPORT_STATUS_SUCCEEDED = 3;
+  SPACE_EXPORT_STATUS_FAILED = 4;
+  SPACE_EXPORT_STATUS_DELETED = 5;
+  SPACE_EXPORT_STATUS_EXPIRED = 6;
 }
 
 enum DomainExportFormat {
