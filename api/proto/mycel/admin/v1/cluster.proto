@@ -26,6 +26,11 @@ service AdminClusterService {
   // ListRaftGroups returns read-only status for the local daemon's Raft groups.
   rpc ListRaftGroups(ListRaftGroupsRequest) returns (ListRaftGroupsResponse);
 
+  // CreateRaftSnapshot creates local Raft snapshots on this daemon's groups.
+  // This is an operator/debug operation used to exercise raft snapshot catch-up;
+  // it does not create graph checkpoints, backups, or cross-node snapshots.
+  rpc CreateRaftSnapshot(CreateRaftSnapshotRequest) returns (CreateRaftSnapshotResponse);
+
   // LookupSpaceRoute returns the Raft partition and replica set for a space ID.
   rpc LookupSpaceRoute(LookupSpaceRouteRequest) returns (LookupSpaceRouteResponse);
 
@@ -44,6 +49,15 @@ service AdminClusterService {
   // for one space/domain. The response is intended for forensic diff tooling;
   // it does not repair, merge, delete, or rebalance data.
   rpc GetLocalGraphForensicExport(GetLocalGraphForensicExportRequest) returns (GetLocalGraphForensicExportResponse);
+
+  // CreateGraphCheckpoint writes a local derived graph checkpoint for one
+  // space/domain after the daemon has applied committed graph state. It is a
+  // local storage operation, not a Raft snapshot or backup.
+  rpc CreateGraphCheckpoint(CreateGraphCheckpointRequest) returns (CreateGraphCheckpointResponse);
+
+  // GetGraphCheckpointStatus returns local latest checkpoint status for one
+  // space/domain. It is read-only and does not collect from peers.
+  rpc GetGraphCheckpointStatus(GetGraphCheckpointStatusRequest) returns (GetGraphCheckpointStatusResponse);
 }
 
 // ClusterEngine describes the clustering engine implementation.
@@ -174,6 +188,26 @@ message ListRaftGroupsRequest {}
 
 message ListRaftGroupsResponse {
   repeated RaftGroupStatus groups = 1;
+}
+
+message CreateRaftSnapshotRequest {
+  // Optional local group IDs to snapshot. When empty, all local raft groups are snapshotted.
+  repeated string group_ids = 1;
+  // Compact raft logs through the snapshot index after successful snapshot creation.
+  bool compact = 2;
+}
+
+message CreateRaftSnapshotResponse {
+  repeated RaftSnapshotResult results = 1;
+}
+
+message RaftSnapshotResult {
+  string group_id = 1;
+  uint64 snapshot_index = 2;
+  bool compacted = 3;
+  string error = 4;
+  RaftGroupStatus before = 5;
+  RaftGroupStatus after = 6;
 }
 
 message RaftGroupStatus {
@@ -319,6 +353,90 @@ message GraphForensicEntity {
   string id = 1;
   string checksum = 2;
   string canonical_json = 3;
+}
+
+message CreateGraphCheckpointRequest {
+  string space_id = 1;
+  string domain_id = 2;
+}
+
+message CreateGraphCheckpointResponse {
+  GraphCheckpointStatus status = 1;
+}
+
+message GetGraphCheckpointStatusRequest {
+  string space_id = 1;
+  string domain_id = 2;
+}
+
+message GetGraphCheckpointStatusResponse {
+  GraphCheckpointStatus status = 1;
+}
+
+message GraphCheckpointStatus {
+  string space_id = 1;
+  string domain_id = 2;
+  uint64 current_revision = 3;
+  bool checkpoint_present = 4;
+  uint64 checkpoint_revision = 5;
+  string checkpoint_created_at = 6;
+  uint64 node_count = 7;
+  uint64 edge_count = 8;
+  string graph_checksum = 9;
+  string checksum_algorithm = 10;
+  uint64 tail_revisions = 11;
+  string source = 12;
+  bool auto_checkpoint_enabled = 13;
+  uint64 auto_checkpoint_revision_threshold = 14;
+  string auto_checkpoint_interval = 15;
+  string last_checkpoint_attempt_at = 16;
+  string last_checkpoint_success_at = 17;
+  uint64 last_checkpoint_duration_ms = 18;
+  string last_checkpoint_error = 19;
+  uint64 checkpoint_age_seconds = 20;
+  GraphPersistentIndexStatus persistent_index = 21;
+}
+
+message GraphPersistentIndexStatus {
+  bool present = 1;
+  string index_set_id = 2;
+  string index_format = 3;
+  uint64 graph_revision = 4;
+  string graph_checksum = 5;
+  string checksum_algorithm = 6;
+  string graph_checkpoint_id = 7;
+  string created_at = 8;
+  string load_result = 9;
+  string fallback_reason = 10;
+  repeated GraphPersistentIndexEntryStatus entries = 11;
+  repeated GraphPersistentQueryIndexStatus query_indexes = 12;
+}
+
+message GraphPersistentIndexEntryStatus {
+  string kind = 1;
+  string path = 2;
+  uint64 entry_count = 3;
+  string checksum = 4;
+}
+
+message GraphPersistentQueryIndexStatus {
+  string identity = 1;
+  string name = 2;
+  string domain_id = 3;
+  string schema_hash = 4;
+  string definition_fingerprint = 5;
+  string target_kind = 6;
+  string target_type = 7;
+  repeated string labels = 8;
+  string field_namespace = 9;
+  string field_name = 10;
+  string index_kind = 11;
+  string direction = 12;
+  string build_state = 13;
+  uint64 last_indexed_graph_revision = 14;
+  int32 key_encoding_version = 15;
+  uint64 entry_count = 16;
+  string load_result = 17;
 }
 
 message LocalGraphConsistencyStats {

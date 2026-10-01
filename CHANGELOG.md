@@ -6,6 +6,20 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.17.0] - 2026-09-30
+
+### Added
+
+- Added client space export job APIs to `mycel.client.v1.ImportExportService`, including create, status/list, download, delete, options, counts, and status messages.
+- Added admin Raft snapshot and graph checkpoint status APIs, including explicit snapshot creation and graph checkpoint create/status requests.
+- Added persistent graph index visibility to `mycel.admin.v1.GraphCheckpointStatus` so operators can inspect local derived index set presence, load result, fallback reason, and entry counts alongside checkpoint status.
+
+## [v0.16.0] - 2026-09-24
+
+### Added
+
+- Added the graph `replace_references` operation, including reference replacement modes, targets, and operation results so clients can reconcile relationship edges in one transaction-scoped graph operation.
+
 ## [v0.15.0] - 2026-09-18
 
 ### Added
