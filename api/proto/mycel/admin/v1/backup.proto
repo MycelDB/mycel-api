@@ -12,8 +12,13 @@ service AdminBackupService {
   rpc GetBackupStatus(GetBackupStatusRequest) returns (GetBackupStatusResponse);
   rpc ListBackups(ListBackupsRequest) returns (ListBackupsResponse);
   rpc DeleteBackup(DeleteBackupRequest) returns (DeleteBackupResponse);
-  rpc TriggerClusterBackup(TriggerClusterBackupRequest) returns (TriggerClusterBackupResponse);
+  // StartClusterBackup creates an asynchronous cluster-wide backup operation. Implementations own
+  // cluster-safety transitions such as waiting for Raft applied-index convergence before capture.
+  rpc StartClusterBackup(StartClusterBackupRequest) returns (StartClusterBackupResponse);
   rpc GetClusterBackupStatus(GetClusterBackupStatusRequest) returns (GetClusterBackupStatusResponse);
+  // CancelClusterBackup requests cancellation of a pending or active cluster-wide backup operation.
+  // Cancellation is idempotent for terminal operations.
+  rpc CancelClusterBackup(CancelClusterBackupRequest) returns (CancelClusterBackupResponse);
   rpc ListClusterBackups(ListClusterBackupsRequest) returns (ListClusterBackupsResponse);
   rpc ValidateClusterBackupSet(ValidateClusterBackupSetRequest) returns (ValidateClusterBackupSetResponse);
 }
@@ -25,6 +30,21 @@ enum BackupArchiveFormat {
   BACKUP_ARCHIVE_FORMAT_TAR = 2;
   BACKUP_ARCHIVE_FORMAT_TAR_GZ = 3;
   BACKUP_ARCHIVE_FORMAT_TAR_ZST = 4;
+}
+
+// ClusterBackupState identifies the lifecycle state of an asynchronous cluster backup operation.
+enum ClusterBackupState {
+  CLUSTER_BACKUP_STATE_UNSPECIFIED = 0;
+  CLUSTER_BACKUP_STATE_PENDING = 1;
+  CLUSTER_BACKUP_STATE_WAITING_FOR_CLUSTER_CONVERGENCE = 2;
+  CLUSTER_BACKUP_STATE_READY = 3;
+  CLUSTER_BACKUP_STATE_QUIESCING = 4;
+  CLUSTER_BACKUP_STATE_CAPTURING = 5;
+  CLUSTER_BACKUP_STATE_VALIDATING = 6;
+  CLUSTER_BACKUP_STATE_SUCCEEDED = 7;
+  CLUSTER_BACKUP_STATE_FAILED = 8;
+  CLUSTER_BACKUP_STATE_CANCELING = 9;
+  CLUSTER_BACKUP_STATE_CANCELED = 10;
 }
 
 message BackupPolicy {
@@ -144,13 +164,19 @@ message DeleteBackupResponse {
   string backup_id = 1;
 }
 
-message TriggerClusterBackupRequest {
+message StartClusterBackupRequest {
   string reason = 1;
   string output_dir = 2;
   BackupArchiveFormat archive_format = 3;
+  // Optional client-provided key for idempotent start retries. Servers may return the existing
+  // operation for the same key instead of creating a duplicate operation.
+  string idempotency_key = 4;
+  // Optional maximum time the operation may remain waiting for cluster convergence before failing.
+  // Zero means the server default applies.
+  int64 convergence_timeout_seconds = 5;
 }
 
-message TriggerClusterBackupResponse {
+message StartClusterBackupResponse {
   ClusterBackupStatus status = 1;
   ClusterBackupSetSummary backup_set = 2;
 }
@@ -160,6 +186,15 @@ message GetClusterBackupStatusRequest {
 }
 
 message GetClusterBackupStatusResponse {
+  ClusterBackupStatus status = 1;
+}
+
+message CancelClusterBackupRequest {
+  string backup_set_id = 1;
+  string reason = 2;
+}
+
+message CancelClusterBackupResponse {
   ClusterBackupStatus status = 1;
 }
 
@@ -197,6 +232,22 @@ message ClusterBackupStatus {
   string failed_phase = 11;
   string error = 12;
   map<string, uint64> raft_barriers = 13;
+  ClusterBackupState state_code = 14;
+  repeated ClusterBackupBlocker blockers = 15;
+  bool cancel_requested = 16;
+  string current_phase = 17;
+  int64 retry_after_seconds = 18;
+}
+
+message ClusterBackupBlocker {
+  string node_name = 1;
+  string node_id = 2;
+  uint64 raft_node_id = 3;
+  string raft_group = 4;
+  string reason = 5;
+  uint64 applied_index = 6;
+  uint64 commit_index = 7;
+  string detail = 8;
 }
 
 message ClusterBackupSetSummary {
