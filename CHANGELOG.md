@@ -6,6 +6,8 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.18.0] - 2026-10-07
+
 ### Added
 
 - Added asynchronous cluster backup operation API contracts to `mycel.admin.v1.AdminBackupService`, including start/status/cancel flow, lifecycle states, cancellation status, retry hints, and structured readiness blockers for Raft convergence.
