@@ -6,6 +6,10 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+### Removed
+
+- Removed the legacy `AdminSpaceService.GrantSpacePrincipal` RPC and request/response messages; space access grants are moving to identity scoped roles/capabilities while `Space.owner` remains the ownership field.
+
 ## [v0.18.0] - 2026-10-07
 
 ### Added
