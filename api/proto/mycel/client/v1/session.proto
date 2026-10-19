@@ -38,7 +38,8 @@ service TransactionService {
   rpc GetTransaction(GetTransactionRequest) returns (GetTransactionResponse);
 
   // CommitTransaction commits a read-write transaction and advances the domain
-  // revision.
+  // revision. An idempotency key may bind the commit to a durable result so an
+  // ambiguous commit response can be retried safely.
   rpc CommitTransaction(CommitTransactionRequest) returns (CommitTransactionResponse);
 
   // RollbackTransaction discards pending mutations in a read-write transaction.
@@ -115,10 +116,36 @@ message GetTransactionResponse {
 
 message CommitTransactionRequest {
   string transaction_id = 1;
+
+  // Optional opaque key for durable commit idempotency. Keys are scoped by the
+  // authenticated principal, space_id, and domain_id. A key is limited to 128
+  // UTF-8 bytes, must not have leading or trailing whitespace, and must not
+  // contain secrets.
+  //
+  // The first successful commit binds the key to the canonical graph mutation
+  // and original TransactionCommit. A retry with the same key and mutation
+  // returns that commit without advancing the graph revision or emitting
+  // duplicate change events. Reusing the key for a different mutation fails
+  // with ALREADY_EXISTS while the binding is retained.
+  //
+  // space_id and domain_id are required when this field is set. Callers should
+  // persist all four fields until the commit outcome is reconciled so the
+  // request remains retryable after daemon restart or leader change.
+  string idempotency_key = 2;
+
+  // Scope used to recover a durable idempotent result when daemon-local
+  // transaction lifecycle state is no longer available.
+  string space_id = 3;
+  string domain_id = 4;
 }
 
 message CommitTransactionResponse {
   TransactionCommit commit = 1;
+
+  // True when commit is the result of an earlier successful request with the
+  // same idempotency binding. False for the first successful commit and for
+  // commits that do not use idempotency_key.
+  bool idempotent_replay = 2;
 }
 
 message RollbackTransactionRequest {
@@ -189,6 +216,14 @@ message TransactionCommit {
 
   // Client write correlation UUID associated with this commit.
   string operation_id = 10;
+
+  // Durable idempotency key associated with this commit, if one was supplied.
+  string idempotency_key = 11;
+
+  // Time until which the daemon guarantees retention of this idempotency
+  // binding. Absent when idempotency_key is empty. After this time, reusing the
+  // key may create a new commit.
+  google.protobuf.Timestamp idempotency_expire_time = 12;
 }
 
 enum SessionState {
