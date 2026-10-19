@@ -154,6 +154,19 @@ message GetClusterRuntimeStatusResponse {
   int32 raft_group_count = 8;
   int32 raft_groups_with_leader = 9;
   RaftTransportDiagnostics raft_transport = 10;
+  GraphIdempotencyDiagnostics graph_idempotency = 11;
+}
+
+// Process-local durable graph transaction idempotency diagnostics. Active and
+// capacity records cover domain stores loaded by this daemon instance.
+message GraphIdempotencyDiagnostics {
+  uint64 replay_hits = 1;
+  uint64 replay_misses = 2;
+  uint64 mismatches = 3;
+  uint64 capacity_rejections = 4;
+  uint64 evictions = 5;
+  uint64 active_records = 6;
+  uint64 capacity_records = 7;
 }
 
 message RaftTransportDiagnostics {

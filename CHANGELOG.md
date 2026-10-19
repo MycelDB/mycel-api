@@ -6,6 +6,17 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.20.0] - 2026-10-19
+
+### Added
+
+- Added durable graph transaction commit idempotency fields, including explicit scope, replay indication, the original idempotency key, and its retention expiry.
+- Added graph idempotency replay, mismatch, capacity, eviction, and active-record diagnostics to cluster runtime status.
+
+### Compatibility
+
+- These `mycel.client.v1` and `mycel.admin.v1` additions are backward compatible; no existing fields or RPCs were removed or renumbered.
+
 ## [v0.19.0] - 2026-10-09
 
 ### Removed
