@@ -83,6 +83,27 @@ Resource IDs are opaque unless a field comment says otherwise. Clients should st
 
 List/search RPCs should expose bounded result sets and cursor-style continuation where needed. Clients should treat cursors as opaque values and should not assume cursor stability across unrelated queries.
 
+### Transaction commit idempotency
+
+`mycel.client.v1.CommitTransactionRequest.idempotency_key` provides durable
+retry safety for ambiguous graph commit responses. The key is scoped by the
+authenticated principal plus the explicit `space_id` and `domain_id`. Clients
+must persist the transaction ID, scope, and key until the commit is reconciled.
+A successful replay returns the original `TransactionCommit` and sets
+`CommitTransactionResponse.idempotent_replay`; it does not advance the graph
+revision or emit duplicate downstream work. Reusing a retained key for a
+different canonical mutation fails with `ALREADY_EXISTS`.
+
+`TransactionCommit.idempotency_expire_time` is the authoritative retention
+boundary. After it passes, the key may be reused for a new commit. Keys are
+opaque non-secret values of at most 128 UTF-8 bytes. Application-generated
+stable node and edge IDs make individual entity writes naturally retryable;
+transaction idempotency complements those IDs by deduplicating the complete
+multi-effect commit.
+
+`BeginTransactionRequest.operation_id` remains correlation metadata only. It is
+not an idempotency key or replay-protection mechanism.
+
 ### Streaming
 
 Streaming RPCs must document:
