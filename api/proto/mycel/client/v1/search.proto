@@ -138,6 +138,12 @@ message SemanticSearchOptions {
   // Number of semantic candidates to retrieve before filtering/fusion. If unset,
   // the daemon chooses a bounded default.
   int32 candidate_count = 4;
+
+  // Optional natural-language text to embed for semantic retrieval. Hybrid
+  // search continues to parse SearchRequest.query as the lexical expression.
+  // If omitted or empty, semantic retrieval also uses SearchRequest.query for
+  // backward compatibility.
+  optional string query = 5;
 }
 
 message SearchFilters {
