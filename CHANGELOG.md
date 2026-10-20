@@ -6,6 +6,16 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.20.1] - 2026-10-20
+
+### Fixed
+
+- Corrected `GraphTransaction`, `base_revision`, `QueryService.ExecuteQuery`, and `ImportExportService.ExportDomain` documentation to describe the implemented repeatable-read contract: read-only graph, query, and export operations remain pinned to the revision observed through the strong-read path when the transaction begins.
+
+### Compatibility
+
+- Documentation-only correction. Protobuf field numbers, types, services, RPCs, and wire behavior are unchanged from v0.20.0.
+
 ## [v0.20.0] - 2026-10-19
 
 ### Added
