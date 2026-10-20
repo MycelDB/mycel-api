@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package mycel.client.v1;
 
+import "google/protobuf/struct.proto";
 import "mycel/client/v1/graph.proto";
 
 // SemanticService exposes client-facing semantic generation rule discovery and
@@ -49,6 +50,16 @@ message SemanticSearchRequest {
   // Optional minimum score threshold. Score meaning is model dependent but
   // higher scores should represent more relevant results.
   optional double min_score = 7;
+
+  // Opaque direct-semantic continuation. The daemon binds this token to the
+  // authenticated visibility scope, graph/index view, query, rule, binding,
+  // route, ranking version, and continuation position.
+  optional string page_token = 8;
+
+  // Optional hard-eligibility filter for direct semantic candidates. The
+  // daemon authorizes graph visibility before evaluating properties and
+  // applies eligibility before score thresholding and page truncation.
+  SemanticEligibilityFilter filter = 9;
 }
 
 message SemanticSearchResponse {
@@ -58,6 +69,39 @@ message SemanticSearchResponse {
   // search indexes, unavailable vector spaces, or skipped providers. Warnings
   // must not include secrets.
   repeated string warnings = 2;
+
+  // Opaque continuation for the same direct-semantic request and authorized
+  // read/index view. A stale or mismatched token fails explicitly.
+  string next_page_token = 3;
+
+  // "semantic_index_pushdown" or "authorized_candidate_post_filter".
+  string filter_execution_mode = 4;
+  int32 examined_semantic_candidates = 5;
+  int32 eligible_semantic_candidates = 6;
+}
+
+message SemanticEligibilityFilter {
+  // Every listed label is required.
+  repeated string node_labels = 1;
+  // When non-empty, only these exact node IDs are eligible.
+  repeated string node_ids = 2;
+  // Every property predicate is required. Property keys are top-level payload
+  // keys. Missing is distinct from a present null value.
+  repeated SemanticPropertyPredicate properties = 3;
+}
+
+message SemanticPropertyPredicate {
+  string key = 1;
+  SemanticPropertyOperator operator = 2;
+  google.protobuf.Value value = 3;
+}
+
+enum SemanticPropertyOperator {
+  SEMANTIC_PROPERTY_OPERATOR_UNSPECIFIED = 0;
+  SEMANTIC_PROPERTY_OPERATOR_EQUAL = 1;
+  SEMANTIC_PROPERTY_OPERATOR_NOT_EQUAL = 2;
+  SEMANTIC_PROPERTY_OPERATOR_EXISTS = 3;
+  SEMANTIC_PROPERTY_OPERATOR_MISSING = 4;
 }
 
 message SemanticSearchResult {
@@ -73,6 +117,29 @@ message SemanticSearchResult {
 
   repeated string matched_chunk_ids = 7;
   string snippet = 8;
+
+  // Safe, authorization-scoped generation evidence. It excludes credentials,
+  // raw vectors, projected source text, and source-content digests.
+  SemanticResultProvenance provenance = 9;
+}
+
+message SemanticResultProvenance {
+  uint64 source_graph_revision = 1;
+  uint64 semantic_generation = 2;
+  string semantic_configuration_hash = 3;
+  string opaque_source_version = 4;
+  int32 dimensions = 5;
+  string vector_space_key = 6;
+  string configured_intelligence_profile_id = 7;
+  string configured_model_endpoint_id = 8;
+  string configured_model_id = 9;
+  string configured_capability_id = 10;
+  bool actual_route_known = 11;
+  string actual_model_endpoint_id = 12;
+  string actual_model_id = 13;
+  string actual_capability_id = 14;
+  string rebuild_epoch = 15;
+  string generated_at = 16;
 }
 
 message SemanticGenerationRuleSummary {

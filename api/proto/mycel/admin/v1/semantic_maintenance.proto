@@ -8,6 +8,8 @@ package mycel.admin.v1;
 // maintenance work.
 service AdminSemanticMaintenanceService {
   rpc GetSemanticMaintenanceStatus(GetSemanticMaintenanceStatusRequest) returns (GetSemanticMaintenanceStatusResponse);
+  rpc GetSemanticReliabilityStatus(GetSemanticReliabilityStatusRequest) returns (GetSemanticReliabilityStatusResponse);
+  rpc RebuildSemanticRule(RebuildSemanticRuleRequest) returns (RebuildSemanticRuleResponse);
   rpc ListSemanticMaintenanceWork(ListSemanticMaintenanceWorkRequest) returns (ListSemanticMaintenanceWorkResponse);
   rpc RetrySemanticMaintenanceWork(RetrySemanticMaintenanceWorkRequest) returns (RetrySemanticMaintenanceWorkResponse);
   rpc CancelSemanticMaintenanceWork(CancelSemanticMaintenanceWorkRequest) returns (CancelSemanticMaintenanceWorkResponse);
@@ -38,6 +40,75 @@ message GetSemanticMaintenanceStatusResponse {
   int32 worker_runs = 15;
 }
 
+message GetSemanticReliabilityStatusRequest {
+  string space_id = 1;
+  string semantic_rule_id = 2;
+  string embedding_binding_key = 3;
+}
+
+message GetSemanticReliabilityStatusResponse {
+  // Authorization-scoped resource identity; no credential identity is exposed.
+  string space_id = 1;
+  string semantic_rule_id = 2;
+  string embedding_binding_key = 3;
+  // Highest committed graph revision observed for this domain.
+  uint64 latest_observed_graph_revision = 4;
+  // Ingestion cursor only: events through this revision were classified. This
+  // field is not a semantic freshness claim.
+  uint64 analyzed_through_graph_revision = 5;
+  // Highest contiguous revision whose required semantic outcomes are terminal.
+  uint64 fresh_through_graph_revision = 6;
+  // Bounded unresolved interval diagnostics; these expose no node/source text.
+  uint64 unresolved_gap_count = 7;
+  uint64 oldest_unresolved_graph_revision = 8;
+  uint64 configured_frontier_limit = 9;
+  uint64 retained_work_item_count = 10;
+  // Generation rotates for incompatible semantic configuration changes.
+  uint64 semantic_generation = 11;
+  // "ok" or "exhausted". Exhaustion is restart-safe and requires rebuild.
+  string capacity_state = 12;
+  bool degraded = 13;
+  // Bounded sanitized operator diagnostic; provider bodies are excluded.
+  string degraded_reason = 14;
+  bool rebuild_required = 15;
+  SemanticRebuildStatus rebuild = 16;
+  uint64 configured_gap_interval_limit = 17;
+  uint64 configured_revision_span_limit = 18;
+  uint64 configured_serialized_byte_limit = 19;
+  uint64 retained_gap_interval_count = 20;
+  uint64 retained_revision_span = 21;
+  uint64 retained_serialized_bytes = 22;
+}
+
+message SemanticRebuildStatus {
+  string rebuild_epoch = 1;
+  string state = 2;
+  uint64 pinned_target_graph_revision = 3;
+  uint64 delta_catchup_graph_revision = 4;
+  uint64 semantic_generation = 5;
+  string started_at = 6;
+  string completed_at = 7;
+  string error_message_sanitized = 8;
+}
+
+message RebuildSemanticRuleRequest {
+  string space_id = 1;
+  string semantic_rule_id = 2;
+  string embedding_binding_key = 3;
+  int32 backfill_limit = 4;
+  int32 maintenance_batch_limit = 5;
+  int32 max_catchup_iterations = 6;
+}
+
+message RebuildSemanticRuleResponse {
+  SemanticRebuildStatus rebuild = 1;
+  GetSemanticReliabilityStatusResponse reliability = 2;
+  int32 selected_count = 3;
+  int32 generated_count = 4;
+  int32 skipped_count = 5;
+  int32 failed_count = 6;
+}
+
 message ListSemanticMaintenanceWorkRequest {
   string space_id = 1;
   string status = 2;
@@ -66,6 +137,9 @@ message SemanticMaintenanceWorkItem {
   string last_error_message_sanitized = 13;
   string created_at = 14;
   string updated_at = 15;
+  uint64 first_graph_revision = 16;
+  uint64 last_graph_revision = 17;
+  uint64 work_generation = 18;
 }
 
 message RetrySemanticMaintenanceWorkRequest {
