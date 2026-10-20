@@ -10,8 +10,8 @@ import "mycel/client/v1/graph.proto";
 // QueryService provides transaction-scoped structured graph queries.
 service QueryService {
   // ExecuteQuery executes a read-only structured graph query inside a
-  // transaction read context. Read-only transactions are current-read contexts
-  // in V1 and do not pin historical snapshots.
+  // transaction read context. Read-only transactions use the graph snapshot
+  // pinned to their base_revision.
   rpc ExecuteQuery(ExecuteQueryRequest) returns (ExecuteQueryResponse);
 
   // ExecuteGQL executes textual Mycel GQL inside an existing transaction.

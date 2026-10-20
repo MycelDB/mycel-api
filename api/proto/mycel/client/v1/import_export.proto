@@ -42,8 +42,8 @@ service ImportExportService {
 
 message ExportDomainRequest {
   // Readable transaction id. The transaction determines space/domain and read
-  // consistency. Read-only exports are current reads in V1, not pinned
-  // historical snapshots.
+  // consistency. Read-only exports use the graph snapshot pinned to the
+  // transaction's base_revision.
   string transaction_id = 1;
   DomainExportFormat format = 2;
   DomainExportOptions options = 3;
