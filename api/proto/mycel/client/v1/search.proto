@@ -28,11 +28,11 @@ message SearchRequest {
   // combines lexical and semantic candidate retrieval into one fused ranking.
   SearchMode mode = 3;
 
-  // Lucene-style v1 query string. Supported syntax includes terms, quoted
-  // phrases, AND, OR, NOT, unary '-', and parentheses. The implicit operator is
-  // AND. Wildcard, fuzzy, range, and fielded lexical syntax are reserved and
-  // should return structured diagnostics rather than partial matches.
-  string query = 4;
+  // Deprecated compatibility query used as the fallback for both lexical and
+  // semantic retrieval when their channel-specific query is omitted. New
+  // callers should set lexical.query and semantic.query explicitly because the
+  // lexical query language and semantic embedding text have different syntax.
+  string query = 4 [deprecated = true];
 
   // Optional hard eligibility filters. Filters constrain which candidate nodes
   // may be returned and do not contribute to score.
@@ -121,6 +121,14 @@ message LexicalSearchOptions {
   // Number of lexical candidates to retrieve before filtering/fusion. If unset,
   // the daemon chooses a bounded default.
   int32 candidate_count = 1;
+
+  // Optional Lucene-style v1 query string for lexical retrieval. Supported
+  // syntax includes terms, quoted phrases, AND, OR, NOT, unary '-', and
+  // parentheses. The implicit operator is AND. Wildcard, fuzzy, range, and
+  // fielded syntax are reserved and should return structured diagnostics rather
+  // than partial matches. If omitted or empty, SearchRequest.query is used for
+  // backward compatibility.
+  optional string query = 2;
 }
 
 message SemanticSearchOptions {
@@ -138,6 +146,10 @@ message SemanticSearchOptions {
   // Number of semantic candidates to retrieve before filtering/fusion. If unset,
   // the daemon chooses a bounded default.
   int32 candidate_count = 4;
+
+  // Optional natural-language text to embed for semantic retrieval. If omitted
+  // or empty, SearchRequest.query is used for backward compatibility.
+  optional string query = 5;
 }
 
 message SearchFilters {
