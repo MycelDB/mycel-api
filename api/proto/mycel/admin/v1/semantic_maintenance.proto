@@ -9,6 +9,17 @@ package mycel.admin.v1;
 service AdminSemanticMaintenanceService {
   rpc GetSemanticMaintenanceStatus(GetSemanticMaintenanceStatusRequest) returns (GetSemanticMaintenanceStatusResponse);
   rpc GetSemanticReliabilityStatus(GetSemanticReliabilityStatusRequest) returns (GetSemanticReliabilityStatusResponse);
+  // Synchronously starts and executes a full reconciled baseline at a pinned
+  // graph revision followed by bounded delta catch-up. Success returns only
+  // after state is "completed". Failure returns a non-OK status and persists
+  // "failed" when the rebuild epoch was started. A concurrent request for the
+  // same rule/binding fails with FAILED_PRECONDITION, except that a new leader
+  // may fence an abandoned running owner and start a new epoch.
+  //
+  // This method is not idempotent: every accepted request, including one after
+  // a completed or failed rebuild, starts a new rebuild_epoch. After an
+  // ambiguous transport outcome, clients must inspect
+  // GetSemanticReliabilityStatus before retrying.
   rpc RebuildSemanticRule(RebuildSemanticRuleRequest) returns (RebuildSemanticRuleResponse);
   rpc ListSemanticMaintenanceWork(ListSemanticMaintenanceWorkRequest) returns (ListSemanticMaintenanceWorkResponse);
   rpc RetrySemanticMaintenanceWork(RetrySemanticMaintenanceWorkRequest) returns (RetrySemanticMaintenanceWorkResponse);
@@ -56,16 +67,30 @@ message GetSemanticReliabilityStatusResponse {
   // Ingestion cursor only: events through this revision were classified. This
   // field is not a semantic freshness claim.
   uint64 analyzed_through_graph_revision = 5;
-  // Highest contiguous revision whose required semantic outcomes are terminal.
+  // Highest contiguous revision whose required semantic outcomes completed
+  // successfully for semantic_generation. Successful outcomes are a published
+  // current record, an applied delete, an explicit policy no-op/skip, or work
+  // reconciled by a completed rebuild. Pending, running, retryable/permanent
+  // failure, or cancellation never permits this frontier to cross the affected
+  // revision.
+  //
+  // Freshness through revision R is proved only when this field is >= R and
+  // the same response has the expected semantic_generation, zero unresolved
+  // gaps, capacity_state "ok", degraded false, and rebuild_required false,
+  // with rebuild.state neither "required", "running", nor "failed".
   uint64 fresh_through_graph_revision = 6;
   // Bounded unresolved interval diagnostics; these expose no node/source text.
   uint64 unresolved_gap_count = 7;
   uint64 oldest_unresolved_graph_revision = 8;
   uint64 configured_frontier_limit = 9;
   uint64 retained_work_item_count = 10;
-  // Generation rotates for incompatible semantic configuration changes.
+  // Generation rotates for incompatible semantic configuration changes. A
+  // rotation resets fresh_through_graph_revision and requires a rebuilt
+  // baseline for the new generation; values from different generations must
+  // never be combined into one freshness claim.
   uint64 semantic_generation = 11;
-  // "ok" or "exhausted". Exhaustion is restart-safe and requires rebuild.
+  // "ok" or "exhausted". Exhaustion is restart-safe, invalidates freshness,
+  // and requires rebuild.
   string capacity_state = 12;
   bool degraded = 13;
   // Bounded sanitized operator diagnostic; provider bodies are excluded.
@@ -81,13 +106,27 @@ message GetSemanticReliabilityStatusResponse {
 }
 
 message SemanticRebuildStatus {
+  // Unique identity for one accepted rebuild invocation. Each accepted request
+  // creates a new epoch; clients use it to detect replacement or takeover.
   string rebuild_epoch = 1;
+  // Closed value set: empty means no rebuild has been recorded; "required"
+  // means the current generation lacks a valid baseline; "running" is
+  // non-terminal; "completed" is successful terminal state; and "failed" is
+  // unsuccessful terminal state. Unknown values must be treated as not ready.
   string state = 2;
+  // Graph revision pinned for the reconciled full baseline.
   uint64 pinned_target_graph_revision = 3;
+  // Latest graph revision accounted by delta catch-up. On completed state it
+  // reaches at least the latest revision observed before completion.
   uint64 delta_catchup_graph_revision = 4;
+  // Generation rebuilt by this epoch. Rebuild itself does not rotate the
+  // generation; incompatible configuration changes rotate it before rebuild.
   uint64 semantic_generation = 5;
+  // RFC 3339 timestamps. completed_at is populated only for completed state.
   string started_at = 6;
   string completed_at = 7;
+  // Bounded operator-safe failure detail; credentials and provider bodies are
+  // excluded.
   string error_message_sanitized = 8;
 }
 

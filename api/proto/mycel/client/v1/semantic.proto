@@ -52,13 +52,20 @@ message SemanticSearchRequest {
   optional double min_score = 7;
 
   // Opaque direct-semantic continuation. The daemon binds this token to the
-  // authenticated visibility scope, graph/index view, query, rule, binding,
-  // route, ranking version, and continuation position.
+  // authenticated visibility scope, graph/index view, ranking version,
+  // continuation position, canonical normalized filter, and every
+  // result-affecting request field except page_token, including the query,
+  // limit, score threshold, rule, and binding. A malformed or integrity-invalid
+  // token fails with INVALID_ARGUMENT. A valid token used with a different
+  // request/scope or a stale graph, rule, binding, route, generation, ranking,
+  // or candidate view fails with FAILED_PRECONDITION.
   optional string page_token = 8;
 
   // Optional hard-eligibility filter for direct semantic candidates. The
   // daemon authorizes graph visibility before evaluating properties and
-  // applies eligibility before score thresholding and page truncation.
+  // applies eligibility before score thresholding, ranking, and page
+  // truncation. All labels, node IDs, and property predicates are combined
+  // with logical AND.
   SemanticEligibilityFilter filter = 9;
 }
 
@@ -71,12 +78,21 @@ message SemanticSearchResponse {
   repeated string warnings = 2;
 
   // Opaque continuation for the same direct-semantic request and authorized
-  // read/index view. A stale or mismatched token fails explicitly.
+  // read/index view. See SemanticSearchRequest.page_token for binding and
+  // error semantics.
   string next_page_token = 3;
 
+  // Empty when no filter was requested; otherwise
   // "semantic_index_pushdown" or "authorized_candidate_post_filter".
   string filter_execution_mode = 4;
+  // Number of caller-visible, authorized semantic candidates examined. This
+  // never includes candidates hidden by graph or semantic authorization.
+  // Implementations that cannot produce this count without disclosure return
+  // zero rather than exposing a pre-authorization count.
   int32 examined_semantic_candidates = 5;
+  // Number of caller-visible, authorized candidates satisfying filter before
+  // minimum-score evaluation, ranking, and page truncation. Implementations
+  // that cannot produce this safely return zero.
   int32 eligible_semantic_candidates = 6;
 }
 
@@ -92,7 +108,15 @@ message SemanticEligibilityFilter {
 
 message SemanticPropertyPredicate {
   string key = 1;
+  // UNSPECIFIED and unknown operators are invalid and fail with
+  // INVALID_ARGUMENT.
   SemanticPropertyOperator operator = 2;
+  // EQUAL and NOT_EQUAL require value. Equality is exact, type-sensitive
+  // protobuf Value equality: scalar kinds and values must match, list order and
+  // elements must match, and struct key/value mappings must match. A missing
+  // key satisfies neither EQUAL nor NOT_EQUAL. EXISTS and MISSING reject a
+  // supplied value; EXISTS is true for a present key including null, while
+  // MISSING is true only when the key is absent.
   google.protobuf.Value value = 3;
 }
 
