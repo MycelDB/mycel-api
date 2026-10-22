@@ -90,9 +90,12 @@ message SemanticSearchResponse {
   // Implementations that cannot produce this count without disclosure return
   // zero rather than exposing a pre-authorization count.
   int32 examined_semantic_candidates = 5;
-  // Number of caller-visible, authorized candidates satisfying filter before
-  // minimum-score evaluation, ranking, and page truncation. Implementations
-  // that cannot produce this safely return zero.
+  // Number of caller-visible, authorized candidates satisfying the hard
+  // filter. In authorized_candidate_post_filter mode this is counted before
+  // minimum-score evaluation, ranking, and page truncation. When execution mode
+  // is empty because no hard filter was requested, it equals
+  // examined_semantic_candidates after any backend minimum-score evaluation.
+  // Implementations that cannot produce this safely return zero.
   int32 eligible_semantic_candidates = 6;
 }
 
