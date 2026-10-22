@@ -6,6 +6,15 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+### Added
+
+- Added direct semantic continuation tokens, typed hard-eligibility filters, authorization-safe filter diagnostics, and safe per-result generation/route provenance.
+- Added Admin semantic reliability and rebuild RPCs with separately named analyzed/fresh frontiers, bounded gap/capacity diagnostics, generation/rebuild state, and work revision/generation evidence.
+
+### Compatibility
+
+- Additive `mycel.client.v1` and `mycel.admin.v1` fields and RPCs preserve existing field numbers and wire compatibility. Clients must capability-check the new RPCs before requiring SGT5 proof.
+
 ## [v0.20.1] - 2026-10-20
 
 ### Fixed
