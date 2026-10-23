@@ -67,6 +67,19 @@ message SemanticSearchRequest {
   // truncation. All labels, node IDs, and property predicates are combined
   // with logical AND.
   SemanticEligibilityFilter filter = 9;
+
+  // Optional daemon-enforced provider budget scope for query embedding. When
+  // set, semantic_rule_id and embedding_binding_key are both required and must
+  // resolve exactly one binding before provider access. The authenticated
+  // principal must be authorized for the scope, request space_id must equal the
+  // persisted scope space, and the complete domain/rule/binding target must be
+  // contained by the scope's authorization scope. Its route must match that
+  // binding. Any mismatch fails before reservation or provider access.
+  string budget_scope_id = 10;
+  // Optional bounded non-secret identity shared by retries of this logical
+  // request. The daemon derives retry classification from durable scope state;
+  // callers cannot declare an attempt to be a retry.
+  string budget_request_id = 11;
 }
 
 message SemanticSearchResponse {
@@ -97,6 +110,9 @@ message SemanticSearchResponse {
   // examined_semantic_candidates after any backend minimum-score evaluation.
   // Implementations that cannot produce this safely return zero.
   int32 eligible_semantic_candidates = 6;
+  // Daemon-generated attempt identity when query embedding used a budget. It
+  // is empty when no provider attempt was made.
+  string budget_attempt_id = 7;
 }
 
 message SemanticEligibilityFilter {

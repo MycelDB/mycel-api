@@ -1,0 +1,477 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package mycel.admin.v1;
+
+import "google/protobuf/timestamp.proto";
+import "mycel/common/v1/inference.proto";
+import "mycel/common/v1/intelligence_access.proto";
+
+// AdminInferenceBudgetService manages authorization-scoped, daemon-enforced
+// provider budget scopes. Budget mutation is an administrative operation;
+// provider attempts are reserved and completed only by daemon execution paths.
+// Implementations must fail closed when the requested enforcement guarantee is
+// unavailable. Caller-supplied budget/request identities are non-secret,
+// 1-128 byte ASCII values matching [A-Za-z0-9][A-Za-z0-9._:-]*. For every
+// preflight, create, list, get, complete, attempt-list, or reconcile operation,
+// space_id is required; when an authorization_scope is present, its space_id is
+// also required and must equal the request/resource space_id. Cross-space or
+// empty mismatches fail with INVALID_ARGUMENT before mutation or provider
+// access. List RPC page tokens are opaque and bound to the complete request
+// filter. page_size must be between 1 and 500; values outside that range fail with
+// INVALID_ARGUMENT.
+service AdminInferenceBudgetService {
+  // GetInferenceBudgetCapability preflights one resolved provider route. An
+  // unspecified or unavailable check is not proof that a hard limit exists.
+  rpc GetInferenceBudgetCapability(AdminInferenceBudgetServiceGetInferenceBudgetCapabilityRequest) returns (AdminInferenceBudgetServiceGetInferenceBudgetCapabilityResponse);
+  // CreateInferenceBudgetScope creates an immutable limit/route envelope.
+  // budget_scope_id is the caller's bounded run/scope correlation identity.
+  // Reusing an existing identity fails with ALREADY_EXISTS. After an ambiguous
+  // create response, clients reconcile with GetInferenceBudgetScope rather than
+  // blindly creating a replacement.
+  rpc CreateInferenceBudgetScope(AdminInferenceBudgetServiceCreateInferenceBudgetScopeRequest) returns (AdminInferenceBudgetServiceCreateInferenceBudgetScopeResponse);
+  rpc GetInferenceBudgetScope(AdminInferenceBudgetServiceGetInferenceBudgetScopeRequest) returns (AdminInferenceBudgetServiceGetInferenceBudgetScopeResponse);
+  rpc ListInferenceBudgetScopes(AdminInferenceBudgetServiceListInferenceBudgetScopesRequest) returns (AdminInferenceBudgetServiceListInferenceBudgetScopesResponse);
+  // CompleteInferenceBudgetScope prevents new reservations. It does not refund
+  // active or ambiguous attempts. Repeating completion for an already-completed
+  // scope is idempotent and returns its current state.
+  rpc CompleteInferenceBudgetScope(AdminInferenceBudgetServiceCompleteInferenceBudgetScopeRequest) returns (AdminInferenceBudgetServiceCompleteInferenceBudgetScopeResponse);
+  rpc ListInferenceBudgetAttempts(AdminInferenceBudgetServiceListInferenceBudgetAttemptsRequest) returns (AdminInferenceBudgetServiceListInferenceBudgetAttemptsResponse);
+  // ReconcileInferenceBudgetScope compares untrusted harness/provider
+  // observations with daemon-authoritative accounting. It does not mutate or
+  // relax enforcement state.
+  rpc ReconcileInferenceBudgetScope(AdminInferenceBudgetServiceReconcileInferenceBudgetScopeRequest) returns (AdminInferenceBudgetServiceReconcileInferenceBudgetScopeResponse);
+}
+
+// InferenceBudgetCapabilityAvailability states whether a capability may be
+// used as proof of hard enforcement. UNSPECIFIED is never successful proof.
+enum InferenceBudgetCapabilityAvailability {
+  INFERENCE_BUDGET_CAPABILITY_AVAILABILITY_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_CAPABILITY_AVAILABILITY_AVAILABLE = 1;
+  INFERENCE_BUDGET_CAPABILITY_AVAILABILITY_UNAVAILABLE = 2;
+  INFERENCE_BUDGET_CAPABILITY_AVAILABILITY_UNSUPPORTED = 3;
+}
+
+// InferenceBudgetGuaranteeState reports one independently required safety
+// guarantee. Clients must require PROVIDED for every guarantee they claim.
+enum InferenceBudgetGuaranteeState {
+  INFERENCE_BUDGET_GUARANTEE_STATE_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_GUARANTEE_STATE_PROVIDED = 1;
+  INFERENCE_BUDGET_GUARANTEE_STATE_NOT_PROVIDED = 2;
+  INFERENCE_BUDGET_GUARANTEE_STATE_UNAVAILABLE = 3;
+}
+
+// InferenceBudgetLimitKind identifies each independently preflighted hard
+// limit. Missing kinds are unsupported, not zero-valued limits.
+enum InferenceBudgetLimitKind {
+  INFERENCE_BUDGET_LIMIT_KIND_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_LIMIT_KIND_REQUESTS = 1;
+  INFERENCE_BUDGET_LIMIT_KIND_ATTEMPTS = 2;
+  INFERENCE_BUDGET_LIMIT_KIND_RETRY_ATTEMPTS = 3;
+  INFERENCE_BUDGET_LIMIT_KIND_CONCURRENT_PROVIDER_CALLS = 4;
+  INFERENCE_BUDGET_LIMIT_KIND_BATCH_ITEMS = 5;
+  INFERENCE_BUDGET_LIMIT_KIND_INPUT_TOKENS_PER_REQUEST = 6;
+  INFERENCE_BUDGET_LIMIT_KIND_OUTPUT_TOKENS_PER_REQUEST = 7;
+  INFERENCE_BUDGET_LIMIT_KIND_INPUT_TOKENS = 8;
+  INFERENCE_BUDGET_LIMIT_KIND_OUTPUT_TOKENS = 9;
+  INFERENCE_BUDGET_LIMIT_KIND_PROVIDER_MILLIS_PER_REQUEST = 10;
+  INFERENCE_BUDGET_LIMIT_KIND_PROVIDER_MILLIS = 11;
+  INFERENCE_BUDGET_LIMIT_KIND_ABSOLUTE_DEADLINE = 12;
+  INFERENCE_BUDGET_LIMIT_KIND_ESTIMATED_COST = 13;
+}
+
+// InferenceBudgetBatchingMode is the actual connector request shape supported
+// for the pinned route.
+enum InferenceBudgetBatchingMode {
+  INFERENCE_BUDGET_BATCHING_MODE_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_BATCHING_MODE_SINGLE = 1;
+  INFERENCE_BUDGET_BATCHING_MODE_BATCH = 2;
+}
+
+// InferenceBudgetScopeState is the durable lifecycle of a budget scope.
+enum InferenceBudgetScopeState {
+  INFERENCE_BUDGET_SCOPE_STATE_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_SCOPE_STATE_ACTIVE = 1;
+  INFERENCE_BUDGET_SCOPE_STATE_COMPLETED = 2;
+  INFERENCE_BUDGET_SCOPE_STATE_EXPIRED = 3;
+  INFERENCE_BUDGET_SCOPE_STATE_EXHAUSTED = 4;
+}
+
+// InferenceBudgetAttemptState is the durable lifecycle of one provider
+// attempt. AMBIGUOUS and any terminal state with outcome_known=false continue
+// consuming conservative capacity.
+enum InferenceBudgetAttemptState {
+  INFERENCE_BUDGET_ATTEMPT_STATE_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_ATTEMPT_STATE_RESERVED = 1;
+  INFERENCE_BUDGET_ATTEMPT_STATE_SUCCEEDED = 2;
+  INFERENCE_BUDGET_ATTEMPT_STATE_FAILED = 3;
+  INFERENCE_BUDGET_ATTEMPT_STATE_CANCELED = 4;
+  INFERENCE_BUDGET_ATTEMPT_STATE_AMBIGUOUS = 5;
+}
+
+// InferenceBudgetDenialReason is a bounded machine-readable denial category.
+// Implementations must not substitute provider text, credentials, or payloads.
+enum InferenceBudgetDenialReason {
+  INFERENCE_BUDGET_DENIAL_REASON_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_DENIAL_REASON_SCOPE_NOT_FOUND = 1;
+  INFERENCE_BUDGET_DENIAL_REASON_SCOPE_NOT_ACTIVE = 2;
+  INFERENCE_BUDGET_DENIAL_REASON_SCOPE_CAPACITY_EXHAUSTED = 3;
+  INFERENCE_BUDGET_DENIAL_REASON_ATTEMPT_CAPACITY_EXHAUSTED = 4;
+  INFERENCE_BUDGET_DENIAL_REASON_DUPLICATE_ATTEMPT = 5;
+  INFERENCE_BUDGET_DENIAL_REASON_RETRY_CLASSIFICATION_INVALID = 6;
+  INFERENCE_BUDGET_DENIAL_REASON_REQUEST_LIMIT_EXHAUSTED = 7;
+  INFERENCE_BUDGET_DENIAL_REASON_ATTEMPT_LIMIT_EXHAUSTED = 8;
+  INFERENCE_BUDGET_DENIAL_REASON_RETRY_LIMIT_EXHAUSTED = 9;
+  INFERENCE_BUDGET_DENIAL_REASON_CONCURRENCY_LIMIT_EXHAUSTED = 10;
+  INFERENCE_BUDGET_DENIAL_REASON_BATCH_LIMIT_EXCEEDED = 11;
+  INFERENCE_BUDGET_DENIAL_REASON_INPUT_TOKENS_PER_REQUEST_EXCEEDED = 12;
+  INFERENCE_BUDGET_DENIAL_REASON_OUTPUT_TOKENS_PER_REQUEST_EXCEEDED = 13;
+  INFERENCE_BUDGET_DENIAL_REASON_INPUT_TOKEN_LIMIT_EXHAUSTED = 14;
+  INFERENCE_BUDGET_DENIAL_REASON_OUTPUT_TOKEN_LIMIT_EXHAUSTED = 15;
+  INFERENCE_BUDGET_DENIAL_REASON_PROVIDER_TIME_PER_REQUEST_EXCEEDED = 16;
+  INFERENCE_BUDGET_DENIAL_REASON_PROVIDER_TIME_LIMIT_EXHAUSTED = 17;
+  INFERENCE_BUDGET_DENIAL_REASON_DEADLINE_EXHAUSTED = 18;
+  INFERENCE_BUDGET_DENIAL_REASON_COST_LIMIT_EXHAUSTED = 19;
+  INFERENCE_BUDGET_DENIAL_REASON_ROUTE_MISMATCH = 20;
+  INFERENCE_BUDGET_DENIAL_REASON_PRICE_UNAVAILABLE = 21;
+  INFERENCE_BUDGET_DENIAL_REASON_RESERVATION_UNAVAILABLE = 22;
+  INFERENCE_BUDGET_DENIAL_REASON_RESERVATION_EXCEEDED = 23;
+  INFERENCE_BUDGET_DENIAL_REASON_LOCAL_WRITE_UNAVAILABLE = 24;
+  INFERENCE_BUDGET_DENIAL_REASON_PERSISTENCE_UNAVAILABLE = 25;
+  INFERENCE_BUDGET_DENIAL_REASON_ENFORCEMENT_UNAVAILABLE = 26;
+  INFERENCE_BUDGET_DENIAL_REASON_INVALID_RESERVATION = 27;
+  INFERENCE_BUDGET_DENIAL_REASON_INPUT_TOKEN_RESERVATION_UNAVAILABLE = 28;
+  INFERENCE_BUDGET_DENIAL_REASON_OUTPUT_TOKEN_RESERVATION_UNAVAILABLE = 29;
+  INFERENCE_BUDGET_DENIAL_REASON_COST_ESTIMATE_MISMATCH = 30;
+}
+
+// InferenceBudgetOutcomeCategory is the closed diagnostic vocabulary persisted
+// for an attempt. It intentionally excludes provider-supplied error codes.
+enum InferenceBudgetOutcomeCategory {
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_SUCCEEDED = 1;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_CANCELED = 2;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_DEADLINE_EXCEEDED = 3;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_SECRET_RESOLUTION_FAILED = 4;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_PROVIDER_DEADLINE_EXHAUSTED = 5;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_PROVIDER_TRANSPORT_ERROR = 6;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_PROVIDER_RATE_LIMITED = 7;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_PROVIDER_UNAVAILABLE = 8;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_PROVIDER_REJECTED = 9;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_CONNECTOR_ERROR = 10;
+  INFERENCE_BUDGET_OUTCOME_CATEGORY_UNKNOWN = 11;
+}
+
+// InferenceBudgetObservationSource distinguishes independent accounting
+// authorities without exposing provider resource identities.
+enum InferenceBudgetObservationSource {
+  INFERENCE_BUDGET_OBSERVATION_SOURCE_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_OBSERVATION_SOURCE_HARNESS = 1;
+  INFERENCE_BUDGET_OBSERVATION_SOURCE_DAEMON = 2;
+  INFERENCE_BUDGET_OBSERVATION_SOURCE_PROVIDER = 3;
+  INFERENCE_BUDGET_OBSERVATION_SOURCE_EMULATOR = 4;
+}
+
+// InferenceBudgetReconciliationState describes one count comparison or the
+// authoritative aggregate result. UNSPECIFIED is never success.
+enum InferenceBudgetReconciliationState {
+  INFERENCE_BUDGET_RECONCILIATION_STATE_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_RECONCILIATION_STATE_MATCHED = 1;
+  INFERENCE_BUDGET_RECONCILIATION_STATE_MISMATCHED = 2;
+  INFERENCE_BUDGET_RECONCILIATION_STATE_UNAVAILABLE = 3;
+}
+
+// InferenceBudgetMetric identifies a safe aggregate used for reconciliation.
+enum InferenceBudgetMetric {
+  INFERENCE_BUDGET_METRIC_UNSPECIFIED = 0;
+  INFERENCE_BUDGET_METRIC_REQUESTS = 1;
+  INFERENCE_BUDGET_METRIC_ATTEMPTS = 2;
+  INFERENCE_BUDGET_METRIC_RETRY_ATTEMPTS = 3;
+  INFERENCE_BUDGET_METRIC_BATCH_ITEMS = 4;
+  INFERENCE_BUDGET_METRIC_INPUT_TOKENS = 5;
+  INFERENCE_BUDGET_METRIC_OUTPUT_TOKENS = 6;
+  INFERENCE_BUDGET_METRIC_PROVIDER_MILLIS = 7;
+  INFERENCE_BUDGET_METRIC_ESTIMATED_COST_MICROS = 8;
+  // Compares provider/emulator observed request count with daemon attempts.
+  INFERENCE_BUDGET_METRIC_PROVIDER_REQUESTS = 9;
+}
+
+// InferenceBudgetRoute pins all provider selection dimensions. Configured route
+// identity is daemon configuration and must not be relabeled as provider-
+// observed identity in evidence.
+message InferenceBudgetRoute {
+  string model_endpoint_id = 1;
+  string model_id = 2;
+  string model_endpoint_capability_id = 3;
+  mycel.common.v1.InferenceOperation operation = 4;
+}
+
+// InferenceBudgetPriceDefinition is authoritative only when availability is
+// AVAILABLE and every rate required by the operation is present and positive.
+// A Create request's values are assertions that the server independently
+// verifies against its route catalog; clients cannot declare a price available.
+message InferenceBudgetPriceDefinition {
+  InferenceBudgetCapabilityAvailability availability = 1;
+  string currency = 2;
+  string version = 3;
+  optional int64 input_micros_per_million_tokens = 4;
+  optional int64 output_micros_per_million_tokens = 5;
+}
+
+// InferenceBudgetLimits uses presence to distinguish an absent/unlimited field
+// from an enforced value. Every present numeric limit must be positive. The v1
+// daemon contract does not advertise a zero-retry hard limit.
+message InferenceBudgetLimits {
+  optional int64 max_requests = 1;
+  optional int64 max_attempts = 2;
+  optional int64 max_retry_attempts = 3;
+  optional int64 max_concurrent_provider_calls = 4;
+  InferenceBudgetBatchingMode batching_mode = 5;
+  optional int64 max_batch_items = 6;
+  optional int64 max_input_tokens_per_request = 7;
+  optional int64 max_output_tokens_per_request = 8;
+  optional int64 max_input_tokens = 9;
+  optional int64 max_output_tokens = 10;
+  optional int64 max_provider_millis_per_request = 11;
+  optional int64 max_provider_millis = 12;
+  google.protobuf.Timestamp deadline = 13;
+  InferenceBudgetPriceDefinition price_definition = 14;
+  optional int64 max_estimated_cost_micros = 15;
+}
+
+message InferenceBudgetCapabilityCheck {
+  InferenceBudgetLimitKind limit_kind = 1;
+  InferenceBudgetCapabilityAvailability availability = 2;
+  optional int64 maximum_supported_value = 3;
+  InferenceBudgetDenialReason unavailable_reason = 4;
+}
+
+message InferenceBudgetEnforcementCapability {
+  string enforcement_capability_id = 1;
+  string version = 2;
+  InferenceBudgetCapabilityAvailability availability = 3;
+  InferenceBudgetRoute route = 4;
+  InferenceBudgetBatchingMode batching_mode = 5;
+  optional int64 max_batch_items = 6;
+  repeated InferenceBudgetCapabilityCheck limit_checks = 7;
+  InferenceBudgetGuaranteeState atomic_reservation = 8;
+  InferenceBudgetGuaranteeState durable_replay = 9;
+  InferenceBudgetGuaranteeState conservative_ambiguity_accounting = 10;
+  InferenceBudgetGuaranteeState clustered_mutation = 11;
+  InferenceBudgetPriceDefinition price_definition = 12;
+  optional int64 max_retained_scopes = 13;
+  optional int64 max_attempts_per_scope = 14;
+  google.protobuf.Timestamp observed_at = 15;
+  InferenceBudgetDenialReason unavailable_reason = 16;
+}
+
+message InferenceBudgetUsage {
+  int64 requests = 1;
+  int64 attempts = 2;
+  int64 retry_attempts = 3;
+  int64 batch_items = 4;
+  int64 active_provider_calls = 5;
+  int64 input_tokens = 6;
+  int64 output_tokens = 7;
+  int64 provider_millis = 8;
+  int64 estimated_cost_micros = 9;
+  int64 ambiguous_attempts = 10;
+}
+
+// Every consumer of budget_scope_id must require the workload space_id to equal
+// this scope's space_id and must authorize the complete workload target under
+// authorization_scope using the canonical intelligence-access scope matcher.
+// Mismatch fails before enqueueing, reservation, credential resolution, or
+// provider access.
+message InferenceBudgetScope {
+  string budget_scope_id = 1;
+  string space_id = 2;
+  mycel.common.v1.IntelligenceAccessScope authorization_scope = 3;
+  InferenceBudgetScopeState state = 4;
+  InferenceBudgetRoute route = 5;
+  InferenceBudgetLimits limits = 6;
+  InferenceBudgetUsage usage = 7;
+  InferenceBudgetDenialReason denial_reason = 8;
+  string enforcement_capability_id = 9;
+  google.protobuf.Timestamp create_time = 10;
+  google.protobuf.Timestamp update_time = 11;
+  google.protobuf.Timestamp expire_time = 12;
+  google.protobuf.Timestamp retention_expire_time = 13;
+  string enforcement_capability_version = 14;
+}
+
+message InferenceBudgetAttempt {
+  string budget_attempt_id = 1;
+  string request_id = 2;
+  InferenceBudgetAttemptState state = 3;
+  bool retry = 4;
+  int64 batch_items = 5;
+  int64 reserved_input_tokens = 6;
+  int64 reserved_output_tokens = 7;
+  int64 reserved_provider_millis = 8;
+  int64 reserved_cost_micros = 9;
+  int64 charged_input_tokens = 10;
+  int64 charged_output_tokens = 11;
+  int64 charged_provider_millis = 12;
+  int64 charged_cost_micros = 13;
+  bool usage_known = 14;
+  bool outcome_known = 15;
+  bool provider_duration_known = 16;
+  InferenceBudgetOutcomeCategory outcome = 17;
+  google.protobuf.Timestamp reserved_at = 18;
+  google.protobuf.Timestamp reserved_until = 19;
+  google.protobuf.Timestamp completed_at = 20;
+}
+
+// InferenceBudgetObservation contains aggregate counts only. Each
+// reconciliation request may contain at most one observation per non-daemon
+// source. It must not carry credentials, headers, provider payloads, prompts,
+// graph data, route identity, provider request IDs, or provider resource names.
+message InferenceBudgetObservation {
+  InferenceBudgetObservationSource source = 1;
+  // For HARNESS this is the logical budget request count. For PROVIDER or
+  // EMULATOR this is the independently observed provider request count and is
+  // reconciled as PROVIDER_REQUESTS against daemon attempts.
+  optional int64 requests = 2;
+  optional int64 attempts = 3;
+  optional int64 retry_attempts = 4;
+  optional int64 batch_items = 5;
+  optional int64 input_tokens = 6;
+  optional int64 output_tokens = 7;
+  optional int64 provider_millis = 8;
+  optional int64 estimated_cost_micros = 9;
+}
+
+message InferenceBudgetReconciliation {
+  InferenceBudgetMetric metric = 1;
+  InferenceBudgetObservationSource observed_source = 2;
+  InferenceBudgetReconciliationState state = 3;
+  optional int64 daemon_value = 4;
+  optional int64 observed_value = 5;
+}
+
+message InferenceBudgetReconciliationRequirement {
+  InferenceBudgetObservationSource observed_source = 1;
+  // PROVIDER_REQUESTS is valid only for PROVIDER or EMULATOR. Other metrics
+  // require the corresponding optional observation counter to be present or
+  // yield UNAVAILABLE.
+  repeated InferenceBudgetMetric metrics = 2;
+}
+
+message AdminInferenceBudgetServiceGetInferenceBudgetCapabilityRequest {
+  // space_id and authorization_scope.space_id must match when both are set.
+  string space_id = 1;
+  mycel.common.v1.IntelligenceAccessScope authorization_scope = 2;
+  InferenceBudgetRoute route = 3;
+  repeated InferenceBudgetLimitKind required_limit_kinds = 4;
+  InferenceBudgetBatchingMode required_batching_mode = 5;
+  bool require_cost_enforcement = 6;
+  // Exact proposed values for preflight. The server validates every present
+  // field, deadline, batching setting, and price assertion without creating a
+  // scope. required_limit_kinds may additionally require supported fields that
+  // are intentionally absent from this proposal.
+  InferenceBudgetLimits required_limits = 7;
+  // Require authoritative clustered mutation rather than standalone local WAL
+  // enforcement. When true, node-local fallback is forbidden.
+  bool require_clustered_mutation = 8;
+}
+
+message AdminInferenceBudgetServiceGetInferenceBudgetCapabilityResponse {
+  // availability is AVAILABLE only when atomic reservation, durable replay,
+  // conservative ambiguity accounting, every requested limit/batching mode,
+  // required price, and any required clustered mutation are enforceable for
+  // the complete route.
+  InferenceBudgetEnforcementCapability capability = 1;
+}
+
+message AdminInferenceBudgetServiceCreateInferenceBudgetScopeRequest {
+  string budget_scope_id = 1;
+  string space_id = 2;
+  mycel.common.v1.IntelligenceAccessScope authorization_scope = 3;
+  InferenceBudgetRoute route = 4;
+  InferenceBudgetLimits limits = 5;
+  google.protobuf.Timestamp expire_time = 6;
+  // expire_time must not exceed limits.deadline. retention_expire_time must
+  // cover limits.deadline and is subject to the daemon's bounded retention.
+  google.protobuf.Timestamp retention_expire_time = 7;
+  string required_enforcement_capability_id = 8;
+  string required_enforcement_capability_version = 9;
+}
+
+message AdminInferenceBudgetServiceCreateInferenceBudgetScopeResponse {
+  InferenceBudgetScope budget_scope = 1;
+}
+
+message AdminInferenceBudgetServiceGetInferenceBudgetScopeRequest {
+  string space_id = 1;
+  string budget_scope_id = 2;
+}
+
+message AdminInferenceBudgetServiceGetInferenceBudgetScopeResponse {
+  InferenceBudgetScope budget_scope = 1;
+}
+
+message AdminInferenceBudgetServiceListInferenceBudgetScopesRequest {
+  string space_id = 1;
+  mycel.common.v1.IntelligenceAccessScope authorization_scope = 2;
+  InferenceBudgetScopeState state = 3;
+  google.protobuf.Timestamp since = 4;
+  google.protobuf.Timestamp until = 5;
+  int32 page_size = 6;
+  string page_token = 7;
+}
+
+message AdminInferenceBudgetServiceListInferenceBudgetScopesResponse {
+  repeated InferenceBudgetScope budget_scopes = 1;
+  string next_page_token = 2;
+}
+
+message AdminInferenceBudgetServiceCompleteInferenceBudgetScopeRequest {
+  string space_id = 1;
+  string budget_scope_id = 2;
+}
+
+message AdminInferenceBudgetServiceCompleteInferenceBudgetScopeResponse {
+  InferenceBudgetScope budget_scope = 1;
+}
+
+message AdminInferenceBudgetServiceListInferenceBudgetAttemptsRequest {
+  string space_id = 1;
+  string budget_scope_id = 2;
+  InferenceBudgetAttemptState state = 3;
+  int32 page_size = 4;
+  string page_token = 5;
+}
+
+message AdminInferenceBudgetServiceListInferenceBudgetAttemptsResponse {
+  repeated InferenceBudgetAttempt budget_attempts = 1;
+  string next_page_token = 2;
+}
+
+message AdminInferenceBudgetServiceReconcileInferenceBudgetScopeRequest {
+  string space_id = 1;
+  string budget_scope_id = 2;
+  // Only HARNESS, PROVIDER, and EMULATOR observations are accepted. DAEMON is
+  // server-derived; duplicate sources or more than three observations fail.
+  repeated InferenceBudgetObservation observations = 3;
+  // At least one unique source/metric pair is required. Duplicate sources,
+  // duplicate metrics within a source, and metrics incompatible with a source
+  // fail with INVALID_ARGUMENT.
+  repeated InferenceBudgetReconciliationRequirement requirements = 4;
+}
+
+message AdminInferenceBudgetServiceReconcileInferenceBudgetScopeResponse {
+  InferenceBudgetScope budget_scope = 1;
+  // daemon_observation always has source DAEMON and is derived from the scope's
+  // durable usage. It is never copied from request observations.
+  InferenceBudgetObservation daemon_observation = 2;
+  // Exactly one result is returned for every unique required source/metric
+  // pair, and no extra result is returned. A missing observed value yields
+  // UNAVAILABLE rather than omission.
+  repeated InferenceBudgetReconciliation reconciliations = 3;
+  // MATCHED iff requirements is non-empty and every result is MATCHED;
+  // UNAVAILABLE if any result is UNAVAILABLE; otherwise MISMATCHED if any
+  // result is MISMATCHED. UNSPECIFIED is never a successful reconciliation.
+  InferenceBudgetReconciliationState overall_state = 4;
+}

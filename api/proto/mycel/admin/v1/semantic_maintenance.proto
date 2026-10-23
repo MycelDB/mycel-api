@@ -143,6 +143,12 @@ message RebuildSemanticRuleRequest {
   int32 backfill_limit = 4;
   int32 maintenance_batch_limit = 5;
   int32 max_catchup_iterations = 6;
+  // Optional daemon-enforced provider budget scope. When set,
+  // embedding_binding_key is required. Request space_id must equal the scope
+  // space, and the resolved domain/rule/binding target must be contained by its
+  // authorization scope. The route must match every provider attempt. Any
+  // mismatch or unavailable enforcement fails before enqueue or provider access.
+  string budget_scope_id = 7;
 }
 
 message RebuildSemanticRuleResponse {
@@ -185,6 +191,9 @@ message SemanticMaintenanceWorkItem {
   uint64 first_graph_revision = 16;
   uint64 last_graph_revision = 17;
   uint64 work_generation = 18;
+  // Empty when the work is not budget-associated. This is a bounded non-secret
+  // correlation identity, not provider-observed identity.
+  string budget_scope_id = 19;
 }
 
 message RetrySemanticMaintenanceWorkRequest {
@@ -210,6 +219,12 @@ message AnalyzeSemanticDirtyWorkRequest {
   string semantic_rule_id = 2;
   string embedding_binding_key = 3;
   int32 limit = 4;
+  // Optional scope assigned to newly enqueued provider work. When set,
+  // semantic_rule_id and embedding_binding_key are required. Request space_id
+  // must equal the scope space, and the resolved domain/rule/binding target must
+  // be contained by its authorization scope and match its pinned route before
+  // work is enqueued.
+  string budget_scope_id = 5;
 }
 
 message AnalyzeSemanticDirtyWorkResponse {
@@ -220,6 +235,12 @@ message AnalyzeSemanticDirtyWorkResponse {
 message ProcessSemanticDirtyWorkRequest {
   string space_id = 1;
   int32 limit = 2;
+  // Optional scope for selected work that has no existing budget association.
+  // It never replaces a work item's already-persisted scope. Request space_id
+  // must equal the scope space. Only work contained by the scope's authorization
+  // scope and matching its pinned route is eligible; mismatched work remains
+  // unassociated and cannot make provider access under this request.
+  string budget_scope_id = 3;
 }
 
 message ProcessSemanticDirtyWorkResponse {
@@ -236,6 +257,11 @@ message BackfillSemanticRuleRequest {
   bool force = 5;
   int32 limit = 6;
   bool continue_on_error = 7;
+  // Optional daemon-enforced provider budget scope. When set,
+  // embedding_binding_key is required. Request space_id must equal the scope
+  // space, and the resolved domain/rule/binding target must be contained by its
+  // authorization scope and match its pinned route before enqueue or access.
+  string budget_scope_id = 8;
 }
 
 message BackfillSemanticRuleResponse {

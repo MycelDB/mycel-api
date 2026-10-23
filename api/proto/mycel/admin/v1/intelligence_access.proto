@@ -6,6 +6,7 @@ package mycel.admin.v1;
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "mycel/admin/v1/inference_budget.proto";
 import "mycel/common/v1/inference.proto";
 import "mycel/common/v1/intelligence_access.proto";
 
@@ -319,6 +320,8 @@ message AdminIntelligenceAccessUsageServiceListUsageEventsRequest {
   int32 page_size = 17;
   string page_token = 18;
   string embedding_binding_key = 19;
+  string budget_scope_id = 20;
+  string budget_attempt_id = 21;
 }
 
 message AdminIntelligenceAccessUsageServiceListUsageEventsResponse {
@@ -489,17 +492,28 @@ message IntelligenceAccessUsageEvent {
   string credential_id = 18;
   string credential_grant_id = 19;
   string policy_decision_id = 20;
+  // For every budget-associated event this field must be empty. Provider
+  // request identity is not budget evidence.
   string provider_request_id = 21;
   int64 input_tokens = 22;
   int64 output_tokens = 23;
   int64 total_tokens = 24;
   int64 latency_millis = 25;
+  // For budget-associated events these fields must be empty or fixed daemon
+  // categories; provider-supplied codes, bodies, and raw errors are prohibited.
   string error_code = 26;
   string error_message = 27;
   google.protobuf.Timestamp started_at = 28;
   google.protobuf.Timestamp completed_at = 29;
+  // For every budget-associated event this struct must be empty. Budget
+  // correlation uses the typed fields below, never free-form metadata.
   google.protobuf.Struct metadata = 30;
   string embedding_binding_key = 31;
+  // Budget identities are bounded non-secret correlation values. They do not
+  // identify provider resources and carry no provider payload.
+  string budget_scope_id = 32;
+  string budget_attempt_id = 33;
+  InferenceBudgetDenialReason budget_denial_reason = 34;
 }
 
 message IntelligenceAccessUsageSummary {

@@ -104,6 +104,14 @@ multi-effect commit.
 `BeginTransactionRequest.operation_id` remains correlation metadata only. It is
 not an idempotency key or replay-protection mechanism.
 
+### Inference provider budgets
+
+`mycel.admin.v1.AdminInferenceBudgetService` exposes route-specific preflight, durable budget-scope lifecycle, bounded attempt pagination, and reconciliation for daemon-authoritative inference-provider budgets. Clients must treat unspecified, unavailable, unsupported, or not-provided capability states as failed hard-limit proof; an omitted optional limit is not an enforced zero.
+
+Budget scopes pin authorization scope plus endpoint, model, capability, and operation identity. Every consuming workload must match the persisted scope space, fall within its authorization scope, and match its complete route before enqueueing, reservation, or provider access. Cost-limited scopes also pin a versioned currency price definition, and missing required prices are explicitly unavailable. Reconciliation accepts only aggregate harness/provider/emulator observations, requires a non-empty source/metric matrix, returns exactly one result per required pair plus an authoritative overall state, and never changes enforcement accounting. Budget resources and diagnostics must not expose credentials, authorization headers, prompts, graph data, vectors, provider payloads, provider request IDs, or provider resource names. Budget-associated usage events clear provider request IDs and free-form metadata and use only fixed daemon error categories.
+
+List RPC page sizes are bounded to 1–500 and continuation tokens are opaque and request-bound. Clustered implementations must report clustered mutation as unavailable until scope reservation and completion have authoritative cluster ownership; they must not fall back to independent node-local ledgers.
+
 ### Streaming
 
 Streaming RPCs must document:

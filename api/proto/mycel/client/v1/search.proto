@@ -65,6 +65,20 @@ message SearchRequest {
 
   // Lexical candidate retrieval options used by lexical and hybrid modes.
   LexicalSearchOptions lexical = 13;
+
+  // Optional daemon-enforced provider budget scope for semantic query
+  // embedding. It is ignored for lexical-only requests. When set for hybrid
+  // mode, semantic.semantic_rule_id and semantic.embedding_binding_key are both
+  // required and must resolve exactly one binding before provider access. The
+  // authenticated principal must be authorized for the scope, request space_id
+  // must equal the persisted scope space, and the complete domain/rule/binding
+  // target must be contained by the scope's authorization scope. Its route must
+  // match that binding. Any mismatch fails before reservation or provider
+  // access.
+  string budget_scope_id = 14;
+  // Optional bounded non-secret identity shared by retries of this logical
+  // request. Retry classification remains daemon-authoritative.
+  string budget_request_id = 15;
 }
 
 message SearchResponse {
@@ -78,6 +92,9 @@ message SearchResponse {
   repeated string warnings = 4;
 
   SearchDiagnostics diagnostics = 5;
+  // Daemon-generated attempt identity when semantic query embedding used a
+  // budget. It is empty when no provider attempt was made.
+  string budget_attempt_id = 6;
 }
 
 message SearchResult {
