@@ -253,6 +253,9 @@ message AdminIntelligenceAccessPolicyServiceCreateAccessPolicyRequest {
   bool require_local_endpoint = 8;
   string reason = 9;
   google.protobuf.Timestamp expires_at = 10;
+  repeated string endpoint_refs = 11;
+  repeated string model_refs = 12;
+  repeated string capability_refs = 13;
 }
 
 message AdminIntelligenceAccessPolicyServiceCreateAccessPolicyResponse {
@@ -442,6 +445,9 @@ message IntelligenceAccessPolicy {
   mycel.common.v1.IntelligenceAccessPolicyState state = 23;
   string revoked_by = 24;
   google.protobuf.Timestamp revoked_at = 25;
+  repeated string model_endpoint_ids = 26;
+  repeated string model_ids = 27;
+  repeated string model_endpoint_capability_ids = 28;
 }
 
 message IntelligenceAccessPolicyDecision {
