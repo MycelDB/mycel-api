@@ -5,6 +5,7 @@ syntax = "proto3";
 package mycel.admin.v1;
 
 import "mycel/client/v1/automation.proto";
+import "mycel/common/v1/procedure_inference.proto";
 
 // AdminAutomationService exposes operator access to graph automation definitions and run history.
 service AdminAutomationService {
@@ -26,6 +27,13 @@ service AdminAutomationService {
   rpc DeleteGraphProcedure(DeleteGraphProcedureRequest) returns (DeleteGraphProcedureResponse);
   rpc GetGraphProcedure(GetGraphProcedureRequest) returns (GetGraphProcedureResponse);
   rpc ListGraphProcedures(ListGraphProceduresRequest) returns (ListGraphProceduresResponse);
+  // EnableGraphProcedure is idempotent and returns only after its cross-partition barrier completes.
+  rpc EnableGraphProcedure(EnableGraphProcedureRequest) returns (EnableGraphProcedureResponse);
+  // DisableGraphProcedure is idempotent and returns only after its cross-partition barrier completes.
+  rpc DisableGraphProcedure(DisableGraphProcedureRequest) returns (DisableGraphProcedureResponse);
+  rpc GetProcedureInferenceAttempt(GetProcedureInferenceAttemptRequest) returns (GetProcedureInferenceAttemptResponse);
+  rpc ListProcedureInferenceAttempts(ListProcedureInferenceAttemptsRequest) returns (ListProcedureInferenceAttemptsResponse);
+  rpc ListProcedureInferenceAttemptChanges(ListProcedureInferenceAttemptChangesRequest) returns (ListProcedureInferenceAttemptChangesResponse);
   rpc ValidateGraphAutomationBinding(ValidateGraphAutomationBindingRequest) returns (ValidateGraphAutomationBindingResponse);
   rpc CreateGraphAutomationBinding(CreateGraphAutomationBindingRequest) returns (CreateGraphAutomationBindingResponse);
   rpc UpdateGraphAutomationBinding(UpdateGraphAutomationBindingRequest) returns (UpdateGraphAutomationBindingResponse);
@@ -127,6 +135,8 @@ message GetAutomationRunRequest {
 
 message GetAutomationRunResponse {
   string run_json = 1;
+  repeated string inference_usage_event_ids = 2;
+  mycel.common.v1.AutomationRun run = 3;
 }
 
 message RetryAutomationInvocationRequest {
@@ -200,6 +210,81 @@ message UpdateGraphProcedureResponse {
 
 message GetGraphProcedureResponse {
   string procedure_json = 1;
+}
+
+message EnableGraphProcedureRequest {
+  string space_id = 1;
+  string domain_id = 2;
+  string procedure_id = 3;
+}
+
+message EnableGraphProcedureResponse {
+  string procedure_json = 1;
+  mycel.common.v1.ProcedureControlBarrier control = 2;
+}
+
+message DisableGraphProcedureRequest {
+  string space_id = 1;
+  string domain_id = 2;
+  string procedure_id = 3;
+}
+
+message DisableGraphProcedureResponse {
+  string procedure_json = 1;
+  mycel.common.v1.ProcedureControlBarrier control = 2;
+}
+
+message GetProcedureInferenceAttemptRequest {
+  string space_id = 1;
+  string attempt_id = 2;
+}
+
+message GetProcedureInferenceAttemptResponse {
+  mycel.common.v1.ProcedureInferenceAttempt attempt = 1;
+}
+
+// space_id is mandatory and exactly one space is allowed. page_token is opaque,
+// snapshot-bound, and bound to the exact space and filter. page_size defaults
+// to 100 and must not exceed 500.
+message ListProcedureInferenceAttemptsRequest {
+  string space_id = 1;
+  mycel.common.v1.ProcedureInferenceAttemptFilter filter = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListProcedureInferenceAttemptsResponse {
+  repeated mycel.common.v1.ProcedureInferenceAttempt attempts = 1;
+  string next_page_token = 2;
+  uint64 snapshot_high_water_sequence = 3;
+  uint64 earliest_retained_state_sequence = 4;
+  // snapshot_cursor resumes the immutable change feed strictly after the
+  // snapshot_high_water_sequence without a snapshot-to-poll race.
+  string snapshot_cursor = 5;
+}
+
+// space_id is mandatory and exactly one space is allowed. after_cursor is
+// opaque and bound to the exact space and filter. page_size defaults to 100 and
+// must not exceed 500. Changes are returned by ascending per-space sequence.
+message ListProcedureInferenceAttemptChangesRequest {
+  string space_id = 1;
+  mycel.common.v1.ProcedureInferenceAttemptFilter filter = 2;
+  int32 page_size = 3;
+  string after_cursor = 4;
+}
+
+message ListProcedureInferenceAttemptChangesResponse {
+  repeated mycel.common.v1.ProcedureInferenceAttemptChange changes = 1;
+  string next_cursor = 2;
+  uint64 high_water_sequence = 3;
+  uint64 earliest_retained_sequence = 4;
+  uint64 earliest_retained_state_sequence = 5;
+  // high_water_sequence is the highest committed sequence observed for this
+  // space. next_cursor identifies the last examined sequence even when no
+  // change matched. history_gap requires rebuilding from a fresh current-state
+  // snapshot and resuming with its snapshot_cursor; the server never silently
+  // restarts at earliest_retained_sequence.
+  bool history_gap = 6;
 }
 
 message ValidateGraphAutomationBindingRequest {
