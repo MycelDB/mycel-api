@@ -4,8 +4,13 @@ syntax = "proto3";
 
 package mycel.admin.v1;
 
+import "google/protobuf/timestamp.proto";
+import "mycel/admin/v1/semantic.proto";
+
 // AdminSemanticMaintenanceService runs daemon-owned semantic generation rule
-// maintenance work.
+// maintenance work. Provider-budget RPCs require CAPABILITY_SEMANTIC_MANAGE
+// scoped to request.space_id. An authenticated caller without that grant
+// receives PERMISSION_DENIED without disclosure of resource existence.
 service AdminSemanticMaintenanceService {
   rpc GetSemanticMaintenanceStatus(GetSemanticMaintenanceStatusRequest) returns (GetSemanticMaintenanceStatusResponse);
   rpc GetSemanticReliabilityStatus(GetSemanticReliabilityStatusRequest) returns (GetSemanticReliabilityStatusResponse);
@@ -30,6 +35,17 @@ service AdminSemanticMaintenanceService {
   rpc AnalyzeSemanticDirtyWork(AnalyzeSemanticDirtyWorkRequest) returns (AnalyzeSemanticDirtyWorkResponse);
   rpc ProcessSemanticDirtyWork(ProcessSemanticDirtyWorkRequest) returns (ProcessSemanticDirtyWorkResponse);
   rpc BackfillSemanticRule(BackfillSemanticRuleRequest) returns (BackfillSemanticRuleResponse);
+
+  // Returns authenticated daemon capabilities before a live credential is
+  // resolved or persisted. Capabilities describe enforcement, not merely
+  // accepted configuration fields.
+  rpc GetSemanticProviderBudgetCapabilities(GetSemanticProviderBudgetCapabilitiesRequest) returns (GetSemanticProviderBudgetCapabilitiesResponse);
+  // Read-only for either the current rule/binding scope or a retained scope id.
+  rpc GetSemanticProviderBudgetStatus(GetSemanticProviderBudgetStatusRequest) returns (GetSemanticProviderBudgetStatusResponse);
+  // Discovers current and retained scopes without granting scope mutation.
+  rpc ListSemanticProviderBudgetScopes(ListSemanticProviderBudgetScopesRequest) returns (ListSemanticProviderBudgetScopesResponse);
+  // Returns append-only attempt transition events for one immutable scope.
+  rpc ListSemanticProviderBudgetAttemptEvents(ListSemanticProviderBudgetAttemptEventsRequest) returns (ListSemanticProviderBudgetAttemptEventsResponse);
 }
 
 message GetSemanticMaintenanceStatusRequest {
@@ -106,6 +122,259 @@ message GetSemanticReliabilityStatusResponse {
   uint64 retained_gap_interval_count = 20;
   uint64 retained_revision_span = 21;
   uint64 retained_serialized_bytes = 22;
+}
+
+message GetSemanticProviderBudgetCapabilitiesRequest {
+  string space_id = 1;
+}
+
+message GetSemanticProviderBudgetCapabilitiesResponse {
+  string contract_version = 1;
+  bool daemon_owned_scopes = 2;
+  bool pre_provider_attempt_reservation = 3;
+  bool durable_restart_recovery = 4;
+  bool raft_replicated = 5;
+  bool request_limit = 6;
+  bool derived_attempt_limit = 7;
+  bool aggregate_retry_limit = 8;
+  bool per_request_retry_limit = 9;
+  bool provider_concurrency_limit = 10;
+  bool single_item_batching = 11;
+  bool multi_item_batching = 12;
+  bool per_request_input_token_limit = 13;
+  bool aggregate_input_token_limit = 14;
+  bool request_timeout = 15;
+  bool total_timeout = 16;
+  bool versioned_cost_limit = 17;
+  bool conservative_ambiguous_reservations = 18;
+  bool append_only_attempt_events = 19;
+  repeated string supported_currencies = 20;
+  int32 maximum_attempt_event_page_size = 21;
+  int32 maximum_scope_page_size = 22;
+  bool overage_exhaustion = 23;
+}
+
+message SemanticProviderBudgetBindingSelector {
+  string semantic_rule_id = 1;
+  string embedding_binding_key = 2;
+}
+
+message GetSemanticProviderBudgetStatusRequest {
+  string space_id = 1;
+  oneof selector {
+    // Selects a retained immutable scope across rule/binding rollover.
+    string budget_scope_id = 2;
+    // Selects the current scope only.
+    SemanticProviderBudgetBindingSelector current_binding = 3;
+  }
+}
+
+message GetSemanticProviderBudgetStatusResponse {
+  SemanticProviderBudgetStatus status = 1;
+}
+
+message SemanticProviderBudgetStatus {
+  string space_id = 1;
+  string semantic_rule_id = 2;
+  string embedding_binding_key = 3;
+  string budget_scope_id = 4;
+  string correlation_id = 5;
+  string model_endpoint_id = 6;
+  string model_id = 7;
+  string model_endpoint_capability_id = 8;
+  SemanticProviderBudgetScopeState state = 9;
+  SemanticProviderBudgetPolicy limits = 10;
+  SemanticProviderBudgetUsage usage = 11;
+  uint64 earliest_retained_event_sequence = 12;
+  uint64 high_water_event_sequence = 13;
+  google.protobuf.Timestamp created_at = 14;
+  google.protobuf.Timestamp updated_at = 15;
+  google.protobuf.Timestamp expires_at = 16;
+  google.protobuf.Timestamp retention_until = 17;
+  SemanticProviderBudgetDenialReason denial_reason = 18;
+  // Monotonic within a space, never reused, and retained across restart.
+  uint64 scope_sequence = 19;
+}
+
+message ListSemanticProviderBudgetScopesRequest {
+  string space_id = 1;
+  // At least correlation_id or semantic_rule_id is required. When both are
+  // supplied all filters are conjunctive. embedding_binding_key requires
+  // semantic_rule_id.
+  string correlation_id = 2;
+  string semantic_rule_id = 3;
+  string embedding_binding_key = 4;
+  int32 page_size = 5;
+  // Opaque and bound to principal, space, all filters, and the fixed matching
+  // scope set selected by the first page. A continuation supplies page_token
+  // and the identical filters; changing filters is INVALID_ARGUMENT.
+  string page_token = 6;
+}
+
+message ListSemanticProviderBudgetScopesResponse {
+  // Strictly ascending by scope_sequence. References are immutable discovery
+  // records; retrieve current counters with GetSemanticProviderBudgetStatus.
+  // The first page is linearized to a fixed set of matching retained scopes;
+  // scopes created later are excluded from every continuation. If retention
+  // removes a selected scope between pages, continuation fails with
+  // FAILED_PRECONDITION and no partial page. Expired or malformed tokens are
+  // INVALID_ARGUMENT. An empty result is not proof that no matching scope ever
+  // existed; callers expecting one must fail their reconciliation.
+  repeated SemanticProviderBudgetScopeReference scopes = 1;
+  string next_page_token = 2;
+}
+
+message SemanticProviderBudgetScopeReference {
+  uint64 scope_sequence = 1;
+  string budget_scope_id = 2;
+  string semantic_rule_id = 3;
+  string embedding_binding_key = 4;
+  string correlation_id = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp retention_until = 7;
+}
+
+message SemanticProviderBudgetUsage {
+  // A request is one logical embedding operation with one stable request id.
+  // A provider batch is one request regardless of batch_items. The first
+  // reservation consumes one request; each reservation consumes one attempt;
+  // and every retry_index > 0 also consumes one retry attempt.
+  int64 requests = 1;
+  int64 attempts = 2;
+  int64 retry_attempts = 3;
+  int64 batch_items = 4;
+  // Includes reserved attempts and terminal attempts with unresolved provider
+  // effects, so ambiguity cannot free concurrency.
+  int64 active_provider_calls = 5;
+  // Token, duration, and cost totals use charged values only when known and no
+  // greater than their reservations; otherwise they retain the conservative
+  // reserved values. Reserved, expired-reserved, and ambiguous attempts remain
+  // counted. Unknown provider effects are never released as unused capacity.
+  // A charged overage is counted at its checked actual value, immediately
+  // exhausts the scope with ACCOUNTING, and is recorded in its terminal event.
+  // Summation overflow saturates the affected counter at int64 max, sets
+  // accounting_overflow, exhausts the scope, and prevents later attempts.
+  int64 input_tokens = 6;
+  int64 provider_millis = 7;
+  int64 estimated_cost_micros = 8;
+  int64 ambiguous_attempts = 9;
+  bool accounting_overflow = 10;
+}
+
+enum SemanticProviderBudgetScopeState {
+  SEMANTIC_PROVIDER_BUDGET_SCOPE_STATE_UNSPECIFIED = 0;
+  SEMANTIC_PROVIDER_BUDGET_SCOPE_STATE_ACTIVE = 1;
+  SEMANTIC_PROVIDER_BUDGET_SCOPE_STATE_COMPLETED = 2;
+  SEMANTIC_PROVIDER_BUDGET_SCOPE_STATE_EXPIRED = 3;
+  SEMANTIC_PROVIDER_BUDGET_SCOPE_STATE_EXHAUSTED = 4;
+}
+
+enum SemanticProviderBudgetDenialReason {
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_UNSPECIFIED = 0;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_NONE = 1;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_REQUEST_LIMIT = 2;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_ATTEMPT_LIMIT = 3;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_RETRY_LIMIT = 4;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_PER_REQUEST_RETRY_LIMIT = 5;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_CONCURRENCY_LIMIT = 6;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_BATCH_LIMIT = 7;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_INPUT_TOKEN_LIMIT = 8;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_PROVIDER_TIME_LIMIT = 9;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_DEADLINE = 10;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_COST_LIMIT = 11;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_ROUTE_MISMATCH = 12;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_ACCOUNTING = 13;
+  SEMANTIC_PROVIDER_BUDGET_DENIAL_REASON_CAPACITY = 14;
+}
+
+message ListSemanticProviderBudgetAttemptEventsRequest {
+  string space_id = 1;
+  string budget_scope_id = 2;
+  // Optional exclusive sequence. It is mutually exclusive with page_token.
+  // retry_index is zero for the original attempt and increases by one for each
+  // later attempt with the same request_id.
+  uint64 after_sequence = 3;
+  // Bounded to maximum_attempt_event_page_size advertised by the daemon.
+  int32 page_size = 4;
+  // Opaque and bound to principal, space, scope, after_sequence, and the fixed
+  // snapshot_high_water_sequence selected by the first page.
+  string page_token = 5;
+}
+
+message ListSemanticProviderBudgetAttemptEventsResponse {
+  // Strictly ascending by event_sequence. Each event is immutable. A provider
+  // attempt has exactly one RESERVED event before any provider effect and at
+  // most one later terminal event with the same attempt_id and version 2.
+  repeated SemanticProviderBudgetAttemptEvent events = 1;
+  string next_page_token = 2;
+  uint64 earliest_retained_event_sequence = 3;
+  // Fixed on the first page and unchanged on every continuation page. Events
+  // appended later are excluded; callers start another read after this value.
+  uint64 snapshot_high_water_sequence = 4;
+  // Current high-water at the response linearization point; it may exceed the
+  // snapshot boundary on continuation pages.
+  uint64 current_high_water_sequence = 5;
+  // True exactly when after_sequence + 1 is less than the earliest retained
+  // sequence, including an initial after_sequence of zero. Arithmetic is
+  // overflow checked. When no event has ever existed, earliest retained and
+  // both high-water values are zero and history_gap is false. When events once
+  // existed but all are pruned, earliest retained is zero, current high-water
+  // remains non-zero, and history_gap is true exactly when after_sequence is
+  // less than snapshot_high_water_sequence. A maximum uint64 after_sequence is
+  // INVALID_ARGUMENT. If retention removes a required event
+  // between pages, the continuation fails with FAILED_PRECONDITION and returns
+  // no partial page. Expired, malformed, or filter-mismatched tokens are
+  // INVALID_ARGUMENT. Callers must fail reconciliation on history_gap.
+  bool history_gap = 6;
+}
+
+message SemanticProviderBudgetAttemptEvent {
+  uint64 event_sequence = 1;
+  string budget_scope_id = 2;
+  // Daemon-generated opaque identities. They must not encode graph identities,
+  // source text, credentials, provider request ids, or provider bodies.
+  string attempt_id = 3;
+  // Exactly 1 for RESERVED and exactly 2 for the optional terminal event.
+  uint32 attempt_version = 4;
+  string request_id = 5;
+  int64 retry_index = 6;
+  SemanticProviderBudgetAttemptState state = 7;
+  int64 batch_items = 8;
+  int64 reserved_input_tokens = 9;
+  int64 charged_input_tokens = 10;
+  int64 reserved_provider_millis = 11;
+  int64 charged_provider_millis = 12;
+  int64 reserved_cost_micros = 13;
+  int64 charged_cost_micros = 14;
+  bool usage_known = 15;
+  bool outcome_known = 16;
+  bool provider_duration_known = 17;
+  SemanticProviderBudgetOutcomeCategory outcome_category = 18;
+  google.protobuf.Timestamp recorded_at = 19;
+  google.protobuf.Timestamp reserved_until = 20;
+  // True only when final cost multiplication or ceiling division exceeded
+  // int64. charged_cost_micros is then int64 max, the aggregate cost saturates,
+  // accounting_overflow is true, and the scope is exhausted with ACCOUNTING.
+  bool charged_cost_saturated = 21;
+}
+
+enum SemanticProviderBudgetAttemptState {
+  SEMANTIC_PROVIDER_BUDGET_ATTEMPT_STATE_UNSPECIFIED = 0;
+  SEMANTIC_PROVIDER_BUDGET_ATTEMPT_STATE_RESERVED = 1;
+  SEMANTIC_PROVIDER_BUDGET_ATTEMPT_STATE_SUCCEEDED = 2;
+  SEMANTIC_PROVIDER_BUDGET_ATTEMPT_STATE_FAILED = 3;
+  SEMANTIC_PROVIDER_BUDGET_ATTEMPT_STATE_CANCELED = 4;
+  SEMANTIC_PROVIDER_BUDGET_ATTEMPT_STATE_AMBIGUOUS = 5;
+}
+
+enum SemanticProviderBudgetOutcomeCategory {
+  SEMANTIC_PROVIDER_BUDGET_OUTCOME_CATEGORY_UNSPECIFIED = 0;
+  SEMANTIC_PROVIDER_BUDGET_OUTCOME_CATEGORY_NONE = 1;
+  SEMANTIC_PROVIDER_BUDGET_OUTCOME_CATEGORY_SUCCESS = 2;
+  SEMANTIC_PROVIDER_BUDGET_OUTCOME_CATEGORY_TRANSIENT_FAILURE = 3;
+  SEMANTIC_PROVIDER_BUDGET_OUTCOME_CATEGORY_PERMANENT_FAILURE = 4;
+  SEMANTIC_PROVIDER_BUDGET_OUTCOME_CATEGORY_CANCELED_BEFORE_EFFECT = 5;
+  SEMANTIC_PROVIDER_BUDGET_OUTCOME_CATEGORY_AMBIGUOUS = 6;
 }
 
 message SemanticRebuildStatus {

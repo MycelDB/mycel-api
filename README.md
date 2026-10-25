@@ -83,6 +83,20 @@ Resource IDs are opaque unless a field comment says otherwise. Clients should st
 
 List/search RPCs should expose bounded result sets and cursor-style continuation where needed. Clients should treat cursors as opaque values and should not assume cursor stability across unrelated queries.
 
+### Daemon-owned semantic provider budgets
+
+`mycel.admin.v1.SemanticEmbeddingBinding.provider_budget` declares operator
+limits for provider-backed semantic work. The daemon owns the resulting budget
+scope, pins it to the resolved route, and reserves every provider attempt;
+clients cannot create scopes or reserve/release capacity directly.
+
+`AdminSemanticMaintenanceService` exposes authenticated capability discovery and
+read-only scope and append-only attempt-transition evidence so operators can
+fail closed before resolving a live credential and reconcile requests, retries,
+tokens, duration, cost, and ambiguous outcomes afterward. Event pagination is
+bounded, ascending, and fixed to a snapshot high-water mark using opaque,
+filter-bound cursors. A reported history gap is not complete reconciliation.
+
 ### Transaction commit idempotency
 
 `mycel.client.v1.CommitTransactionRequest.idempotency_key` provides durable
