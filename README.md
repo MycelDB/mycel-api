@@ -83,6 +83,18 @@ Resource IDs are opaque unless a field comment says otherwise. Clients should st
 
 List/search RPCs should expose bounded result sets and cursor-style continuation where needed. Clients should treat cursors as opaque values and should not assume cursor stability across unrelated queries.
 
+### Typed semantic trigger events
+
+`mycel.admin.v1.SemanticTriggerPolicy.event_types` is the authoritative typed
+representation for the closed set of semantic graph-change triggers. Trigger
+values are treated as a set, and an omitted set defaults to `CHANGED`.
+`UNSPECIFIED` and unknown numeric values are invalid when explicitly supplied.
+
+The deprecated `events` string field remains available during migration. A
+client may dual-write both representations for compatibility with older daemons
+only when they normalize to the same set. Daemons populate both representations
+in responses so older generated clients continue to observe trigger policy.
+
 ### Daemon-owned semantic provider budgets
 
 `mycel.admin.v1.SemanticEmbeddingBinding.provider_budget` declares operator
