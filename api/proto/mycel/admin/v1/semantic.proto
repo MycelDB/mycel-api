@@ -120,12 +120,36 @@ message SemanticGenerationRule {
   string updated_at = 17;
 }
 
+// SemanticTriggerEventType identifies a committed graph change that can make
+// semantic output stale. The values in a trigger policy are treated as a set.
+enum SemanticTriggerEventType {
+  SEMANTIC_TRIGGER_EVENT_TYPE_UNSPECIFIED = 0;
+  SEMANTIC_TRIGGER_EVENT_TYPE_CHANGED = 1;
+  SEMANTIC_TRIGGER_EVENT_TYPE_NODE_CREATED = 2;
+  SEMANTIC_TRIGGER_EVENT_TYPE_NODE_UPDATED = 3;
+  SEMANTIC_TRIGGER_EVENT_TYPE_NODE_DELETED = 4;
+  SEMANTIC_TRIGGER_EVENT_TYPE_EDGE_CHANGED = 5;
+  SEMANTIC_TRIGGER_EVENT_TYPE_EDGE_CREATED = 6;
+  SEMANTIC_TRIGGER_EVENT_TYPE_EDGE_UPDATED = 7;
+  SEMANTIC_TRIGGER_EVENT_TYPE_EDGE_DELETED = 8;
+}
+
 message SemanticTriggerPolicy {
-  repeated string events = 1;
+  // Deprecated compatibility representation. New clients should use
+  // event_types. During migration a client may send both fields when they
+  // describe the same normalized set. Conflicting representations are invalid.
+  // Responses populate both fields so clients generated from older contracts
+  // continue to observe the configured triggers.
+  repeated string events = 1 [deprecated = true];
   repeated string labels = 2;
 
   // Go duration string such as "120s". Empty uses daemon default.
   string debounce = 3;
+
+  // Typed trigger events. Explicit UNSPECIFIED and unknown numeric values are
+  // invalid. If both event representations are empty, the policy defaults to
+  // SEMANTIC_TRIGGER_EVENT_TYPE_CHANGED.
+  repeated SemanticTriggerEventType event_types = 4;
 }
 
 message SemanticTargetSelector {

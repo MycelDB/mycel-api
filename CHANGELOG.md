@@ -8,6 +8,7 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ### Added
 
+- Added typed semantic trigger events while retaining the deprecated string representation for equivalent dual-write and older-client response compatibility.
 - Added direct semantic continuation tokens, typed hard-eligibility filters, authorization-safe filter diagnostics, and safe per-result generation/route provenance.
 - Added Admin semantic reliability and rebuild RPCs with separately named analyzed/fresh frontiers, bounded gap/capacity diagnostics, generation/rebuild state, and work revision/generation evidence.
 - Added typed, sanitized procedure-inference attempt/current-state/change-polling contracts, typed automation-run projections, procedure enable/disable barriers, and procedure/binding Intelligence Access selectors.
@@ -16,6 +17,7 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 ### Compatibility
 
 - Additive `mycel.client.v1` and `mycel.admin.v1` fields and RPCs preserve existing field numbers and wire compatibility. Clients must capability-check the new RPCs before requiring SGT5 or procedure-inference observability/control proof.
+- `SemanticTriggerPolicy.events` remains readable and writable for compatibility but is deprecated. New clients should use `event_types`; clients supporting older daemons may dual-write equivalent representations.
 - Generated Go service interfaces gain the new automation RPC methods and four Admin Semantic Maintenance provider-budget RPC methods; custom implementations must update or embed the generated unimplemented servers. Additive Rust message fields affect exhaustive struct literals while preserving protobuf wire compatibility.
 
 ## [v0.20.1] - 2026-10-20
