@@ -95,6 +95,28 @@ client may dual-write both representations for compatibility with older daemons
 only when they normalize to the same set. Daemons populate both representations
 in responses so older generated clients continue to observe trigger policy.
 
+### Vector-store catalog identity
+
+`mycel.admin.v1.VectorStore.vector_store_id` is the immutable authoritative
+identity and durable foreign-reference target. `key` is the stable machine key;
+`name` is the renameable operator-facing display label. Both key and name are
+required and unique within the system catalog after removing surrounding Unicode
+whitespace and applying the Unicode default lowercase mapping. Keys are stored in
+normalized form; names preserve their trimmed spelling.
+
+A package definition with an ID updates that UUID. For package compatibility, a
+definition without an ID may update the single existing store with the same
+normalized key, but ambiguous lookup fails closed. New uniqueness collisions use
+`ALREADY_EXISTS`; ambiguous legacy catalogs use `FAILED_PRECONDITION`. Both carry
+a sanitized `mycel.admin.v1.VectorStoreCatalogConflict` status detail. Blank
+values use `INVALID_ARGUMENT`.
+
+Legacy ambiguous catalogs remain listable for diagnosis and UUID-directed
+remediation. Restores reject blank or ambiguous catalogs. Implementations and
+clients must never silently rename, merge, replace, delete, or arbitrarily select
+a store to resolve a collision. Display names are not foreign keys, so renaming a
+store does not affect UUID-backed semantic rules.
+
 ### Daemon-owned semantic provider budgets
 
 `mycel.admin.v1.SemanticEmbeddingBinding.provider_budget` declares operator
