@@ -135,21 +135,16 @@ enum SemanticTriggerEventType {
 }
 
 message SemanticTriggerPolicy {
-  // Deprecated compatibility representation. New clients should use
-  // event_types. During migration a client may send both fields when they
-  // describe the same normalized set. Conflicting representations are invalid.
-  // Responses populate both fields so clients generated from older contracts
-  // continue to observe the configured triggers.
-  repeated string events = 1 [deprecated = true];
+  // Typed trigger events. Explicit UNSPECIFIED and unknown numeric values are
+  // invalid. An empty set defaults to SEMANTIC_TRIGGER_EVENT_TYPE_CHANGED.
+  repeated SemanticTriggerEventType events = 1;
   repeated string labels = 2;
 
   // Go duration string such as "120s". Empty uses daemon default.
   string debounce = 3;
 
-  // Typed trigger events. Explicit UNSPECIFIED and unknown numeric values are
-  // invalid. If both event representations are empty, the policy defaults to
-  // SEMANTIC_TRIGGER_EVENT_TYPE_CHANGED.
-  repeated SemanticTriggerEventType event_types = 4;
+  reserved 4;
+  reserved "event_types";
 }
 
 message SemanticTargetSelector {
