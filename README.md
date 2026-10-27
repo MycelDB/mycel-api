@@ -83,6 +83,15 @@ Resource IDs are opaque unless a field comment says otherwise. Clients should st
 
 List/search RPCs should expose bounded result sets and cursor-style continuation where needed. Clients should treat cursors as opaque values and should not assume cursor stability across unrelated queries.
 
+### Channel-specific search queries
+
+`mycel.client.v1.SearchRequest` carries query text only inside the enabled
+retrieval channel options. `lexical.query` contains lexical query-language
+syntax, while `semantic.query` contains natural-language text to embed. Lexical
+mode requires `lexical.query`; hybrid mode requires a non-empty query for each
+weighted or otherwise required channel. The former top-level field 4 is reserved
+and is not used as fallback input.
+
 ### Typed semantic trigger events
 
 `mycel.admin.v1.SemanticTriggerPolicy.events` is an enum-only representation

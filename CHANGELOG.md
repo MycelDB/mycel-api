@@ -16,10 +16,12 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ### Changed
 
+- `SearchRequest` now requires query text in the enabled retrieval channel's options. The deprecated top-level `query` field was removed and reserved; lexical and semantic retrieval no longer share fallback text.
 - `SemanticTriggerPolicy.events` is now the sole typed enum field for semantic graph-change triggers. The transitional `event_types` field was removed and reserved.
 
 ### Compatibility
 
+- The Search query change is intentionally source-incompatible: clients must regenerate bindings and populate `lexical.query` and/or `semantic.query`. Legacy top-level field 4 is reserved and ignored by the protobuf contract; implementations do not use it as fallback input.
 - The semantic trigger change is intentionally source- and wire-incompatible: field 1 changed from repeated strings to repeated enum values. Clients must regenerate bindings and cannot dual-write legacy trigger strings.
 - Other additive `mycel.client.v1` and `mycel.admin.v1` fields and RPCs preserve existing field numbers and wire compatibility. Clients must capability-check the new RPCs before requiring SGT5 or procedure-inference observability/control proof.
 - Generated Go service interfaces gain the new automation RPC methods and four Admin Semantic Maintenance provider-budget RPC methods; custom implementations must update or embed the generated unimplemented servers. Additive Rust message fields affect exhaustive struct literals while preserving protobuf wire compatibility.
