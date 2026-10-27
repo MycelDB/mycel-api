@@ -84,7 +84,12 @@ enum IntelligenceAccessUsageStatus {
 
 // IntelligenceAccessScope scopes grants, policies, decisions, and usage
 // telemetry across automations, semantic generation rules, and future
-// intelligence workloads.
+// intelligence workloads. Populated selectors are conjunctive. An unset
+// version matches all versions of its populated ID; a populated version
+// requires the corresponding ID. A procedure_id with no procedure_version is
+// therefore a logical-procedure scope across versions. Procedure-scoped
+// positive authorization requires an exact version; deny policy may omit the
+// version to revoke the logical procedure across versions.
 message IntelligenceAccessScope {
   string space_id = 1;
   string domain_id = 2;
@@ -92,4 +97,10 @@ message IntelligenceAccessScope {
   string node_id = 4;
   bool include_descendants = 5;
   string embedding_binding_key = 6;
+  string procedure_id = 7;
+  int32 procedure_version = 8;
+  string binding_id = 9;
+  int32 binding_version = 10;
+  string invocation_id = 11;
+  string run_id = 12;
 }

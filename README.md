@@ -83,6 +83,62 @@ Resource IDs are opaque unless a field comment says otherwise. Clients should st
 
 List/search RPCs should expose bounded result sets and cursor-style continuation where needed. Clients should treat cursors as opaque values and should not assume cursor stability across unrelated queries.
 
+### Channel-specific search queries
+
+`mycel.client.v1.SearchRequest` carries query text only inside the enabled
+retrieval channel options. `lexical.query` contains lexical query-language
+syntax, while `semantic.query` contains natural-language text to embed. Lexical
+mode requires `lexical.query`; hybrid mode requires a non-empty query for each
+weighted or otherwise required channel. The former top-level field 4 is reserved
+and is not used as fallback input.
+
+### Typed semantic trigger events
+
+`mycel.admin.v1.SemanticTriggerPolicy.events` is an enum-only representation
+for the closed set of semantic graph-change triggers. Trigger values are treated
+as a set, and an omitted set defaults to `CHANGED`. `UNSPECIFIED` and unknown
+numeric values are invalid when explicitly supplied.
+
+The earlier string-valued `events` contract and transitional `event_types`
+field are not supported. Clients must regenerate their bindings and send typed
+`events`; implementations do not accept or project legacy trigger strings.
+
+### Vector-store catalog identity
+
+`mycel.admin.v1.VectorStore.vector_store_id` is the immutable authoritative
+identity and durable foreign-reference target. `key` is the stable machine key;
+`name` is the renameable operator-facing display label. Both key and name are
+required and unique within the system catalog after removing surrounding Unicode
+whitespace and applying the Unicode default lowercase mapping. Keys are stored in
+normalized form; names preserve their trimmed spelling.
+
+A package definition with an ID updates that UUID. For package compatibility, a
+definition without an ID may update the single existing store with the same
+normalized key, but ambiguous lookup fails closed. New uniqueness collisions use
+`ALREADY_EXISTS`; ambiguous legacy catalogs use `FAILED_PRECONDITION`. Both carry
+a sanitized `mycel.admin.v1.VectorStoreCatalogConflict` status detail. Blank
+values use `INVALID_ARGUMENT`.
+
+Legacy ambiguous catalogs remain listable for diagnosis and UUID-directed
+remediation. Restores reject blank or ambiguous catalogs. Implementations and
+clients must never silently rename, merge, replace, delete, or arbitrarily select
+a store to resolve a collision. Display names are not foreign keys, so renaming a
+store does not affect UUID-backed semantic rules.
+
+### Daemon-owned semantic provider budgets
+
+`mycel.admin.v1.SemanticEmbeddingBinding.provider_budget` declares operator
+limits for provider-backed semantic work. The daemon owns the resulting budget
+scope, pins it to the resolved route, and reserves every provider attempt;
+clients cannot create scopes or reserve/release capacity directly.
+
+`AdminSemanticMaintenanceService` exposes authenticated capability discovery and
+read-only scope and append-only attempt-transition evidence so operators can
+fail closed before resolving a live credential and reconcile requests, retries,
+tokens, duration, cost, and ambiguous outcomes afterward. Event pagination is
+bounded, ascending, and fixed to a snapshot high-water mark using opaque,
+filter-bound cursors. A reported history gap is not complete reconciliation.
+
 ### Transaction commit idempotency
 
 `mycel.client.v1.CommitTransactionRequest.idempotency_key` provides durable

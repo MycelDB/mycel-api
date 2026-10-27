@@ -1,0 +1,177 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package mycel.common.v1;
+
+import "google/protobuf/timestamp.proto";
+import "mycel/common/v1/inference.proto";
+
+// ProcedureInferenceAttemptState is the authoritative lifecycle state for one
+// possible provider side effect initiated by a graph procedure.
+enum ProcedureInferenceAttemptState {
+  PROCEDURE_INFERENCE_ATTEMPT_STATE_UNSPECIFIED = 0;
+  PROCEDURE_INFERENCE_ATTEMPT_STATE_REQUESTED = 1;
+  PROCEDURE_INFERENCE_ATTEMPT_STATE_AUTHORIZED = 2;
+  PROCEDURE_INFERENCE_ATTEMPT_STATE_STARTED = 3;
+  PROCEDURE_INFERENCE_ATTEMPT_STATE_SUCCEEDED = 4;
+  PROCEDURE_INFERENCE_ATTEMPT_STATE_FAILED = 5;
+  PROCEDURE_INFERENCE_ATTEMPT_STATE_DENIED = 6;
+  PROCEDURE_INFERENCE_ATTEMPT_STATE_CANCELED = 7;
+  PROCEDURE_INFERENCE_ATTEMPT_STATE_AMBIGUOUS = 8;
+}
+
+enum AutomationRunState {
+  AUTOMATION_RUN_STATE_UNSPECIFIED = 0;
+  AUTOMATION_RUN_STATE_RUNNING = 1;
+  AUTOMATION_RUN_STATE_SUCCEEDED = 2;
+  AUTOMATION_RUN_STATE_SKIPPED = 3;
+  AUTOMATION_RUN_STATE_RETRYABLE = 4;
+  AUTOMATION_RUN_STATE_FAILED = 5;
+  AUTOMATION_RUN_STATE_CANCELED = 6;
+}
+
+enum ProcedureControlTargetStatus {
+  PROCEDURE_CONTROL_TARGET_STATUS_UNSPECIFIED = 0;
+  PROCEDURE_CONTROL_TARGET_STATUS_ENABLED = 1;
+  PROCEDURE_CONTROL_TARGET_STATUS_DISABLED = 2;
+}
+
+// ProcedureInferenceAttempt contains sanitized execution evidence. Prompts,
+// outputs, graph content, credentials, provider request IDs, raw errors, and
+// arbitrary provider metadata are intentionally excluded.
+message ProcedureInferenceAttempt {
+  string id = 1;
+  uint64 record_version = 2;
+  string space_id = 3;
+  string domain_id = 4;
+  string procedure_id = 5;
+  int32 procedure_version = 6;
+  string binding_id = 7;
+  int32 binding_version = 8;
+  string invocation_id = 9;
+  string run_id = 10;
+  int32 run_attempt_number = 11;
+  string workflow_step_id = 12;
+  int32 provider_attempt_number = 13;
+  string source_event_id = 14;
+  string source_transaction_id = 15;
+  uint64 source_graph_revision = 16;
+  string event_origin_principal_id = 17;
+  string actor_principal_id = 18;
+  string owner_principal_id = 19;
+  string on_behalf_of_principal_id = 20;
+  InferenceOperation operation = 21;
+  string profile_id = 22;
+  string endpoint_id = 23;
+  string model_id = 24;
+  string capability_id = 25;
+  string policy_decision_id = 26;
+  string credential_grant_id = 27;
+  uint64 authorization_revision = 28;
+  uint64 configuration_revision = 29;
+  ProcedureInferenceAttemptState state = 30;
+  string outcome_category = 31;
+  int64 input_tokens = 32;
+  int64 output_tokens = 33;
+  int64 total_tokens = 34;
+  string token_count_authority = 35;
+  int64 provider_duration_millis = 36;
+  string publication_disposition = 37;
+  google.protobuf.Timestamp requested_at = 38;
+  google.protobuf.Timestamp authorized_at = 39;
+  google.protobuf.Timestamp started_at = 40;
+  google.protobuf.Timestamp completed_at = 41;
+}
+
+// ProcedureInferenceAttemptChange is immutable and append-only. Sequence is
+// contiguous and strictly increasing within one space_id; event_id is stable
+// for at-least-once deduplication across repeated reads.
+message ProcedureInferenceAttemptChange {
+  string event_id = 1;
+  string schema_version = 2;
+  string space_id = 3;
+  uint64 sequence = 4;
+  string change_kind = 5;
+  string attempt_id = 6;
+  uint64 record_version = 7;
+  ProcedureInferenceAttempt attempt = 8;
+  google.protobuf.Timestamp occurred_at = 9;
+  google.protobuf.Timestamp committed_at = 10;
+}
+
+message ProcedureInferenceAttemptFilter {
+  string domain_id = 1;
+  string procedure_id = 2;
+  int32 procedure_version = 3;
+  string binding_id = 4;
+  int32 binding_version = 5;
+  string invocation_id = 6;
+  string run_id = 7;
+  string workflow_step_id = 8;
+  string endpoint_id = 9;
+  string model_id = 10;
+  string capability_id = 11;
+  InferenceOperation operation = 12;
+  repeated ProcedureInferenceAttemptState states = 13;
+  string event_origin_principal_id = 14;
+  string actor_principal_id = 15;
+  string owner_principal_id = 16;
+  string on_behalf_of_principal_id = 17;
+  google.protobuf.Timestamp requested_at_or_after = 18;
+  google.protobuf.Timestamp requested_before = 19;
+  google.protobuf.Timestamp completed_at_or_after = 20;
+  google.protobuf.Timestamp completed_before = 21;
+}
+
+// AutomationRun is the typed sanitized run projection. Large attempt sets are
+// retrieved from ListProcedureInferenceAttempts.
+message AutomationRun {
+  string id = 1;
+  string domain_id = 2;
+  string invocation_id = 3;
+  string binding_id = 4;
+  int32 binding_version = 5;
+  string procedure_id = 6;
+  int32 procedure_version = 7;
+  int32 attempt_number = 8;
+  AutomationRunState state = 9;
+  string outcome_category = 10;
+  string actor_principal_id = 11;
+  string owner_principal_id = 12;
+  string on_behalf_of_principal_id = 13;
+  string event_origin_principal_id = 14;
+  string inference_profile = 15;
+  string inference_profile_id = 16;
+  string policy_decision_id = 17;
+  string endpoint_id = 18;
+  string model_id = 19;
+  string capability_id = 20;
+  int64 input_tokens = 21;
+  int64 output_tokens = 22;
+  int64 total_tokens = 23;
+  string token_count_authority = 24;
+  repeated string inference_attempt_ids = 25;
+  google.protobuf.Timestamp started_at = 26;
+  google.protobuf.Timestamp completed_at = 27;
+}
+
+// ProcedureControlBarrier is returned only after all affected partitions have
+// acknowledged the target epoch. A completed disable prevents any later
+// provider-start or output-publication transition at an older epoch. Attempts
+// already in STARTED may finish but unpublished output remains fenced.
+message ProcedureControlBarrier {
+  string space_id = 1;
+  string domain_id = 2;
+  string procedure_id = 3;
+  int32 procedure_version = 4;
+  ProcedureControlTargetStatus target_status = 5;
+  uint64 control_epoch = 6;
+  string controlling_principal_id = 7;
+  repeated uint32 affected_partitions = 8;
+  repeated uint32 acknowledged_partitions = 9;
+  bool completed = 10;
+  uint64 completion_revision = 11;
+  google.protobuf.Timestamp committed_at = 12;
+  google.protobuf.Timestamp completed_at = 13;
+}

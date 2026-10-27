@@ -35,6 +35,14 @@ message AdminInferenceCatalogServiceApplyInferencePackageRequest {
   string checksum = 4;
   repeated ModelEndpoint model_endpoints = 5;
   repeated InferenceModel models = 6;
+  // Vector stores are created or updated by authoritative vector_store_id when
+  // supplied. A definition without an ID may update the single store having the
+  // same normalized key for package compatibility; an ambiguous key is rejected.
+  // Key or name uniqueness conflicts fail with ALREADY_EXISTS and a
+  // VectorStoreCatalogConflict status detail. Blank definitions fail with
+  // INVALID_ARGUMENT. The implementation must validate the complete vector-store
+  // set before making package changes visible; it never renames, merges, replaces,
+  // or deletes a resource to resolve a collision.
   repeated VectorStore vector_stores = 7;
   repeated ModelEndpointCapabilityDefinition model_endpoint_capabilities = 8;
 }
@@ -86,6 +94,9 @@ message AdminInferenceCatalogServiceListVectorStoresRequest {
 }
 
 message AdminInferenceCatalogServiceListVectorStoresResponse {
+  // Legacy catalogs containing blank or duplicate normalized keys or names remain
+  // readable so operators can diagnose them. Clients must use vector_store_id as
+  // identity and must not resolve an ambiguous legacy key or name themselves.
   repeated VectorStore vector_stores = 1;
   string next_page_token = 2;
 }
@@ -219,15 +230,52 @@ message InferenceModel {
   bool enabled = 15;
 }
 
+// VectorStore is one entry in the system-scoped vector-store catalog.
+//
+// vector_store_id is the immutable authoritative identity and durable foreign
+// reference. key is a stable machine/configuration identifier. name is the
+// operator-facing display name and may be changed without changing the ID or
+// breaking UUID-based references. New and updated stores require non-empty key
+// and name values, and both are unique after deterministic normalization within
+// the system catalog.
+//
+// Normalization removes leading and trailing Unicode whitespace and applies the
+// Unicode default lowercase mapping. The key is stored in normalized form; the
+// display name preserves its trimmed spelling. Names are labels, not foreign
+// keys. Legacy ambiguous catalogs remain listable for remediation, but ambiguous
+// key/name lookup and unrelated colliding mutations fail closed. Snapshot or
+// backup restore rejects ambiguous or blank catalogs rather than silently
+// renaming, merging, replacing, or deleting entries.
 message VectorStore {
+  // Immutable authoritative UUID identity.
   string vector_store_id = 1;
+  // Required stable machine key, unique after catalog normalization.
   string key = 2;
+  // Required renameable display label, unique after catalog normalization.
   string name = 3;
   string type = 4;
   string privacy_class = 5;
   bool enabled = 6;
   google.protobuf.Struct config = 7;
   mycel.common.v1.InferencePrivacyClass privacy_class_value = 8;
+}
+
+// VectorStoreCatalogConflict is attached to an ALREADY_EXISTS or
+// FAILED_PRECONDITION gRPC status when a vector-store mutation conflicts with a
+// unique key/name or encounters ambiguous legacy data. Values are normalized and
+// contain no vector-store configuration or secret material.
+message VectorStoreCatalogConflict {
+  VectorStoreCatalogConflictReason reason = 1;
+  string normalized_value = 2;
+  repeated string conflicting_vector_store_ids = 3;
+}
+
+enum VectorStoreCatalogConflictReason {
+  VECTOR_STORE_CATALOG_CONFLICT_REASON_UNSPECIFIED = 0;
+  VECTOR_STORE_CATALOG_CONFLICT_REASON_KEY_ALREADY_EXISTS = 1;
+  VECTOR_STORE_CATALOG_CONFLICT_REASON_NAME_ALREADY_EXISTS = 2;
+  VECTOR_STORE_CATALOG_CONFLICT_REASON_LEGACY_AMBIGUOUS_KEY = 3;
+  VECTOR_STORE_CATALOG_CONFLICT_REASON_LEGACY_AMBIGUOUS_NAME = 4;
 }
 
 message ModelEndpointCapability {
