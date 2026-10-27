@@ -8,17 +8,20 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ### Added
 
-- Added typed semantic trigger events while retaining the deprecated string representation for equivalent dual-write and older-client response compatibility.
 - Added direct semantic continuation tokens, typed hard-eligibility filters, authorization-safe filter diagnostics, and safe per-result generation/route provenance.
 - Added Admin semantic reliability and rebuild RPCs with separately named analyzed/fresh frontiers, bounded gap/capacity diagnostics, generation/rebuild state, and work revision/generation evidence.
 - Added typed, sanitized procedure-inference attempt/current-state/change-polling contracts, typed automation-run projections, procedure enable/disable barriers, and procedure/binding Intelligence Access selectors.
 - Added daemon-owned semantic provider-budget policy, authenticated enforcement-capability discovery, retained-scope status/discovery, and append-only attempt-event reconciliation contracts for bounded live-provider operation.
 - Defined UUID-authoritative vector-store identity, required system-catalog-unique normalized keys and display names, rename semantics, legacy remediation behavior, and structured uniqueness-conflict status details.
 
+### Changed
+
+- `SemanticTriggerPolicy.events` is now the sole typed enum field for semantic graph-change triggers. The transitional `event_types` field was removed and reserved.
+
 ### Compatibility
 
-- Additive `mycel.client.v1` and `mycel.admin.v1` fields and RPCs preserve existing field numbers and wire compatibility. Clients must capability-check the new RPCs before requiring SGT5 or procedure-inference observability/control proof.
-- `SemanticTriggerPolicy.events` remains readable and writable for compatibility but is deprecated. New clients should use `event_types`; clients supporting older daemons may dual-write equivalent representations.
+- The semantic trigger change is intentionally source- and wire-incompatible: field 1 changed from repeated strings to repeated enum values. Clients must regenerate bindings and cannot dual-write legacy trigger strings.
+- Other additive `mycel.client.v1` and `mycel.admin.v1` fields and RPCs preserve existing field numbers and wire compatibility. Clients must capability-check the new RPCs before requiring SGT5 or procedure-inference observability/control proof.
 - Generated Go service interfaces gain the new automation RPC methods and four Admin Semantic Maintenance provider-budget RPC methods; custom implementations must update or embed the generated unimplemented servers. Additive Rust message fields affect exhaustive struct literals while preserving protobuf wire compatibility.
 - Existing `VectorStore` field numbers are unchanged. The new conflict message and enum are additive, while daemon validation now rejects blank or normalized-colliding vector-store keys and names instead of resolving them implicitly.
 

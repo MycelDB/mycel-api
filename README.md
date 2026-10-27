@@ -85,15 +85,14 @@ List/search RPCs should expose bounded result sets and cursor-style continuation
 
 ### Typed semantic trigger events
 
-`mycel.admin.v1.SemanticTriggerPolicy.event_types` is the authoritative typed
-representation for the closed set of semantic graph-change triggers. Trigger
-values are treated as a set, and an omitted set defaults to `CHANGED`.
-`UNSPECIFIED` and unknown numeric values are invalid when explicitly supplied.
+`mycel.admin.v1.SemanticTriggerPolicy.events` is an enum-only representation
+for the closed set of semantic graph-change triggers. Trigger values are treated
+as a set, and an omitted set defaults to `CHANGED`. `UNSPECIFIED` and unknown
+numeric values are invalid when explicitly supplied.
 
-The deprecated `events` string field remains available during migration. A
-client may dual-write both representations for compatibility with older daemons
-only when they normalize to the same set. Daemons populate both representations
-in responses so older generated clients continue to observe trigger policy.
+The earlier string-valued `events` contract and transitional `event_types`
+field are not supported. Clients must regenerate their bindings and send typed
+`events`; implementations do not accept or project legacy trigger strings.
 
 ### Vector-store catalog identity
 
