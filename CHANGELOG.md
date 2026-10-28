@@ -6,6 +6,8 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.21.0] - 2026-10-27
+
 ### Added
 
 - Added direct semantic continuation tokens, typed hard-eligibility filters, authorization-safe filter diagnostics, and safe per-result generation/route provenance.
