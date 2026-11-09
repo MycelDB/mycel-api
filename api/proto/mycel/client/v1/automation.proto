@@ -42,6 +42,13 @@ service AutomationService {
   rpc ListGraphAutomationBindings(ListGraphAutomationBindingsRequest) returns (ListGraphAutomationBindingsResponse);
   rpc EnableGraphAutomationBinding(EnableGraphAutomationBindingRequest) returns (EnableGraphAutomationBindingResponse);
   rpc DisableGraphAutomationBinding(DisableGraphAutomationBindingRequest) returns (DisableGraphAutomationBindingResponse);
+  // StartGraphAutomationReconciliation is idempotent by (space, domain, binding, idempotency_key).
+  // It returns after durable operation creation; target discovery and scheduling are asynchronous.
+  rpc StartGraphAutomationReconciliation(StartGraphAutomationReconciliationRequest) returns (StartGraphAutomationReconciliationResponse);
+  rpc GetGraphAutomationReconciliation(GetGraphAutomationReconciliationRequest) returns (GetGraphAutomationReconciliationResponse);
+  // CancelGraphAutomationReconciliation fences new discovery and scheduling. Already-running
+  // executions retain the normal automation control semantics.
+  rpc CancelGraphAutomationReconciliation(CancelGraphAutomationReconciliationRequest) returns (CancelGraphAutomationReconciliationResponse);
 }
 
 message ValidateAutomationRequest {
@@ -437,4 +444,61 @@ message EnableGraphAutomationBindingResponse {
 
 message DisableGraphAutomationBindingResponse {
   string binding_json = 1;
+}
+
+message StartGraphAutomationReconciliationRequest {
+  string space_id = 1;
+  string domain_id = 2;
+  string binding_id = 3;
+  string idempotency_key = 4;
+  // batch_size defaults to the daemon limit and must be bounded by it.
+  int32 batch_size = 5;
+  // max_concurrency is an optional operation-local ceiling. The daemon may apply a lower
+  // global or binding limit; zero uses the daemon default.
+  int32 max_concurrency = 6;
+}
+
+message StartGraphAutomationReconciliationResponse {
+  GraphAutomationReconciliation operation = 1;
+}
+
+message GetGraphAutomationReconciliationRequest {
+  string space_id = 1;
+  string operation_id = 2;
+}
+
+message GetGraphAutomationReconciliationResponse {
+  GraphAutomationReconciliation operation = 1;
+}
+
+message CancelGraphAutomationReconciliationRequest {
+  string space_id = 1;
+  string operation_id = 2;
+}
+
+message CancelGraphAutomationReconciliationResponse {
+  GraphAutomationReconciliation operation = 1;
+}
+
+message GraphAutomationReconciliation {
+  string operation_id = 1;
+  string space_id = 2;
+  string domain_id = 3;
+  string binding_id = 4;
+  int32 binding_version = 5;
+  string procedure_id = 6;
+  int32 procedure_version = 7;
+  // queued | running | completed | completed_with_failures | canceled | failed
+  string status = 8;
+  string cursor = 9;
+  int64 scanned_count = 10;
+  int64 fresh_skipped_count = 11;
+  int64 scheduled_count = 12;
+  int64 completed_count = 13;
+  int64 retrying_count = 14;
+  int64 failed_count = 15;
+  string failure_code = 16;
+  string created_at = 17;
+  string updated_at = 18;
+  string completed_at = 19;
 }
