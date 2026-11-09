@@ -260,6 +260,11 @@ message ReadMetadata {
   uint64 applied_index = 5;
   int64 observed_revision = 6;
   bool stale = 7;
+
+  // Opaque read-set witness that can be supplied to a later atomic graph
+  // commit. It contains no graph payload or credentials and must be treated as
+  // an uninterpreted value by clients.
+  bytes revision_witness = 9;
   string stale_reason = 8;
 }
 
