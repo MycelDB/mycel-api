@@ -6,9 +6,17 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.22.0] - 2026-11-09
+
 ### Added
 
 - Added additive Graph Automation Reconciliation start, progress, and cancellation RPCs with sanitized durable operation state and idempotent start semantics (#311).
+- Added authenticated graph read and visibility revision metadata plus opaque revision-fence witnesses for conflict-safe graph writes (#54).
+
+### Compatibility
+
+- The v0.22.0 contract remains additive and wire-compatible within the existing `mycel.client.v1` packages. Clients must regenerate bindings to use reconciliation and revision-fence fields and RPCs.
+- Revision-fence witnesses are opaque, authenticated values; clients must not decode, log, or blindly retry them.
 
 ## [v0.21.0] - 2026-10-27
 
