@@ -6,6 +6,10 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+### Added
+
+- Added additive Graph Automation Reconciliation start, progress, and cancellation RPCs with sanitized durable operation state and idempotent start semantics (#311).
+
 ## [v0.21.0] - 2026-10-27
 
 ### Added
