@@ -75,6 +75,20 @@ Implementations should use canonical gRPC status codes consistently:
 
 Clients should not parse human-readable error strings for control flow. Use gRPC status codes and any structured error details exposed by the implementation.
 
+### Revision-fenced graph commits
+
+Graph and query read responses may include an opaque `ReadMetadata.revision_witness`.
+Clients that derive delayed write content from those reads can pass one or more
+witnesses in `CommitTransactionRequest.revision_witnesses`. The daemon validates
+the complete read set atomically at the graph commit boundary. Entity reads
+fence node/edge revisions; query predicate reads fence the committed domain
+revision; authenticated reads also fence the authorization and visibility
+revisions governing the principal's scope. If any declared dependency changed, the commit returns `ABORTED` with
+`ErrorInfo.reason` `GRAPH_REVISION_FENCE_CONFLICT` and applies no mutation.
+Clients must re-read and regenerate derived output rather than retrying stale
+content. Witnesses are authenticated opaque values derived from the daemon's
+cluster-stable secret; they must not be logged or decoded by clients.
+
 ### IDs and names
 
 Resource IDs are opaque unless a field comment says otherwise. Clients should store and round-trip IDs exactly as returned by the API and should not infer meaning from their format.

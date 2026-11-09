@@ -137,6 +137,12 @@ message CommitTransactionRequest {
   // transaction lifecycle state is no longer available.
   string space_id = 3;
   string domain_id = 4;
+
+  // Opaque read-set witnesses returned by graph/query reads. At commit, the
+  // daemon atomically verifies that every declared dependency is unchanged.
+  // A conflict returns ABORTED and applies no mutation. Callers must re-read
+  // and regenerate derived output; stale witnesses must not be retried.
+  repeated bytes revision_witnesses = 5;
 }
 
 message CommitTransactionResponse {
