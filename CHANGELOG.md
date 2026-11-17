@@ -6,6 +6,21 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.23.0] - 2026-11-17
+
+### Added
+
+- Added request-level semantic projection consistency policies for hybrid search, including strict, read-your-writes, bounded-stale last-good snapshots, and best-effort semantic-channel skipping (#357).
+- Added per-channel lexical and semantic freshness, usage, revision-lag, retryability, and degradation diagnostics to search responses.
+
+### Changed
+
+- Semantic freshness relaxation applies only to retrieval projections; authorization, domain authority, visibility, deletion, and policy enforcement remain strict.
+
+### Compatibility
+
+- This is a coordinated API evolution with the daemon and SDKs. Clients and daemons must update together; no legacy semantic-search compatibility bridge is provided.
+
 ## [v0.22.0] - 2026-11-09
 
 ### Added
