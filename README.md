@@ -106,6 +106,17 @@ mode requires `lexical.query`; hybrid mode requires a non-empty query for each
 weighted or otherwise required channel. The former top-level field 4 is reserved
 and is not used as fallback input.
 
+### Semantic projection consistency
+
+Hybrid search is strict by default: semantic retrieval fails when the current
+projection cannot be certified ready. Callers may set
+`SearchRequest.semantic_consistency` to request read-your-writes,
+bounded-stale last-good projection serving, or best-effort semantic retrieval
+that skips the semantic channel when it is unavailable. Consistency bounds
+control retrieval freshness only; authorization, space/domain authority,
+visibility, deletion, and policy enforcement remain strict. Search responses
+include per-channel usage and freshness diagnostics when available.
+
 ### Typed semantic trigger events
 
 `mycel.admin.v1.SemanticTriggerPolicy.events` is an enum-only representation
