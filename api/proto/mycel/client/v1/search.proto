@@ -4,6 +4,8 @@ syntax = "proto3";
 
 package mycel.client.v1;
 
+import "google/protobuf/duration.proto";
+
 // SearchService exposes first-class search over graph content. V1 supports
 // lexical search for one space/domain and hybrid lexical + semantic search.
 // Metadata filters are hard eligibility constraints, not scoring signals.
@@ -62,6 +64,11 @@ message SearchRequest {
 
   // Lexical candidate retrieval options used by lexical and hybrid modes.
   LexicalSearchOptions lexical = 13;
+
+  // Request-level consistency policy for semantic projections in hybrid mode.
+  // When omitted or unspecified, semantic retrieval remains strict and fails
+  // when its current projection cannot be certified ready.
+  ProjectionConsistencyPolicy semantic_consistency = 14;
 }
 
 message SearchResponse {
@@ -75,6 +82,10 @@ message SearchResponse {
   repeated string warnings = 4;
 
   SearchDiagnostics diagnostics = 5;
+
+  // Per-channel usage and freshness diagnostics. These fields describe index
+  // freshness only; authorization and graph visibility remain authoritative.
+  SearchChannelDiagnostics channel_diagnostics = 6;
 }
 
 message SearchResult {
@@ -196,6 +207,45 @@ message SearchDiagnostics {
   string rejected_reason = 10;
 }
 
+// ProjectionConsistencyPolicy controls how a search request handles semantic
+// projection freshness. It applies to retrieval/index freshness only; graph
+// authorization, domain authority, and visibility checks remain strict.
+message ProjectionConsistencyPolicy {
+  ProjectionConsistency consistency = 1;
+
+  // Minimum graph revision that the semantic projection must represent. A
+  // value of 0 leaves this lower bound unset.
+  int64 min_required_graph_revision = 2;
+
+  // Maximum acceptable lag from the latest known graph revision. A value of 0
+  // leaves this upper bound unset.
+  int64 max_revision_lag = 3;
+
+  // Optional wall-clock staleness bound for a last-good projection snapshot.
+  google.protobuf.Duration max_staleness = 4;
+
+  // Behavior when the current semantic projection is not ready. Callers using
+  // bounded-stale or best-effort modes should set this explicitly.
+  StaleProjectionBehavior stale_behavior = 5;
+}
+
+// SearchChannelDiagnostics reports whether each retrieval channel contributed
+// to the response and the graph freshness of the snapshot it used.
+message SearchChannelDiagnostics {
+  SearchChannelStatus lexical = 1;
+  SearchChannelStatus semantic = 2;
+}
+
+message SearchChannelStatus {
+  bool used = 1;
+  SearchFreshnessState state = 2;
+  int64 served_graph_revision = 3;
+  int64 latest_known_graph_revision = 4;
+  int64 revision_lag = 5;
+  string reason = 6;
+  bool retryable = 7;
+}
+
 message SearchScoreComponent {
   string name = 1;
   double value = 2;
@@ -226,6 +276,21 @@ message LexicalIndexStatus {
   string updated_at = 12;
   string last_rebuild_at = 13;
   string last_error = 14;
+}
+
+enum ProjectionConsistency {
+  PROJECTION_CONSISTENCY_UNSPECIFIED = 0;
+  PROJECTION_CONSISTENCY_STRICT = 1;
+  PROJECTION_CONSISTENCY_READ_YOUR_WRITES = 2;
+  PROJECTION_CONSISTENCY_BOUNDED_STALE = 3;
+  PROJECTION_CONSISTENCY_BEST_EFFORT = 4;
+}
+
+enum StaleProjectionBehavior {
+  STALE_PROJECTION_BEHAVIOR_UNSPECIFIED = 0;
+  STALE_PROJECTION_BEHAVIOR_FAIL = 1;
+  STALE_PROJECTION_BEHAVIOR_SERVE_LAST_GOOD = 2;
+  STALE_PROJECTION_BEHAVIOR_SKIP_CHANNEL = 3;
 }
 
 enum SearchMode {
