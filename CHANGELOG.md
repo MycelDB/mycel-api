@@ -6,6 +6,11 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+### Added
+
+- Added the first repository-backed production backup/restore contract foundation, including backup repository CRUD/validation, repository-backed cluster backup and backup-set catalog fields, restore planning/operation messages, credential-reference/encryption/capacity/compatibility summaries, and derived-state policy enums.
+- Extended backup-set validation, compatibility, capacity, and manifest summaries so clients can display schema/version, required feature, storage format, supported restore mode, artifact count, and byte-size evidence returned by daemon validators.
+
 ## [v0.23.0] - 2026-11-17
 
 ### Added
