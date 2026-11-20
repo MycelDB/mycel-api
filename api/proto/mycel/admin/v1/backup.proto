@@ -285,6 +285,12 @@ message QuiesceParticipantStatus {
   string source = 6;
   string since = 7;
   string last_error = 8;
+  int32 active_read_only = 9;
+  int32 active_writes = 10;
+  string read_allowlist_profile = 11;
+  string deadline = 12;
+  bool accepting_read_only = 13;
+  bool accepting_writes = 14;
 }
 
 message SecretReference {
