@@ -6,6 +6,13 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+### Added
+
+- Extended the cluster restore contract with explicit target cluster/node mappings, staging location, clean-target proof, source-fencing precondition evidence, and per-node/progress fields required before safe `NEW_CLUSTER_BOOTSTRAP` restore execution can be enabled.
+- Added the first repository-backed production backup/restore contract foundation, including backup repository CRUD/validation, repository-backed cluster backup and backup-set catalog fields, restore planning/operation messages, credential-reference/encryption/capacity/compatibility summaries, and derived-state policy enums.
+- Extended backup-set validation, compatibility, capacity, and manifest summaries so clients can display schema/version, required feature, storage format, supported restore mode, artifact count, and byte-size evidence returned by daemon validators.
+- Extended quiesce participant status with active read/write counts, read allowlist profile, deadline, and admission-state fields for backup safety UX.
+
 ## [v0.23.0] - 2026-11-17
 
 ### Added
