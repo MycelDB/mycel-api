@@ -428,6 +428,97 @@ message CleanupTask {
   string last_error = 5;
 }
 
+// ClusterRestoreTarget describes the restore destination. For NEW_CLUSTER_BOOTSTRAP,
+// callers must identify the target bootstrap cluster shape before execution; for
+// EXISTING_CLUSTER_REPLACE, the same fields describe the fenced replacement target.
+message ClusterRestoreTarget {
+  string target_cluster_id = 1;
+  string target_cluster_name = 2;
+  string namespace = 3;
+  string stateful_set = 4;
+  int32 expected_node_count = 5;
+  repeated ClusterRestoreNodeMapping nodes = 6;
+  map<string, string> labels = 7;
+  map<string, string> annotations = 8;
+}
+
+// ClusterRestoreNodeMapping binds one backed-up ordinal/artifact to one target data
+// location. Restore execution must fail closed when mappings are incomplete or ambiguous.
+message ClusterRestoreNodeMapping {
+  int32 ordinal = 1;
+  string source_pod_name = 2;
+  string source_node_id = 3;
+  string source_archive_uri = 4;
+  string target_pod_name = 5;
+  string target_node_name = 6;
+  string target_pvc_name = 7;
+  string target_data_dir = 8;
+  string staging_path = 9;
+}
+
+// ClusterRestoreStagingLocation describes where repository artifacts may be downloaded
+// and verified before being applied to target data dirs/PVCs.
+message ClusterRestoreStagingLocation {
+  string staging_uri = 1;
+  string storage_class = 2;
+  int64 required_bytes = 3;
+  int64 available_bytes = 4;
+  bool clean_before_use = 5;
+  repeated ValidationBlocker blockers = 6;
+}
+
+// ClusterRestoreCleanTargetProof records evidence that a NEW_CLUSTER_BOOTSTRAP target
+// is empty/safe to receive physical backup artifacts.
+message ClusterRestoreCleanTargetProof {
+  string proof_id = 1;
+  string checked_at = 2;
+  bool target_empty = 3;
+  repeated ClusterRestoreNodeMapping checked_nodes = 4;
+  repeated ValidationBlocker blockers = 5;
+  string operator_attestation = 6;
+}
+
+// ClusterRestoreSourceFencingEvidence records proof that preserved-identity restores
+// cannot race with the original source cluster.
+message ClusterRestoreSourceFencingEvidence {
+  bool source_cluster_fenced = 1;
+  string fenced_at = 2;
+  string fence_token_ref = 3;
+  repeated string fenced_endpoints = 4;
+  repeated ValidationBlocker blockers = 5;
+}
+
+// ClusterRestorePreconditionEvidence groups execution safety proofs supplied with a
+// restore start request or reported back on an operation.
+message ClusterRestorePreconditionEvidence {
+  ClusterRestoreCleanTargetProof clean_target = 1;
+  ClusterRestoreSourceFencingEvidence source_fencing = 2;
+  repeated ValidationBlocker blockers = 3;
+}
+
+message ClusterRestoreNodeProgress {
+  int32 ordinal = 1;
+  string state = 2;
+  string source_archive_uri = 3;
+  string staging_uri = 4;
+  int64 bytes_total = 5;
+  int64 bytes_completed = 6;
+  string checksum_sha256 = 7;
+  string last_error = 8;
+}
+
+message ClusterRestoreProgress {
+  int32 total_nodes = 1;
+  int32 staged_nodes = 2;
+  int32 applied_nodes = 3;
+  int32 verified_nodes = 4;
+  int64 bytes_total = 5;
+  int64 bytes_completed = 6;
+  string current_phase = 7;
+  string current_node = 8;
+  repeated ClusterRestoreNodeProgress nodes = 9;
+}
+
 message RestorePlanSummary {
   string restore_plan_id = 1;
   string repository_id = 2;
@@ -442,6 +533,9 @@ message RestorePlanSummary {
   repeated DerivedSubsystemPolicy derived_actions = 11;
   repeated ValidationBlocker blockers = 12;
   string planned_at = 13;
+  ClusterRestoreTarget target = 14;
+  ClusterRestoreStagingLocation staging = 15;
+  ClusterRestorePreconditionEvidence required_preconditions = 16;
 }
 
 message ClusterRestoreOperation {
@@ -458,6 +552,11 @@ message ClusterRestoreOperation {
   repeated ValidationBlocker blockers = 11;
   repeated CleanupTask cleanup_tasks = 12;
   string error = 13;
+  ClusterRestoreAuthSessionPolicy auth_session_policy = 14;
+  ClusterRestoreTarget target = 15;
+  ClusterRestoreStagingLocation staging = 16;
+  ClusterRestorePreconditionEvidence preconditions = 17;
+  ClusterRestoreProgress progress = 18;
 }
 
 message GetBackupPolicyRequest {}
@@ -740,6 +839,8 @@ message PlanClusterRestoreRequest {
   ClusterRestoreIdentityMode identity_mode = 4;
   ClusterRestoreAuthSessionPolicy auth_session_policy = 5;
   ValidationOptions validation_options = 6;
+  ClusterRestoreTarget target = 7;
+  ClusterRestoreStagingLocation staging = 8;
 }
 
 message PlanClusterRestoreResponse {
@@ -755,6 +856,10 @@ message StartClusterRestoreRequest {
   ClusterRestoreAuthSessionPolicy auth_session_policy = 6;
   string idempotency_key = 7;
   string destructive_confirmation = 8;
+  ClusterRestoreTarget target = 9;
+  ClusterRestoreStagingLocation staging = 10;
+  ClusterRestorePreconditionEvidence preconditions = 11;
+  string plan_freshness_token = 12;
 }
 
 message StartClusterRestoreResponse {
