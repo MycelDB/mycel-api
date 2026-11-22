@@ -8,6 +8,7 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ### Added
 
+- Added `GetBackupObservability` plus backup metric and alert-condition messages so operators can poll credential-free backup/restore health, stale-operation, retention, and blocker signals.
 - Added restored-cluster derived subsystem readiness fields to cluster readiness so operators can see post-restore rebuild requirements for lexical, graph/checkpoint, and semantic/vector-derived artifacts.
 - Added repository backup retention planning/apply RPCs and plan/action messages so operators can preview and execute keep-last-successful, keep-for, and incomplete-prefix cleanup policies.
 - Added per-node restore progress evidence so Kubernetes restore controller/helper status can report target PVC actions, source-fencing tokens, helper pod phase, logs, and event tails.
