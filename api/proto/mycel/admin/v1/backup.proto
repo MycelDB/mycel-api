@@ -505,6 +505,7 @@ message ClusterRestoreNodeProgress {
   int64 bytes_completed = 6;
   string checksum_sha256 = 7;
   string last_error = 8;
+  map<string, string> evidence = 9;
 }
 
 message ClusterRestoreProgress {
