@@ -8,6 +8,7 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ### Added
 
+- Added restored-cluster derived subsystem readiness fields to cluster readiness so operators can see post-restore rebuild requirements for lexical, graph/checkpoint, and semantic/vector-derived artifacts.
 - Added repository backup retention planning/apply RPCs and plan/action messages so operators can preview and execute keep-last-successful, keep-for, and incomplete-prefix cleanup policies.
 - Added per-node restore progress evidence so Kubernetes restore controller/helper status can report target PVC actions, source-fencing tokens, helper pod phase, logs, and event tails.
 - Extended the cluster restore contract with explicit target cluster/node mappings, staging location, clean-target proof, source-fencing precondition evidence, and per-node/progress fields required before safe `NEW_CLUSTER_BOOTSTRAP` restore execution can be enabled.
