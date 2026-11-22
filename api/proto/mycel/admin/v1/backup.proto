@@ -38,6 +38,10 @@ service AdminBackupService {
   rpc PlanRepositoryRetention(PlanRepositoryRetentionRequest) returns (PlanRepositoryRetentionResponse);
   rpc ApplyRepositoryRetention(ApplyRepositoryRetentionRequest) returns (ApplyRepositoryRetentionResponse);
 
+  // GetBackupObservability returns a non-secret operator snapshot of backup/restore
+  // metrics and alert conditions suitable for external monitoring systems.
+  rpc GetBackupObservability(GetBackupObservabilityRequest) returns (GetBackupObservabilityResponse);
+
   rpc PlanClusterRestore(PlanClusterRestoreRequest) returns (PlanClusterRestoreResponse);
   rpc StartClusterRestore(StartClusterRestoreRequest) returns (StartClusterRestoreResponse);
   rpc GetClusterRestoreStatus(GetClusterRestoreStatusRequest) returns (GetClusterRestoreStatusResponse);
@@ -817,6 +821,61 @@ message RepositoryRetentionAction {
   bool blocked = 10;
   string error = 11;
   string retention_cutoff = 12;
+}
+
+message GetBackupObservabilityRequest {
+  // Optional repository to probe for retention/incomplete-backup conditions.
+  // When empty, the daemon's default repository is used when available.
+  string repository_id = 1;
+  // Include a dry-run repository retention probe. This may perform object-store
+  // list/read operations but never mutates repository contents.
+  bool include_retention_probe = 2;
+  // Threshold used by stale active operation alert conditions. Defaults to the
+  // daemon backup timeout when unset, or 1 hour when no policy timeout exists.
+  int64 stale_operation_after_seconds = 3;
+  // Threshold used by backup freshness alert conditions. Defaults to twice the
+  // backup schedule interval when unset, or 24 hours when no schedule exists.
+  int64 backup_freshness_after_seconds = 4;
+  // Threshold used by incomplete repository-prefix alerts. Defaults to the
+  // effective retention policy's delete-incomplete-after duration when unset.
+  int64 incomplete_backup_after_seconds = 5;
+}
+
+message GetBackupObservabilityResponse {
+  BackupObservabilitySnapshot snapshot = 1;
+}
+
+message BackupObservabilitySnapshot {
+  string observed_at = 1;
+  string repository_id = 2;
+  repeated BackupMetric metrics = 3;
+  repeated BackupAlertCondition alerts = 4;
+  // One of: healthy, warning, critical.
+  string summary_state = 5;
+}
+
+message BackupMetric {
+  // Stable metric name, e.g. mycel_backup_cluster_operation_count.
+  string name = 1;
+  string description = 2;
+  // Unit values are conventional strings such as count, seconds, bytes, or ratio.
+  string unit = 3;
+  double value = 4;
+  // Labels intentionally contain only non-secret identifiers and categories.
+  map<string, string> labels = 5;
+}
+
+message BackupAlertCondition {
+  string name = 1;
+  // One of: info, warning, critical.
+  string severity = 2;
+  bool firing = 3;
+  string reason = 4;
+  // Prometheus-style expression using metric names from this snapshot.
+  string expression = 5;
+  // Labels intentionally contain only non-secret identifiers and categories.
+  map<string, string> labels = 6;
+  repeated string evidence = 7;
 }
 
 message ClusterBackupStatus {
