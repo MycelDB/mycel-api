@@ -8,6 +8,7 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ### Added
 
+- Added repository backup retention planning/apply RPCs and plan/action messages so operators can preview and execute keep-last-successful, keep-for, and incomplete-prefix cleanup policies.
 - Added per-node restore progress evidence so Kubernetes restore controller/helper status can report target PVC actions, source-fencing tokens, helper pod phase, logs, and event tails.
 - Extended the cluster restore contract with explicit target cluster/node mappings, staging location, clean-target proof, source-fencing precondition evidence, and per-node/progress fields required before safe `NEW_CLUSTER_BOOTSTRAP` restore execution can be enabled.
 - Added the first repository-backed production backup/restore contract foundation, including backup repository CRUD/validation, repository-backed cluster backup and backup-set catalog fields, restore planning/operation messages, credential-reference/encryption/capacity/compatibility summaries, and derived-state policy enums.

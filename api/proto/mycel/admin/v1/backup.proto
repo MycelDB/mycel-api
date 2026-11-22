@@ -35,6 +35,8 @@ service AdminBackupService {
   rpc GetClusterBackupSet(GetClusterBackupSetRequest) returns (GetClusterBackupSetResponse);
   rpc ValidateClusterBackupSet(ValidateClusterBackupSetRequest) returns (ValidateClusterBackupSetResponse);
   rpc DeleteClusterBackupSet(DeleteClusterBackupSetRequest) returns (DeleteClusterBackupSetResponse);
+  rpc PlanRepositoryRetention(PlanRepositoryRetentionRequest) returns (PlanRepositoryRetentionResponse);
+  rpc ApplyRepositoryRetention(ApplyRepositoryRetentionRequest) returns (ApplyRepositoryRetentionResponse);
 
   rpc PlanClusterRestore(PlanClusterRestoreRequest) returns (PlanClusterRestoreResponse);
   rpc StartClusterRestore(StartClusterRestoreRequest) returns (StartClusterRestoreResponse);
@@ -764,6 +766,57 @@ message DeleteClusterBackupSetResponse {
   string repository_id = 1;
   string backup_set_id = 2;
   BackupDeletionState state = 3;
+}
+
+message PlanRepositoryRetentionRequest {
+  string repository_id = 1;
+  // Optional override. When omitted, the daemon's effective backup policy retention is used.
+  RetentionPolicy retention_policy = 2;
+  // Optional RFC3339/RFC3339Nano planning time for deterministic previews and tests.
+  string now = 3;
+}
+
+message PlanRepositoryRetentionResponse {
+  RepositoryRetentionPlan plan = 1;
+}
+
+message ApplyRepositoryRetentionRequest {
+  string repository_id = 1;
+  // Optional override. When omitted, the daemon's effective backup policy retention is used.
+  RetentionPolicy retention_policy = 2;
+  string reason = 3;
+  // Optional RFC3339/RFC3339Nano planning time for deterministic previews and tests.
+  string now = 4;
+}
+
+message ApplyRepositoryRetentionResponse {
+  RepositoryRetentionPlan plan = 1;
+}
+
+message RepositoryRetentionPlan {
+  string repository_id = 1;
+  string planned_at = 2;
+  RetentionPolicy retention_policy = 3;
+  bool dry_run = 4;
+  repeated RepositoryRetentionAction actions = 5;
+  repeated string warnings = 6;
+  int32 deleted_objects = 7;
+}
+
+message RepositoryRetentionAction {
+  string backup_set_id = 1;
+  string prefix = 2;
+  // One of: keep, delete, blocked, delete_incomplete, warn.
+  string action = 3;
+  string reason = 4;
+  string created_at = 5;
+  string completed_at = 6;
+  int32 object_count = 7;
+  int32 deleted_objects = 8;
+  bool retryable = 9;
+  bool blocked = 10;
+  string error = 11;
+  string retention_cutoff = 12;
 }
 
 message ClusterBackupStatus {
