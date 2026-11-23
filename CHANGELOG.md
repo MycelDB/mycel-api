@@ -6,6 +6,8 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.24.0] - 2026-11-23
+
 ### Added
 
 - Added `AdminUsageAccountingService` plus usage scope, metric, revision, status, list, batch, and health messages for read-only quota-safe space/domain usage accounting snapshots.
@@ -19,6 +21,15 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 - Added the first repository-backed production backup/restore contract foundation, including backup repository CRUD/validation, repository-backed cluster backup and backup-set catalog fields, restore planning/operation messages, credential-reference/encryption/capacity/compatibility summaries, and derived-state policy enums.
 - Extended backup-set validation, compatibility, capacity, and manifest summaries so clients can display schema/version, required feature, storage format, supported restore mode, artifact count, and byte-size evidence returned by daemon validators.
 - Extended quiesce participant status with active read/write counts, read allowlist profile, deadline, and admission-state fields for backup safety UX.
+
+### Compatibility
+
+- Coordinated API evolution for MycelDB v0.24.0. Daemon and SDK clients should be upgraded together to use repository-backed production backup/restore, backup observability, restored-derived readiness, usage accounting, and hard usage admission contracts.
+- Existing protobuf package names remain `mycel.*.v1`; new admin RPCs, fields, enum values, and capabilities require regenerated client bindings.
+
+### Validation
+
+- `make test` and pull-request CI passed for the merged v0.24 API contract.
 
 ## [v0.23.0] - 2026-11-17
 
