@@ -531,6 +531,33 @@ message ClusterReadiness {
   // write_ready means schema and graph-partition writes can route to known Raft
   // leaders. In clustered mode this is stronger than partition_groups_started.
   bool write_ready = 13;
+
+  // derived_ready reports whether restored derived subsystems such as lexical
+  // indexes, graph checkpoints/query indexes, and semantic vector-search views
+  // are ready or explicitly require rebuild. It is independent from read/write
+  // routing readiness so operators can distinguish durable-state availability
+  // from derived-artifact catch-up.
+  bool derived_ready = 14;
+  // restored_cluster_ready is true when no post-restore derived subsystem
+  // requires rebuild or operator follow-up. Non-restored clusters report true.
+  bool restored_cluster_ready = 15;
+  repeated ClusterDerivedSubsystemReadiness derived_subsystems = 16;
+}
+
+message ClusterDerivedSubsystemReadiness {
+  string subsystem = 1;
+  string state = 2;
+  bool ready = 3;
+  bool rebuild_required = 4;
+  string reason = 5;
+  string artifact_id = 6;
+  string policy_mode = 7;
+  string restore_policy = 8;
+  string validation_state = 9;
+  string source_frontier_kind = 10;
+  string source_frontier_value = 11;
+  map<string, string> evidence = 12;
+  string updated_at = 13;
 }
 
 message ListClusterMembersRequest {}

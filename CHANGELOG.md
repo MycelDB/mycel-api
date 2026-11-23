@@ -6,6 +6,31 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.24.0] - 2026-11-23
+
+### Added
+
+- Added `AdminUsageAccountingService` plus usage scope, metric, revision, status, list, batch, and health messages for read-only quota-safe space/domain usage accounting snapshots.
+- Added `AdminUsageAdmissionService` plus `UsageLimit` CRUD messages for daemon-side hard write-gate configuration of quota-safe hard-limit-eligible usage metrics.
+- Added usage-accounting capabilities (`CAPABILITY_USAGE_READ`, `CAPABILITY_USAGE_DIAGNOSTIC_READ`, `CAPABILITY_USAGE_RECONCILE`, `CAPABILITY_USAGE_LIMIT_MANAGE`, and `CAPABILITY_USAGE_LIMIT_OVERRIDE`) for read APIs, diagnostics, reconciliation, and future admission controls.
+- Added `GetBackupObservability` plus backup metric and alert-condition messages so operators can poll credential-free backup/restore health, stale-operation, retention, and blocker signals.
+- Added restored-cluster derived subsystem readiness fields to cluster readiness so operators can see post-restore rebuild requirements for lexical, graph/checkpoint, and semantic/vector-derived artifacts.
+- Added repository backup retention planning/apply RPCs and plan/action messages so operators can preview and execute keep-last-successful, keep-for, and incomplete-prefix cleanup policies.
+- Added per-node restore progress evidence so Kubernetes restore controller/helper status can report target PVC actions, source-fencing tokens, helper pod phase, logs, and event tails.
+- Extended the cluster restore contract with explicit target cluster/node mappings, staging location, clean-target proof, source-fencing precondition evidence, and per-node/progress fields required before safe `NEW_CLUSTER_BOOTSTRAP` restore execution can be enabled.
+- Added the first repository-backed production backup/restore contract foundation, including backup repository CRUD/validation, repository-backed cluster backup and backup-set catalog fields, restore planning/operation messages, credential-reference/encryption/capacity/compatibility summaries, and derived-state policy enums.
+- Extended backup-set validation, compatibility, capacity, and manifest summaries so clients can display schema/version, required feature, storage format, supported restore mode, artifact count, and byte-size evidence returned by daemon validators.
+- Extended quiesce participant status with active read/write counts, read allowlist profile, deadline, and admission-state fields for backup safety UX.
+
+### Compatibility
+
+- Coordinated API evolution for MycelDB v0.24.0. Daemon and SDK clients should be upgraded together to use repository-backed production backup/restore, backup observability, restored-derived readiness, usage accounting, and hard usage admission contracts.
+- Existing protobuf package names remain `mycel.*.v1`; new admin RPCs, fields, enum values, and capabilities require regenerated client bindings.
+
+### Validation
+
+- `make test` and pull-request CI passed for the merged v0.24 API contract.
+
 ## [v0.23.0] - 2026-11-17
 
 ### Added

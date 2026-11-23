@@ -1,0 +1,311 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package mycel.admin.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// AdminUsageAccountingService exposes read-only logical usage snapshots for
+// billing, quota, reconciliation, and operator diagnostics.
+service AdminUsageAccountingService {
+  // GetUsage returns the current materialized usage snapshot for one scope.
+  rpc GetUsage(GetUsageRequest) returns (GetUsageResponse);
+
+  // BatchGetUsage returns independent usage snapshots or statuses for multiple
+  // scopes without failing the whole response when one scope is unavailable.
+  rpc BatchGetUsage(BatchGetUsageRequest) returns (BatchGetUsageResponse);
+
+  // ListUsage pages over materialized space or domain usage snapshots.
+  rpc ListUsage(ListUsageRequest) returns (ListUsageResponse);
+
+  // GetUsageAccountingHealth reports whether usage accounting is safe for quota
+  // decisions and surfaces rebuild, staleness, reconciliation, and diagnostic
+  // collector health.
+  rpc GetUsageAccountingHealth(GetUsageAccountingHealthRequest) returns (GetUsageAccountingHealthResponse);
+}
+
+// AdminUsageAdmissionService configures daemon-side hard write gates for
+// quota-safe metrics. Product policy, billing, warning thresholds, and plan
+// mapping remain outside Mycel; Mycel only enforces explicit hard limits that
+// operators configure here.
+service AdminUsageAdmissionService {
+  rpc UpsertUsageLimit(UpsertUsageLimitRequest) returns (UpsertUsageLimitResponse);
+  rpc DeleteUsageLimit(DeleteUsageLimitRequest) returns (DeleteUsageLimitResponse);
+  rpc GetUsageLimit(GetUsageLimitRequest) returns (GetUsageLimitResponse);
+  rpc ListUsageLimits(ListUsageLimitsRequest) returns (ListUsageLimitsResponse);
+}
+
+// UsageScope identifies the Mycel scope whose usage is measured.
+message UsageScope {
+  oneof scope {
+    SpaceUsageScope space = 1;
+    DomainUsageScope domain = 2;
+  }
+}
+
+// SpaceUsageScope identifies one Mycel space.
+message SpaceUsageScope {
+  string space_id = 1;
+}
+
+// DomainUsageScope identifies one domain inside a Mycel space.
+message DomainUsageScope {
+  string space_id = 1;
+  string domain_id = 2;
+}
+
+// DomainInclusionMode controls which domains contribute to a space aggregate.
+enum DomainInclusionMode {
+  DOMAIN_INCLUSION_MODE_UNSPECIFIED = 0;
+  DOMAIN_INCLUSION_MODE_RETAINED_NON_SYSTEM = 1;
+  DOMAIN_INCLUSION_MODE_RETAINED_ALL = 2;
+  DOMAIN_INCLUSION_MODE_SYSTEM_ONLY = 3;
+}
+
+// UsageUnit identifies the unit for a usage metric value.
+enum UsageUnit {
+  USAGE_UNIT_UNSPECIFIED = 0;
+  USAGE_UNIT_BYTES = 1;
+  USAGE_UNIT_COUNT = 2;
+}
+
+// UsageAuthority describes the source authority and safety of a metric.
+enum UsageAuthority {
+  USAGE_AUTHORITY_UNSPECIFIED = 0;
+  USAGE_AUTHORITY_RAFT_COMMITTED_EXACT = 1;
+  USAGE_AUTHORITY_STATE_MACHINE_EXACT = 2;
+  USAGE_AUTHORITY_OBSERVED_APPROXIMATE = 3;
+  USAGE_AUTHORITY_REBUILDABLE_OPERATIONAL = 4;
+}
+
+// UsageAccountingState summarizes the serving state for usage accounting.
+enum UsageAccountingState {
+  USAGE_ACCOUNTING_STATE_UNSPECIFIED = 0;
+  USAGE_ACCOUNTING_STATE_READY = 1;
+  USAGE_ACCOUNTING_STATE_REBUILDING = 2;
+  USAGE_ACCOUNTING_STATE_RECONCILING = 3;
+  USAGE_ACCOUNTING_STATE_STALE = 4;
+  USAGE_ACCOUNTING_STATE_DRIFT_DETECTED = 5;
+  USAGE_ACCOUNTING_STATE_UNAVAILABLE = 6;
+}
+
+// UsageListMode selects which usage snapshots ListUsage returns.
+enum UsageListMode {
+  USAGE_LIST_MODE_UNSPECIFIED = 0;
+  USAGE_LIST_MODE_SPACES = 1;
+  USAGE_LIST_MODE_DOMAINS_IN_SPACE = 2;
+  USAGE_LIST_MODE_SPACE_WITH_DOMAIN_BREAKDOWN = 3;
+}
+
+// UsageStatusSeverity classifies a usage status row.
+enum UsageStatusSeverity {
+  USAGE_STATUS_SEVERITY_UNSPECIFIED = 0;
+  USAGE_STATUS_SEVERITY_INFO = 1;
+  USAGE_STATUS_SEVERITY_WARNING = 2;
+  USAGE_STATUS_SEVERITY_BLOCKER = 3;
+}
+
+// UsageStatusReason is a stable reason for a usage warning or blocker.
+enum UsageStatusReason {
+  USAGE_STATUS_REASON_UNSPECIFIED = 0;
+  USAGE_STATUS_REASON_COUNTERS_REBUILDING = 1;
+  USAGE_STATUS_REASON_COUNTER_STALE = 2;
+  USAGE_STATUS_REASON_RECONCILIATION_DRIFT = 3;
+  USAGE_STATUS_REASON_METRIC_UNAVAILABLE = 4;
+  USAGE_STATUS_REASON_METRIC_NOT_QUOTA_SAFE = 5;
+  USAGE_STATUS_REASON_UNSUPPORTED_SCOPE = 6;
+  USAGE_STATUS_REASON_UNSUPPORTED_REVISION = 7;
+  USAGE_STATUS_REASON_DIAGNOSTIC_COLLECTOR_UNAVAILABLE = 8;
+  USAGE_STATUS_REASON_UNAUTHORIZED = 9;
+}
+
+// UsageRevision identifies the committed/materialized sources behind a snapshot.
+message UsageRevision {
+  string revision_token = 1;
+  repeated UsageSourceRevision source_revisions = 2;
+}
+
+// UsageSourceRevision identifies one source high-water mark in a usage snapshot.
+message UsageSourceRevision {
+  string source = 1;
+  string revision = 2;
+}
+
+// GetUsageRequest requests a usage snapshot for one scope.
+message GetUsageRequest {
+  UsageScope scope = 1;
+  DomainInclusionMode domain_inclusion = 2;
+  bool include_diagnostic_physical = 3;
+  bool require_quota_safe = 4;
+  uint64 max_staleness_seconds = 5;
+  UsageRevision minimum_revision = 6;
+  repeated string metric_names = 7;
+}
+
+// GetUsageResponse returns one usage snapshot.
+message GetUsageResponse {
+  UsageSnapshot snapshot = 1;
+}
+
+// BatchGetUsageRequest requests usage snapshots for multiple scopes.
+message BatchGetUsageRequest {
+  repeated GetUsageRequest requests = 1;
+}
+
+// BatchGetUsageResponse returns per-scope snapshots or statuses.
+message BatchGetUsageResponse {
+  repeated BatchUsageResult results = 1;
+}
+
+// BatchUsageResult is one per-scope result from BatchGetUsage.
+message BatchUsageResult {
+  UsageScope scope = 1;
+  oneof result {
+    UsageSnapshot snapshot = 2;
+    UsageStatus status = 3;
+  }
+}
+
+// ListUsageRequest pages over materialized usage snapshots.
+message ListUsageRequest {
+  UsageScope parent = 1;
+  UsageListMode mode = 2;
+  DomainInclusionMode domain_inclusion = 3;
+  bool include_diagnostic_physical = 4;
+  bool require_quota_safe = 5;
+  uint64 max_staleness_seconds = 6;
+  int32 page_size = 7;
+  string page_token = 8;
+  repeated string metric_names = 9;
+  UsageRevision minimum_revision = 10;
+}
+
+// ListUsageResponse returns a page of usage snapshots.
+message ListUsageResponse {
+  repeated UsageSnapshot snapshots = 1;
+  string next_page_token = 2;
+}
+
+// GetUsageAccountingHealthRequest requests usage accounting health.
+message GetUsageAccountingHealthRequest {
+  UsageScope scope = 1;
+  bool include_reconciliation = 2;
+  bool include_diagnostic_collectors = 3;
+}
+
+// GetUsageAccountingHealthResponse returns usage accounting health.
+message GetUsageAccountingHealthResponse {
+  UsageAccountingHealth health = 1;
+}
+
+// UsageLimit configures a daemon-side hard write gate for one quota-safe metric.
+message UsageLimit {
+  string limit_id = 1;
+  UsageScope scope = 2;
+  DomainInclusionMode domain_inclusion = 3;
+  string metric_name = 4;
+  uint32 metric_version = 5;
+  uint64 hard_limit = 6;
+  bool enabled = 7;
+  string policy_ref = 8;
+  string description = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message UpsertUsageLimitRequest {
+  UsageLimit limit = 1;
+}
+
+message UpsertUsageLimitResponse {
+  UsageLimit limit = 1;
+}
+
+message DeleteUsageLimitRequest {
+  string limit_id = 1;
+  UsageScope scope = 2;
+  DomainInclusionMode domain_inclusion = 3;
+  string metric_name = 4;
+  uint32 metric_version = 5;
+}
+
+message DeleteUsageLimitResponse {
+  UsageLimit limit = 1;
+}
+
+message GetUsageLimitRequest {
+  string limit_id = 1;
+  UsageScope scope = 2;
+  DomainInclusionMode domain_inclusion = 3;
+  string metric_name = 4;
+  uint32 metric_version = 5;
+}
+
+message GetUsageLimitResponse {
+  UsageLimit limit = 1;
+}
+
+message ListUsageLimitsRequest {
+  UsageScope parent = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+  string metric_name = 4;
+}
+
+message ListUsageLimitsResponse {
+  repeated UsageLimit limits = 1;
+  string next_page_token = 2;
+}
+
+// UsageAccountingHealth summarizes usage accounting health for dashboards and gates.
+message UsageAccountingHealth {
+  UsageScope scope = 1;
+  google.protobuf.Timestamp observed_at = 2;
+  UsageAccountingState state = 3;
+  UsageRevision as_of_revision = 4;
+  bool quota_safe_ready = 5;
+  repeated UsageStatus blockers = 6;
+  repeated UsageStatus warnings = 7;
+  uint64 rebuilding_scope_count = 8;
+  uint64 stale_scope_count = 9;
+  uint64 drift_scope_count = 10;
+  uint64 diagnostic_collector_unavailable_count = 11;
+}
+
+// UsageSnapshot is a materialized usage view for one scope.
+message UsageSnapshot {
+  UsageScope scope = 1;
+  DomainInclusionMode domain_inclusion = 2;
+  google.protobuf.Timestamp observed_at = 3;
+  UsageRevision as_of_revision = 4;
+  UsageAccountingState accounting_state = 5;
+  bool quota_safe_complete = 6;
+  repeated UsageMetric metrics = 7;
+  repeated UsageStatus blockers = 8;
+  repeated UsageStatus warnings = 9;
+}
+
+// UsageMetric is one named usage value with explicit authority metadata.
+message UsageMetric {
+  string name = 1;
+  uint32 metric_version = 2;
+  uint64 value = 3;
+  UsageUnit unit = 4;
+  UsageAuthority authority = 5;
+  bool quota_safe = 6;
+  bool hard_limit_eligible = 7;
+  google.protobuf.Timestamp observed_at = 8;
+  UsageRevision as_of_revision = 9;
+  map<string, string> labels = 10;
+}
+
+// UsageStatus describes one usage warning or blocker with non-secret evidence.
+message UsageStatus {
+  UsageStatusReason reason = 1;
+  UsageStatusSeverity severity = 2;
+  string message = 3;
+  UsageScope scope = 4;
+  string metric_name = 5;
+  map<string, string> evidence = 6;
+}
