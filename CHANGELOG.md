@@ -8,6 +8,9 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ### Added
 
+- Added `AdminUsageAccountingService` plus usage scope, metric, revision, status, list, batch, and health messages for read-only quota-safe space/domain usage accounting snapshots.
+- Added `AdminUsageAdmissionService` plus `UsageLimit` CRUD messages for daemon-side hard write-gate configuration of quota-safe hard-limit-eligible usage metrics.
+- Added usage-accounting capabilities (`CAPABILITY_USAGE_READ`, `CAPABILITY_USAGE_DIAGNOSTIC_READ`, `CAPABILITY_USAGE_RECONCILE`, `CAPABILITY_USAGE_LIMIT_MANAGE`, and `CAPABILITY_USAGE_LIMIT_OVERRIDE`) for read APIs, diagnostics, reconciliation, and future admission controls.
 - Added `GetBackupObservability` plus backup metric and alert-condition messages so operators can poll credential-free backup/restore health, stale-operation, retention, and blocker signals.
 - Added restored-cluster derived subsystem readiness fields to cluster readiness so operators can see post-restore rebuild requirements for lexical, graph/checkpoint, and semantic/vector-derived artifacts.
 - Added repository backup retention planning/apply RPCs and plan/action messages so operators can preview and execute keep-last-successful, keep-for, and incomplete-prefix cleanup policies.
