@@ -114,6 +114,13 @@ enum Capability {
   // Activity/audit event capabilities.
   CAPABILITY_AUDIT_READ = 240;
   CAPABILITY_AUDIT_WRITE = 241;
+
+  // Usage accounting capabilities.
+  CAPABILITY_USAGE_READ = 260;
+  CAPABILITY_USAGE_DIAGNOSTIC_READ = 261;
+  CAPABILITY_USAGE_RECONCILE = 262;
+  CAPABILITY_USAGE_LIMIT_MANAGE = 263;
+  CAPABILITY_USAGE_LIMIT_OVERRIDE = 264;
 }
 
 // CapabilityBucket describes the broad context in which a capability is used.

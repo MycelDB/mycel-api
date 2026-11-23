@@ -12,7 +12,7 @@ The protobuf definitions live under `api/proto/` and are grouped by audience:
 | --- | --- | --- |
 | `mycel.common.v1` | Shared primitives used by both admin and client APIs. | Authentication, access/capability concepts, inference metadata. |
 | `mycel.client.v1` | Application-facing APIs for graph users and client SDKs. | Spaces, sessions, transactions, graph operations, queries, blobs, schema, metadata catalogs, lexical search, semantic search, import/export, automation, graph-change streaming. |
-| `mycel.admin.v1` | Operator and administrative APIs. | Principals, role/capability grants, spaces/domains, cluster state, backups, inference catalog, lexical/semantic maintenance, activity/audit APIs. |
+| `mycel.admin.v1` | Operator and administrative APIs. | Principals, role/capability grants, spaces/domains, cluster state, backups, usage accounting/admission, inference catalog, lexical/semantic maintenance, activity/audit APIs. |
 
 All current public API packages are versioned as `v1`. Package version is the compatibility boundary.
 
