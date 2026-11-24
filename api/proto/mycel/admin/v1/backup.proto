@@ -5,9 +5,10 @@ syntax = "proto3";
 package mycel.admin.v1;
 
 // AdminBackupService manages repository-backed backup policy, backup repositories,
-// cluster-wide backup operations, backup-set validation, and restore planning/operations.
-// External backup repositories are the durable backup source of truth; daemon-local
-// filesystem paths are not exposed as public backup artifacts.
+// deployment-wide backup operations, backup-set validation, and restore planning/operations.
+// A deployment can be a standalone daemon or a clustered installation. External backup
+// repositories are the durable backup source of truth; daemon-local filesystem paths are
+// not exposed as public backup artifacts.
 service AdminBackupService {
   rpc GetBackupPolicy(GetBackupPolicyRequest) returns (GetBackupPolicyResponse);
   rpc UpdateBackupPolicy(UpdateBackupPolicyRequest) returns (UpdateBackupPolicyResponse);
@@ -19,19 +20,20 @@ service AdminBackupService {
   rpc ValidateBackupRepository(ValidateBackupRepositoryRequest) returns (ValidateBackupRepositoryResponse);
   rpc DeleteBackupRepository(DeleteBackupRepositoryRequest) returns (DeleteBackupRepositoryResponse);
 
-  // StartClusterBackup creates an asynchronous repository-backed cluster-wide backup operation.
-  // Implementations own cluster-safety transitions such as waiting for Raft applied-index
-  // convergence before capture. The requested repository is the durable source of truth.
-  rpc StartClusterBackup(StartClusterBackupRequest) returns (StartClusterBackupResponse);
-  rpc GetClusterBackupStatus(GetClusterBackupStatusRequest) returns (GetClusterBackupStatusResponse);
-  // CancelClusterBackup requests cancellation of a pending or active cluster-wide backup operation.
+  // StartBackup creates an asynchronous repository-backed deployment backup operation.
+  // Standalone deployments are represented as a single-node backup set. Clustered deployments
+  // include all authoritative members and any required multi-node convergence evidence.
+  // The requested repository is the durable source of truth.
+  rpc StartBackup(StartBackupRequest) returns (StartBackupResponse);
+  rpc GetBackupOperation(GetBackupOperationRequest) returns (GetBackupOperationResponse);
+  // CancelBackupOperation requests cancellation of a pending or active backup operation.
   // Cancellation is idempotent for terminal operations.
-  rpc CancelClusterBackup(CancelClusterBackupRequest) returns (CancelClusterBackupResponse);
-  rpc ListClusterBackupOperations(ListClusterBackupOperationsRequest) returns (ListClusterBackupOperationsResponse);
-  rpc ListClusterBackupSets(ListClusterBackupSetsRequest) returns (ListClusterBackupSetsResponse);
-  rpc GetClusterBackupSet(GetClusterBackupSetRequest) returns (GetClusterBackupSetResponse);
-  rpc ValidateClusterBackupSet(ValidateClusterBackupSetRequest) returns (ValidateClusterBackupSetResponse);
-  rpc DeleteClusterBackupSet(DeleteClusterBackupSetRequest) returns (DeleteClusterBackupSetResponse);
+  rpc CancelBackupOperation(CancelBackupOperationRequest) returns (CancelBackupOperationResponse);
+  rpc ListBackupOperations(ListBackupOperationsRequest) returns (ListBackupOperationsResponse);
+  rpc ListBackupSets(ListBackupSetsRequest) returns (ListBackupSetsResponse);
+  rpc GetBackupSet(GetBackupSetRequest) returns (GetBackupSetResponse);
+  rpc ValidateBackupSet(ValidateBackupSetRequest) returns (ValidateBackupSetResponse);
+  rpc DeleteBackupSet(DeleteBackupSetRequest) returns (DeleteBackupSetResponse);
   rpc PlanRepositoryRetention(PlanRepositoryRetentionRequest) returns (PlanRepositoryRetentionResponse);
   rpc ApplyRepositoryRetention(ApplyRepositoryRetentionRequest) returns (ApplyRepositoryRetentionResponse);
 
@@ -39,11 +41,11 @@ service AdminBackupService {
   // metrics and alert conditions suitable for external monitoring systems.
   rpc GetBackupObservability(GetBackupObservabilityRequest) returns (GetBackupObservabilityResponse);
 
-  rpc PlanClusterRestore(PlanClusterRestoreRequest) returns (PlanClusterRestoreResponse);
-  rpc StartClusterRestore(StartClusterRestoreRequest) returns (StartClusterRestoreResponse);
-  rpc GetClusterRestoreStatus(GetClusterRestoreStatusRequest) returns (GetClusterRestoreStatusResponse);
-  rpc ListClusterRestores(ListClusterRestoresRequest) returns (ListClusterRestoresResponse);
-  rpc CancelClusterRestore(CancelClusterRestoreRequest) returns (CancelClusterRestoreResponse);
+  rpc PlanRestore(PlanRestoreRequest) returns (PlanRestoreResponse);
+  rpc StartRestore(StartRestoreRequest) returns (StartRestoreResponse);
+  rpc GetRestoreOperation(GetRestoreOperationRequest) returns (GetRestoreOperationResponse);
+  rpc ListRestoreOperations(ListRestoreOperationsRequest) returns (ListRestoreOperationsResponse);
+  rpc CancelRestoreOperation(CancelRestoreOperationRequest) returns (CancelRestoreOperationResponse);
 }
 
 // BackupArchiveFormat identifies the archive/container format used for a backup.
@@ -139,68 +141,75 @@ enum BackupQuiesceReadProfile {
   BACKUP_QUIESCE_READ_PROFILE_STRICT_READ_ONLY = 2;
 }
 
-// ClusterBackupState identifies the lifecycle state of an asynchronous cluster backup operation.
-enum ClusterBackupState {
-  CLUSTER_BACKUP_STATE_UNSPECIFIED = 0;
-  CLUSTER_BACKUP_STATE_PENDING = 1;
-  CLUSTER_BACKUP_STATE_WAITING_FOR_CLUSTER_CONVERGENCE = 2;
-  CLUSTER_BACKUP_STATE_READY = 3;
-  CLUSTER_BACKUP_STATE_QUIESCING = 4;
-  CLUSTER_BACKUP_STATE_CAPTURING = 5;
-  CLUSTER_BACKUP_STATE_VALIDATING = 6;
-  CLUSTER_BACKUP_STATE_SUCCEEDED = 7;
-  CLUSTER_BACKUP_STATE_FAILED = 8;
-  CLUSTER_BACKUP_STATE_CANCELING = 9;
-  CLUSTER_BACKUP_STATE_CANCELED = 10;
-  CLUSTER_BACKUP_STATE_PREFLIGHTING = 11;
-  CLUSTER_BACKUP_STATE_CHECKPOINTING = 12;
-  CLUSTER_BACKUP_STATE_RELEASING_QUIESCE = 13;
-  CLUSTER_BACKUP_STATE_UPLOADING = 14;
-  CLUSTER_BACKUP_STATE_FINALIZING = 15;
+// BackupDeploymentMode identifies the source or target deployment topology.
+enum BackupDeploymentMode {
+  BACKUP_DEPLOYMENT_MODE_UNSPECIFIED = 0;
+  BACKUP_DEPLOYMENT_MODE_STANDALONE = 1;
+  BACKUP_DEPLOYMENT_MODE_CLUSTERED = 2;
 }
 
-// ClusterRestoreTargetMode identifies the target shape for a restore.
-enum ClusterRestoreTargetMode {
-  CLUSTER_RESTORE_TARGET_MODE_UNSPECIFIED = 0;
-  CLUSTER_RESTORE_TARGET_MODE_NEW_CLUSTER_BOOTSTRAP = 1;
-  CLUSTER_RESTORE_TARGET_MODE_EXISTING_CLUSTER_REPLACE = 2;
+// BackupOperationState identifies the lifecycle state of an asynchronous backup operation.
+enum BackupOperationState {
+  BACKUP_OPERATION_STATE_UNSPECIFIED = 0;
+  BACKUP_OPERATION_STATE_PENDING = 1;
+  BACKUP_OPERATION_STATE_WAITING_FOR_CONVERGENCE = 2;
+  BACKUP_OPERATION_STATE_READY = 3;
+  BACKUP_OPERATION_STATE_QUIESCING = 4;
+  BACKUP_OPERATION_STATE_CAPTURING = 5;
+  BACKUP_OPERATION_STATE_VALIDATING = 6;
+  BACKUP_OPERATION_STATE_SUCCEEDED = 7;
+  BACKUP_OPERATION_STATE_FAILED = 8;
+  BACKUP_OPERATION_STATE_CANCELING = 9;
+  BACKUP_OPERATION_STATE_CANCELED = 10;
+  BACKUP_OPERATION_STATE_PREFLIGHTING = 11;
+  BACKUP_OPERATION_STATE_CHECKPOINTING = 12;
+  BACKUP_OPERATION_STATE_RELEASING_QUIESCE = 13;
+  BACKUP_OPERATION_STATE_UPLOADING = 14;
+  BACKUP_OPERATION_STATE_FINALIZING = 15;
 }
 
-// ClusterRestoreIdentityMode identifies how restored cluster identity is handled.
-enum ClusterRestoreIdentityMode {
-  CLUSTER_RESTORE_IDENTITY_MODE_UNSPECIFIED = 0;
-  CLUSTER_RESTORE_IDENTITY_MODE_PRESERVE_BACKUP_ID = 1;
-  CLUSTER_RESTORE_IDENTITY_MODE_ADOPT_TARGET_ID = 2;
-  CLUSTER_RESTORE_IDENTITY_MODE_GENERATE_NEW_ID = 3;
+// RestoreTargetMode identifies the target shape for a restore.
+enum RestoreTargetMode {
+  RESTORE_TARGET_MODE_UNSPECIFIED = 0;
+  RESTORE_TARGET_MODE_NEW_DEPLOYMENT_BOOTSTRAP = 1;
+  RESTORE_TARGET_MODE_EXISTING_DEPLOYMENT_REPLACE = 2;
 }
 
-// ClusterRestoreAuthSessionPolicy identifies auth-session handling during restore.
-enum ClusterRestoreAuthSessionPolicy {
-  CLUSTER_RESTORE_AUTH_SESSION_POLICY_UNSPECIFIED = 0;
-  CLUSTER_RESTORE_AUTH_SESSION_POLICY_PRESERVE_RESTORED_SESSIONS = 1;
-  CLUSTER_RESTORE_AUTH_SESSION_POLICY_REVOKE_ALL_SESSIONS = 2;
+// RestoreIdentityMode identifies how restored deployment identity is handled.
+enum RestoreIdentityMode {
+  RESTORE_IDENTITY_MODE_UNSPECIFIED = 0;
+  RESTORE_IDENTITY_MODE_PRESERVE_BACKUP_ID = 1;
+  RESTORE_IDENTITY_MODE_ADOPT_TARGET_ID = 2;
+  RESTORE_IDENTITY_MODE_GENERATE_NEW_ID = 3;
 }
 
-// ClusterRestoreState identifies the lifecycle state of a restore operation.
-enum ClusterRestoreState {
-  CLUSTER_RESTORE_STATE_UNSPECIFIED = 0;
-  CLUSTER_RESTORE_STATE_PENDING = 1;
-  CLUSTER_RESTORE_STATE_PLANNING = 2;
-  CLUSTER_RESTORE_STATE_VALIDATING_BACKUP_SET = 3;
-  CLUSTER_RESTORE_STATE_VALIDATING_TARGET = 4;
-  CLUSTER_RESTORE_STATE_ACQUIRING_RESTORE_LOCK = 5;
-  CLUSTER_RESTORE_STATE_STAGING_ARTIFACTS = 6;
-  CLUSTER_RESTORE_STATE_READY_TO_APPLY = 7;
-  CLUSTER_RESTORE_STATE_PREPARING_TARGET = 8;
-  CLUSTER_RESTORE_STATE_APPLYING_ARTIFACTS = 9;
-  CLUSTER_RESTORE_STATE_NORMALIZING_RESTORED_STATE = 10;
-  CLUSTER_RESTORE_STATE_POST_RESTORE_VALIDATING = 11;
-  CLUSTER_RESTORE_STATE_RESUMING_SERVICE = 12;
-  CLUSTER_RESTORE_STATE_SUCCEEDED = 13;
-  CLUSTER_RESTORE_STATE_CANCELING = 14;
-  CLUSTER_RESTORE_STATE_CANCELED = 15;
-  CLUSTER_RESTORE_STATE_FAILED = 16;
-  CLUSTER_RESTORE_STATE_FAILED_REQUIRES_OPERATOR = 17;
+// RestoreAuthSessionPolicy identifies auth-session handling during restore.
+enum RestoreAuthSessionPolicy {
+  RESTORE_AUTH_SESSION_POLICY_UNSPECIFIED = 0;
+  RESTORE_AUTH_SESSION_POLICY_PRESERVE_RESTORED_SESSIONS = 1;
+  RESTORE_AUTH_SESSION_POLICY_REVOKE_ALL_SESSIONS = 2;
+}
+
+// RestoreOperationState identifies the lifecycle state of a restore operation.
+enum RestoreOperationState {
+  RESTORE_OPERATION_STATE_UNSPECIFIED = 0;
+  RESTORE_OPERATION_STATE_PENDING = 1;
+  RESTORE_OPERATION_STATE_PLANNING = 2;
+  RESTORE_OPERATION_STATE_VALIDATING_BACKUP_SET = 3;
+  RESTORE_OPERATION_STATE_VALIDATING_TARGET = 4;
+  RESTORE_OPERATION_STATE_ACQUIRING_RESTORE_LOCK = 5;
+  RESTORE_OPERATION_STATE_STAGING_ARTIFACTS = 6;
+  RESTORE_OPERATION_STATE_READY_TO_APPLY = 7;
+  RESTORE_OPERATION_STATE_PREPARING_TARGET = 8;
+  RESTORE_OPERATION_STATE_APPLYING_ARTIFACTS = 9;
+  RESTORE_OPERATION_STATE_NORMALIZING_RESTORED_STATE = 10;
+  RESTORE_OPERATION_STATE_POST_RESTORE_VALIDATING = 11;
+  RESTORE_OPERATION_STATE_RESUMING_SERVICE = 12;
+  RESTORE_OPERATION_STATE_SUCCEEDED = 13;
+  RESTORE_OPERATION_STATE_CANCELING = 14;
+  RESTORE_OPERATION_STATE_CANCELED = 15;
+  RESTORE_OPERATION_STATE_FAILED = 16;
+  RESTORE_OPERATION_STATE_FAILED_REQUIRES_OPERATOR = 17;
 }
 
 // BackupDeletionState identifies backup-set deletion lifecycle state.
@@ -215,7 +224,7 @@ enum BackupDeletionState {
 }
 
 message BackupPolicy {
-  // Default repository for repository-backed cluster backup operations when an
+  // Default repository for repository-backed deployment backup operations when an
   // explicit request repository is omitted by server-side policy.
   string default_repository_id = 1;
   // Default capture primitive for repository-backed backup artifacts.
@@ -363,23 +372,24 @@ message CleanupTask {
   string last_error = 5;
 }
 
-// ClusterRestoreTarget describes the restore destination. For NEW_CLUSTER_BOOTSTRAP,
-// callers must identify the target bootstrap cluster shape before execution; for
-// EXISTING_CLUSTER_REPLACE, the same fields describe the fenced replacement target.
-message ClusterRestoreTarget {
-  string target_cluster_id = 1;
-  string target_cluster_name = 2;
-  string namespace = 3;
-  string stateful_set = 4;
-  int32 expected_node_count = 5;
-  repeated ClusterRestoreNodeMapping nodes = 6;
-  map<string, string> labels = 7;
-  map<string, string> annotations = 8;
+// RestoreTarget describes the restore destination. For NEW_DEPLOYMENT_BOOTSTRAP,
+// callers must identify the standalone or clustered target shape before execution; for
+// EXISTING_DEPLOYMENT_REPLACE, the same fields describe the fenced replacement target.
+message RestoreTarget {
+  string target_deployment_id = 1;
+  string target_deployment_name = 2;
+  BackupDeploymentMode deployment_mode = 3;
+  string namespace = 4;
+  string stateful_set = 5;
+  int32 expected_node_count = 6;
+  repeated RestoreNodeMapping nodes = 7;
+  map<string, string> labels = 8;
+  map<string, string> annotations = 9;
 }
 
-// ClusterRestoreNodeMapping binds one backed-up ordinal/artifact to one target data
+// RestoreNodeMapping binds one backed-up ordinal/artifact to one target data
 // location. Restore execution must fail closed when mappings are incomplete or ambiguous.
-message ClusterRestoreNodeMapping {
+message RestoreNodeMapping {
   int32 ordinal = 1;
   string source_pod_name = 2;
   string source_node_id = 3;
@@ -391,9 +401,9 @@ message ClusterRestoreNodeMapping {
   string staging_path = 9;
 }
 
-// ClusterRestoreStagingLocation describes where repository artifacts may be downloaded
+// RestoreStagingLocation describes where repository artifacts may be downloaded
 // and verified before being applied to target data dirs/PVCs.
-message ClusterRestoreStagingLocation {
+message RestoreStagingLocation {
   string staging_uri = 1;
   string storage_class = 2;
   int64 required_bytes = 3;
@@ -402,36 +412,36 @@ message ClusterRestoreStagingLocation {
   repeated ValidationBlocker blockers = 6;
 }
 
-// ClusterRestoreCleanTargetProof records evidence that a NEW_CLUSTER_BOOTSTRAP target
+// RestoreCleanTargetProof records evidence that a NEW_DEPLOYMENT_BOOTSTRAP target
 // is empty/safe to receive physical backup artifacts.
-message ClusterRestoreCleanTargetProof {
+message RestoreCleanTargetProof {
   string proof_id = 1;
   string checked_at = 2;
   bool target_empty = 3;
-  repeated ClusterRestoreNodeMapping checked_nodes = 4;
+  repeated RestoreNodeMapping checked_nodes = 4;
   repeated ValidationBlocker blockers = 5;
   string operator_attestation = 6;
 }
 
-// ClusterRestoreSourceFencingEvidence records proof that preserved-identity restores
-// cannot race with the original source cluster.
-message ClusterRestoreSourceFencingEvidence {
-  bool source_cluster_fenced = 1;
+// RestoreSourceFencingEvidence records proof that preserved-identity restores
+// cannot race with the original source deployment.
+message RestoreSourceFencingEvidence {
+  bool source_deployment_fenced = 1;
   string fenced_at = 2;
   string fence_token_ref = 3;
   repeated string fenced_endpoints = 4;
   repeated ValidationBlocker blockers = 5;
 }
 
-// ClusterRestorePreconditionEvidence groups execution safety proofs supplied with a
+// RestorePreconditionEvidence groups execution safety proofs supplied with a
 // restore start request or reported back on an operation.
-message ClusterRestorePreconditionEvidence {
-  ClusterRestoreCleanTargetProof clean_target = 1;
-  ClusterRestoreSourceFencingEvidence source_fencing = 2;
+message RestorePreconditionEvidence {
+  RestoreCleanTargetProof clean_target = 1;
+  RestoreSourceFencingEvidence source_fencing = 2;
   repeated ValidationBlocker blockers = 3;
 }
 
-message ClusterRestoreNodeProgress {
+message RestoreNodeProgress {
   int32 ordinal = 1;
   string state = 2;
   string source_archive_uri = 3;
@@ -443,7 +453,7 @@ message ClusterRestoreNodeProgress {
   map<string, string> evidence = 9;
 }
 
-message ClusterRestoreProgress {
+message RestoreProgress {
   int32 total_nodes = 1;
   int32 staged_nodes = 2;
   int32 applied_nodes = 3;
@@ -452,16 +462,16 @@ message ClusterRestoreProgress {
   int64 bytes_completed = 6;
   string current_phase = 7;
   string current_node = 8;
-  repeated ClusterRestoreNodeProgress nodes = 9;
+  repeated RestoreNodeProgress nodes = 9;
 }
 
 message RestorePlanSummary {
   string restore_plan_id = 1;
   string repository_id = 2;
   string backup_set_id = 3;
-  ClusterRestoreTargetMode target_mode = 4;
-  ClusterRestoreIdentityMode identity_mode = 5;
-  ClusterRestoreAuthSessionPolicy auth_session_policy = 6;
+  RestoreTargetMode target_mode = 4;
+  RestoreIdentityMode identity_mode = 5;
+  RestoreAuthSessionPolicy auth_session_policy = 6;
   bool restorable = 7;
   ValidationSummary validation = 8;
   CompatibilitySummary compatibility = 9;
@@ -469,30 +479,30 @@ message RestorePlanSummary {
   repeated DerivedSubsystemPolicy derived_actions = 11;
   repeated ValidationBlocker blockers = 12;
   string planned_at = 13;
-  ClusterRestoreTarget target = 14;
-  ClusterRestoreStagingLocation staging = 15;
-  ClusterRestorePreconditionEvidence required_preconditions = 16;
+  RestoreTarget target = 14;
+  RestoreStagingLocation staging = 15;
+  RestorePreconditionEvidence required_preconditions = 16;
 }
 
-message ClusterRestoreOperation {
+message RestoreOperation {
   string restore_operation_id = 1;
   string restore_plan_id = 2;
   string repository_id = 3;
   string backup_set_id = 4;
-  ClusterRestoreState state = 5;
-  ClusterRestoreTargetMode target_mode = 6;
-  ClusterRestoreIdentityMode identity_mode = 7;
+  RestoreOperationState state = 5;
+  RestoreTargetMode target_mode = 6;
+  RestoreIdentityMode identity_mode = 7;
   string created_at = 8;
   string updated_at = 9;
   string completed_at = 10;
   repeated ValidationBlocker blockers = 11;
   repeated CleanupTask cleanup_tasks = 12;
   string error = 13;
-  ClusterRestoreAuthSessionPolicy auth_session_policy = 14;
-  ClusterRestoreTarget target = 15;
-  ClusterRestoreStagingLocation staging = 16;
-  ClusterRestorePreconditionEvidence preconditions = 17;
-  ClusterRestoreProgress progress = 18;
+  RestoreAuthSessionPolicy auth_session_policy = 14;
+  RestoreTarget target = 15;
+  RestoreStagingLocation staging = 16;
+  RestorePreconditionEvidence preconditions = 17;
+  RestoreProgress progress = 18;
 }
 
 message GetBackupPolicyRequest {}
@@ -561,13 +571,13 @@ message DeleteBackupRepositoryResponse {
   BackupDeletionState state = 2;
 }
 
-message StartClusterBackupRequest {
+message StartBackupRequest {
   string reason = 1;
   BackupArchiveFormat archive_format = 2;
   // Optional client-provided key for idempotent start retries. Servers may return the existing
   // operation for the same key instead of creating a duplicate operation.
   string idempotency_key = 3;
-  // Optional maximum time the operation may remain waiting for cluster convergence before failing.
+  // Optional maximum time the operation may remain waiting for deployment convergence before failing.
   // Zero means the server default applies.
   int64 convergence_timeout_seconds = 4;
   // Required unless the daemon has an explicit default repository policy. The repository receives
@@ -578,80 +588,80 @@ message StartClusterBackupRequest {
   BackupQuiesceReadProfile quiesce_read_profile = 8;
 }
 
-message StartClusterBackupResponse {
-  ClusterBackupStatus status = 1;
-  ClusterBackupSetSummary backup_set = 2;
+message StartBackupResponse {
+  BackupOperation operation = 1;
+  BackupSetSummary backup_set = 2;
 }
 
-message GetClusterBackupStatusRequest {
+message GetBackupOperationRequest {
   string backup_set_id = 1;
   string backup_operation_id = 2;
 }
 
-message GetClusterBackupStatusResponse {
-  ClusterBackupStatus status = 1;
+message GetBackupOperationResponse {
+  BackupOperation operation = 1;
 }
 
-message CancelClusterBackupRequest {
+message CancelBackupOperationRequest {
   string backup_set_id = 1;
   string reason = 2;
   string backup_operation_id = 3;
 }
 
-message CancelClusterBackupResponse {
-  ClusterBackupStatus status = 1;
+message CancelBackupOperationResponse {
+  BackupOperation operation = 1;
 }
 
-message ListClusterBackupOperationsRequest {
+message ListBackupOperationsRequest {
   int32 page_size = 1;
   string page_token = 2;
 }
 
-message ListClusterBackupOperationsResponse {
-  repeated ClusterBackupStatus operations = 1;
+message ListBackupOperationsResponse {
+  repeated BackupOperation operations = 1;
   string next_page_token = 2;
 }
 
-message ListClusterBackupSetsRequest {
+message ListBackupSetsRequest {
   string repository_id = 1;
   int32 page_size = 2;
   string page_token = 3;
 }
 
-message ListClusterBackupSetsResponse {
-  repeated ClusterBackupSetSummary backup_sets = 1;
+message ListBackupSetsResponse {
+  repeated BackupSetSummary backup_sets = 1;
   string next_page_token = 2;
 }
 
-message GetClusterBackupSetRequest {
+message GetBackupSetRequest {
   string repository_id = 1;
   string backup_set_id = 2;
 }
 
-message GetClusterBackupSetResponse {
-  ClusterBackupSetSummary backup_set = 1;
+message GetBackupSetResponse {
+  BackupSetSummary backup_set = 1;
 }
 
-message ValidateClusterBackupSetRequest {
+message ValidateBackupSetRequest {
   string repository_id = 1;
   string backup_set_id = 2;
   ValidationOptions validation_options = 3;
 }
 
-message ValidateClusterBackupSetResponse {
+message ValidateBackupSetResponse {
   bool valid = 1;
   repeated string errors = 2;
-  ClusterBackupSetSummary backup_set = 3;
+  BackupSetSummary backup_set = 3;
   ValidationSummary validation = 4;
 }
 
-message DeleteClusterBackupSetRequest {
+message DeleteBackupSetRequest {
   string repository_id = 1;
   string backup_set_id = 2;
   string reason = 3;
 }
 
-message DeleteClusterBackupSetResponse {
+message DeleteBackupSetResponse {
   string repository_id = 1;
   string backup_set_id = 2;
   BackupDeletionState state = 3;
@@ -740,7 +750,7 @@ message BackupObservabilitySnapshot {
 }
 
 message BackupMetric {
-  // Stable metric name, e.g. mycel_backup_cluster_operation_count.
+  // Stable metric name, e.g. mycel_backup_operation_count.
   string name = 1;
   string description = 2;
   // Unit values are conventional strings such as count, seconds, bytes, or ratio.
@@ -763,32 +773,35 @@ message BackupAlertCondition {
   repeated string evidence = 7;
 }
 
-message ClusterBackupStatus {
-  string backup_set_id = 1;
-  string state = 2;
-  string cluster_id = 3;
-  string reason = 4;
-  string created_at = 5;
-  string updated_at = 6;
-  string completed_at = 7;
-  int32 expected_nodes = 8;
-  string manifest_uri = 9;
-  repeated ClusterBackupNodeArtifact nodes = 10;
-  string failed_phase = 11;
-  string error = 12;
-  map<string, uint64> raft_barriers = 13;
-  ClusterBackupState state_code = 14;
-  repeated ClusterBackupBlocker blockers = 15;
-  bool cancel_requested = 16;
-  string current_phase = 17;
-  int64 retry_after_seconds = 18;
-  string repository_id = 19;
-  string backup_operation_id = 20;
-  repeated CleanupTask cleanup_tasks = 21;
-  ValidationSummary validation = 22;
+message BackupOperation {
+  string backup_operation_id = 1;
+  string backup_set_id = 2;
+  string repository_id = 3;
+  string deployment_id = 4;
+  string deployment_name = 5;
+  BackupDeploymentMode deployment_mode = 6;
+  BackupOperationState state = 7;
+  // Optional implementation-specific phase detail for operator diagnostics.
+  string phase = 8;
+  string reason = 9;
+  string created_at = 10;
+  string updated_at = 11;
+  string completed_at = 12;
+  int32 expected_node_count = 13;
+  string manifest_uri = 14;
+  repeated BackupNodeArtifact nodes = 15;
+  // Raft convergence barriers are empty for standalone deployments.
+  map<string, uint64> raft_barriers = 16;
+  repeated BackupOperationBlocker blockers = 17;
+  repeated CleanupTask cleanup_tasks = 18;
+  ValidationSummary validation = 19;
+  bool cancel_requested = 20;
+  int64 retry_after_seconds = 21;
+  string failed_phase = 22;
+  string error = 23;
 }
 
-message ClusterBackupBlocker {
+message BackupOperationBlocker {
   string node_name = 1;
   string node_id = 2;
   uint64 raft_node_id = 3;
@@ -799,24 +812,26 @@ message ClusterBackupBlocker {
   string detail = 8;
 }
 
-message ClusterBackupSetSummary {
+message BackupSetSummary {
   string backup_set_id = 1;
-  string state = 2;
-  string cluster_id = 3;
-  string created_at = 4;
-  string completed_at = 5;
-  int32 expected_nodes = 6;
-  string manifest_uri = 7;
-  repeated ClusterBackupNodeArtifact nodes = 8;
-  string repository_id = 9;
-  CompatibilitySummary compatibility = 10;
-  ValidationSummary validation = 11;
-  BackupDeletionState deletion_state = 12;
-  BackupRetentionClass retention_class = 13;
-  BackupSetManifestSummary manifest = 14;
+  string repository_id = 2;
+  string deployment_id = 3;
+  string deployment_name = 4;
+  BackupDeploymentMode deployment_mode = 5;
+  BackupOperationState state = 6;
+  string created_at = 7;
+  string completed_at = 8;
+  int32 expected_node_count = 9;
+  string manifest_uri = 10;
+  repeated BackupNodeArtifact nodes = 11;
+  CompatibilitySummary compatibility = 12;
+  ValidationSummary validation = 13;
+  BackupDeletionState deletion_state = 14;
+  BackupRetentionClass retention_class = 15;
+  BackupSetManifestSummary manifest = 16;
 }
 
-message ClusterBackupNodeArtifact {
+message BackupNodeArtifact {
   string pod_name = 1;
   string node_id = 2;
   int32 ordinal = 3;
@@ -830,63 +845,63 @@ message ClusterBackupNodeArtifact {
   map<string, uint64> applied_indexes = 11;
 }
 
-message PlanClusterRestoreRequest {
+message PlanRestoreRequest {
   string repository_id = 1;
   string backup_set_id = 2;
-  ClusterRestoreTargetMode target_mode = 3;
-  ClusterRestoreIdentityMode identity_mode = 4;
-  ClusterRestoreAuthSessionPolicy auth_session_policy = 5;
+  RestoreTargetMode target_mode = 3;
+  RestoreIdentityMode identity_mode = 4;
+  RestoreAuthSessionPolicy auth_session_policy = 5;
   ValidationOptions validation_options = 6;
-  ClusterRestoreTarget target = 7;
-  ClusterRestoreStagingLocation staging = 8;
+  RestoreTarget target = 7;
+  RestoreStagingLocation staging = 8;
 }
 
-message PlanClusterRestoreResponse {
+message PlanRestoreResponse {
   RestorePlanSummary plan = 1;
 }
 
-message StartClusterRestoreRequest {
+message StartRestoreRequest {
   string restore_plan_id = 1;
   string repository_id = 2;
   string backup_set_id = 3;
-  ClusterRestoreTargetMode target_mode = 4;
-  ClusterRestoreIdentityMode identity_mode = 5;
-  ClusterRestoreAuthSessionPolicy auth_session_policy = 6;
+  RestoreTargetMode target_mode = 4;
+  RestoreIdentityMode identity_mode = 5;
+  RestoreAuthSessionPolicy auth_session_policy = 6;
   string idempotency_key = 7;
   string destructive_confirmation = 8;
-  ClusterRestoreTarget target = 9;
-  ClusterRestoreStagingLocation staging = 10;
-  ClusterRestorePreconditionEvidence preconditions = 11;
+  RestoreTarget target = 9;
+  RestoreStagingLocation staging = 10;
+  RestorePreconditionEvidence preconditions = 11;
   string plan_freshness_token = 12;
 }
 
-message StartClusterRestoreResponse {
-  ClusterRestoreOperation operation = 1;
+message StartRestoreResponse {
+  RestoreOperation operation = 1;
 }
 
-message GetClusterRestoreStatusRequest {
+message GetRestoreOperationRequest {
   string restore_operation_id = 1;
 }
 
-message GetClusterRestoreStatusResponse {
-  ClusterRestoreOperation operation = 1;
+message GetRestoreOperationResponse {
+  RestoreOperation operation = 1;
 }
 
-message ListClusterRestoresRequest {
+message ListRestoreOperationsRequest {
   int32 page_size = 1;
   string page_token = 2;
 }
 
-message ListClusterRestoresResponse {
-  repeated ClusterRestoreOperation operations = 1;
+message ListRestoreOperationsResponse {
+  repeated RestoreOperation operations = 1;
   string next_page_token = 2;
 }
 
-message CancelClusterRestoreRequest {
+message CancelRestoreOperationRequest {
   string restore_operation_id = 1;
   string reason = 2;
 }
 
-message CancelClusterRestoreResponse {
-  ClusterRestoreOperation operation = 1;
+message CancelRestoreOperationResponse {
+  RestoreOperation operation = 1;
 }
