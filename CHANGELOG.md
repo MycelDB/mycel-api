@@ -6,6 +6,23 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+### Changed
+
+- Generalized repository-backed backup/restore RPCs and messages from cluster-specific names to deployment-wide names (`StartBackup`, `ListBackupSets`, `PlanRestore`, `BackupOperation`, `BackupSetSummary`, etc.) so the same contract covers standalone daemons and clustered installations.
+- Added explicit `BackupDeploymentMode` metadata and deployment identifiers to backup operations, backup sets, and restore targets; standalone backups are represented as one-node repository-backed backup sets.
+
+### Removed
+
+- Removed the legacy daemon-local backup RPCs (`TriggerBackup`, `GetBackupStatus`, `ListBackups`, and `DeleteBackup`) so public backup operations use repository-backed backup sets only.
+- Removed daemon-local backup policy scheduling/archive fields from `BackupPolicy`; the remaining policy fields define repository-backed defaults such as default repository, capture/quiesce behavior, derived subsystem policy, validation, and retention.
+- Removed local filesystem backup-set inputs (`StartClusterBackup.output_dir`, `ValidateClusterBackupSet.backup_set_path`, and the ambiguous `ListClusterBackups` RPC) from the public backup contract.
+
+### Compatibility
+
+- This is an intentional breaking backup API cleanup for the next coordinated minor release. Clients must migrate to repository-backed repositories plus `StartBackup.repository_id`, `ListBackupSets`, `GetBackupSet`, `ValidateBackupSet`, repository retention, observability, and repository-backed restore planning.
+- Because the API is not yet stable, the remaining repository-only backup policy/start/validation messages use clean field numbering instead of reserving removed local-backup fields.
+- Daemon-local paths may still be used by implementations as temporary scratch or restore targets, but they are no longer durable backup artifacts in the public API.
+
 ## [v0.24.0] - 2026-11-23
 
 ### Added
