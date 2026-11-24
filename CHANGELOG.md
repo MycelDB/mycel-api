@@ -29,6 +29,7 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 ### Compatibility
 
 - This is an intentional breaking backup API cleanup for the next coordinated minor release. Clients must migrate to repository-backed repositories plus `StartClusterBackup.repository_id`, `ListClusterBackupSets`, `GetClusterBackupSet`, `ValidateClusterBackupSet`, repository retention, observability, and repository-backed restore planning.
+- Because the API is not yet stable, the remaining repository-only backup policy/start/validation messages use clean field numbering instead of reserving removed local-backup fields.
 - Daemon-local paths may still be used by implementations as temporary scratch or restore targets, but they are no longer durable backup artifacts in the public API.
 
 ## [v0.23.0] - 2026-11-17
