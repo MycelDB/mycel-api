@@ -4,8 +4,10 @@ syntax = "proto3";
 
 package mycel.admin.v1;
 
-// AdminBackupService manages daemon backup policy, backup repositories, backup
-// operations, backup-set validation, and restore planning/operations.
+// AdminBackupService manages repository-backed backup policy, backup repositories,
+// cluster-wide backup operations, backup-set validation, and restore planning/operations.
+// External backup repositories are the durable backup source of truth; daemon-local
+// filesystem paths are not exposed as public backup artifacts.
 service AdminBackupService {
   rpc GetBackupPolicy(GetBackupPolicyRequest) returns (GetBackupPolicyResponse);
   rpc UpdateBackupPolicy(UpdateBackupPolicyRequest) returns (UpdateBackupPolicyResponse);
@@ -17,19 +19,14 @@ service AdminBackupService {
   rpc ValidateBackupRepository(ValidateBackupRepositoryRequest) returns (ValidateBackupRepositoryResponse);
   rpc DeleteBackupRepository(DeleteBackupRepositoryRequest) returns (DeleteBackupRepositoryResponse);
 
-  rpc TriggerBackup(TriggerBackupRequest) returns (TriggerBackupResponse);
-  rpc GetBackupStatus(GetBackupStatusRequest) returns (GetBackupStatusResponse);
-  rpc ListBackups(ListBackupsRequest) returns (ListBackupsResponse);
-  rpc DeleteBackup(DeleteBackupRequest) returns (DeleteBackupResponse);
-
-  // StartClusterBackup creates an asynchronous cluster-wide backup operation. Implementations own
-  // cluster-safety transitions such as waiting for Raft applied-index convergence before capture.
+  // StartClusterBackup creates an asynchronous repository-backed cluster-wide backup operation.
+  // Implementations own cluster-safety transitions such as waiting for Raft applied-index
+  // convergence before capture. The requested repository is the durable source of truth.
   rpc StartClusterBackup(StartClusterBackupRequest) returns (StartClusterBackupResponse);
   rpc GetClusterBackupStatus(GetClusterBackupStatusRequest) returns (GetClusterBackupStatusResponse);
   // CancelClusterBackup requests cancellation of a pending or active cluster-wide backup operation.
   // Cancellation is idempotent for terminal operations.
   rpc CancelClusterBackup(CancelClusterBackupRequest) returns (CancelClusterBackupResponse);
-  rpc ListClusterBackups(ListClusterBackupsRequest) returns (ListClusterBackupsResponse);
   rpc ListClusterBackupOperations(ListClusterBackupOperationsRequest) returns (ListClusterBackupOperationsResponse);
   rpc ListClusterBackupSets(ListClusterBackupSetsRequest) returns (ListClusterBackupSetsResponse);
   rpc GetClusterBackupSet(GetClusterBackupSetRequest) returns (GetClusterBackupSetResponse);
@@ -218,85 +215,20 @@ enum BackupDeletionState {
 }
 
 message BackupPolicy {
-  bool enabled = 1;
-  string backup_dir = 2;
-  // Interval schedule period in whole hours. Used when schedule_kind is empty or "interval".
-  int32 interval_hours = 3;
-  int32 retention_count = 4;
-  bool include_logs = 5;
-  // Deprecated legacy archive/compression format string, for example "zip".
-  string compression = 6 [deprecated = true];
-  int64 quiesce_drain_timeout_seconds = 7;
-  int64 backup_timeout_seconds = 8;
-  int64 retry_after_seconds = 9;
-  int32 status_history_limit = 10;
-  bool allow_reads_during_backup = 11;
-  // Schedule kind: "interval", "daily", or "weekly". Empty means "interval" for compatibility.
-  string schedule_kind = 12;
-  // Wall-clock time for daily/weekly schedules in HH:MM 24-hour format.
-  string time_of_day = 13;
-  // IANA timezone for wall-clock schedules, for example "UTC" or "America/Toronto".
-  string timezone = 14;
-  // Weekdays for weekly schedules, where 0=Sunday through 6=Saturday.
-  repeated int32 weekdays = 15;
-  // Whether the daemon should run a missed calendar schedule after restart.
-  bool run_missed = 16;
-  // Archive format. UNSPECIFIED means ZIP for compatibility.
-  BackupArchiveFormat archive_format = 17;
+  reserved 1 to 17;
+  reserved "enabled", "backup_dir", "interval_hours", "retention_count", "include_logs", "compression", "quiesce_drain_timeout_seconds", "backup_timeout_seconds", "retry_after_seconds", "status_history_limit", "allow_reads_during_backup", "schedule_kind", "time_of_day", "timezone", "weekdays", "run_missed", "archive_format";
+
+  // Default repository for repository-backed cluster backup operations when an
+  // explicit request repository is omitted by server-side policy.
   string default_repository_id = 18;
+  // Default capture primitive for repository-backed backup artifacts.
   BackupCaptureProvider capture_provider = 19;
+  // Default read profile enforced while repository-backed backups hold quiesce.
   BackupQuiesceReadProfile quiesce_read_profile = 20;
   bool allow_read_only_during_quiesce = 21;
   repeated DerivedSubsystemPolicy derived_subsystems = 22;
   RetentionPolicy retention_policy = 23;
   ValidationOptions validation_options = 24;
-}
-
-message BackupStatus {
-  string backup_id = 1;
-  string state = 2;
-  string started_at = 3;
-  string completed_at = 4;
-  string archive_path = 5;
-  string manifest_path = 6;
-  string error = 7;
-  repeated QuiesceParticipantStatus participants = 8;
-  string last_success_at = 9;
-  string next_run_at = 10;
-}
-
-message BackupSummary {
-  string backup_id = 1;
-  string archive_name = 2;
-  string created_at = 3;
-  string completed_at = 4;
-  int64 size_bytes = 5;
-  string checksum_sha256 = 6;
-  // Deprecated legacy archive/compression format string, for example "zip".
-  string compression = 7 [deprecated = true];
-  bool include_logs = 8;
-  BackupArchiveFormat archive_format = 9;
-}
-
-message QuiesceStatus {
-  repeated QuiesceParticipantStatus participants = 1;
-}
-
-message QuiesceParticipantStatus {
-  string name = 1;
-  bool quiesced = 2;
-  int32 active = 3;
-  string reason = 4;
-  string mode = 5;
-  string source = 6;
-  string since = 7;
-  string last_error = 8;
-  int32 active_read_only = 9;
-  int32 active_writes = 10;
-  string read_allowlist_profile = 11;
-  string deadline = 12;
-  bool accepting_read_only = 13;
-  bool accepting_writes = 14;
 }
 
 message SecretReference {
@@ -632,43 +564,11 @@ message DeleteBackupRepositoryResponse {
   BackupDeletionState state = 2;
 }
 
-message TriggerBackupRequest {
-  string reason = 1;
-}
-
-message TriggerBackupResponse {
-  BackupStatus status = 1;
-  BackupSummary backup = 2;
-}
-
-message GetBackupStatusRequest {}
-
-message GetBackupStatusResponse {
-  BackupStatus status = 1;
-  QuiesceStatus quiesce = 2;
-}
-
-message ListBackupsRequest {
-  int32 page_size = 1;
-  string page_token = 2;
-}
-
-message ListBackupsResponse {
-  repeated BackupSummary backups = 1;
-  string next_page_token = 2;
-}
-
-message DeleteBackupRequest {
-  string backup_id = 1;
-}
-
-message DeleteBackupResponse {
-  string backup_id = 1;
-}
-
 message StartClusterBackupRequest {
+  reserved 2;
+  reserved "output_dir";
+
   string reason = 1;
-  string output_dir = 2;
   BackupArchiveFormat archive_format = 3;
   // Optional client-provided key for idempotent start retries. Servers may return the existing
   // operation for the same key instead of creating a duplicate operation.
@@ -676,6 +576,8 @@ message StartClusterBackupRequest {
   // Optional maximum time the operation may remain waiting for cluster convergence before failing.
   // Zero means the server default applies.
   int64 convergence_timeout_seconds = 5;
+  // Required unless the daemon has an explicit default repository policy. The repository receives
+  // the durable backup-set manifest, artifacts, and complete marker.
   string repository_id = 6;
   BackupCaptureProvider capture_provider = 7;
   ValidationOptions validation_options = 8;
@@ -704,16 +606,6 @@ message CancelClusterBackupRequest {
 
 message CancelClusterBackupResponse {
   ClusterBackupStatus status = 1;
-}
-
-message ListClusterBackupsRequest {
-  int32 page_size = 1;
-  string page_token = 2;
-}
-
-message ListClusterBackupsResponse {
-  repeated ClusterBackupSetSummary backup_sets = 1;
-  string next_page_token = 2;
 }
 
 message ListClusterBackupOperationsRequest {
@@ -747,7 +639,9 @@ message GetClusterBackupSetResponse {
 }
 
 message ValidateClusterBackupSetRequest {
-  string backup_set_path = 1;
+  reserved 1;
+  reserved "backup_set_path";
+
   string repository_id = 2;
   string backup_set_id = 3;
   ValidationOptions validation_options = 4;

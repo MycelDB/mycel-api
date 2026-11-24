@@ -20,6 +20,17 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 - Extended backup-set validation, compatibility, capacity, and manifest summaries so clients can display schema/version, required feature, storage format, supported restore mode, artifact count, and byte-size evidence returned by daemon validators.
 - Extended quiesce participant status with active read/write counts, read allowlist profile, deadline, and admission-state fields for backup safety UX.
 
+### Removed
+
+- Removed the legacy daemon-local backup RPCs (`TriggerBackup`, `GetBackupStatus`, `ListBackups`, and `DeleteBackup`) so public backup operations use repository-backed cluster backup sets only.
+- Removed daemon-local backup policy scheduling/archive fields from `BackupPolicy`; the remaining policy fields define repository-backed defaults such as default repository, capture/quiesce behavior, derived subsystem policy, validation, and retention.
+- Removed local filesystem backup-set inputs (`StartClusterBackup.output_dir`, `ValidateClusterBackupSet.backup_set_path`, and the ambiguous `ListClusterBackups` RPC) from the public backup contract.
+
+### Compatibility
+
+- This is an intentional breaking backup API cleanup for the next coordinated minor release. Clients must migrate to repository-backed repositories plus `StartClusterBackup.repository_id`, `ListClusterBackupSets`, `GetClusterBackupSet`, `ValidateClusterBackupSet`, repository retention, observability, and repository-backed restore planning.
+- Daemon-local paths may still be used by implementations as temporary scratch or restore targets, but they are no longer durable backup artifacts in the public API.
+
 ## [v0.23.0] - 2026-11-17
 
 ### Added
