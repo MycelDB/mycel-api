@@ -215,20 +215,17 @@ enum BackupDeletionState {
 }
 
 message BackupPolicy {
-  reserved 1 to 17;
-  reserved "enabled", "backup_dir", "interval_hours", "retention_count", "include_logs", "compression", "quiesce_drain_timeout_seconds", "backup_timeout_seconds", "retry_after_seconds", "status_history_limit", "allow_reads_during_backup", "schedule_kind", "time_of_day", "timezone", "weekdays", "run_missed", "archive_format";
-
   // Default repository for repository-backed cluster backup operations when an
   // explicit request repository is omitted by server-side policy.
-  string default_repository_id = 18;
+  string default_repository_id = 1;
   // Default capture primitive for repository-backed backup artifacts.
-  BackupCaptureProvider capture_provider = 19;
+  BackupCaptureProvider capture_provider = 2;
   // Default read profile enforced while repository-backed backups hold quiesce.
-  BackupQuiesceReadProfile quiesce_read_profile = 20;
-  bool allow_read_only_during_quiesce = 21;
-  repeated DerivedSubsystemPolicy derived_subsystems = 22;
-  RetentionPolicy retention_policy = 23;
-  ValidationOptions validation_options = 24;
+  BackupQuiesceReadProfile quiesce_read_profile = 3;
+  bool allow_read_only_during_quiesce = 4;
+  repeated DerivedSubsystemPolicy derived_subsystems = 5;
+  RetentionPolicy retention_policy = 6;
+  ValidationOptions validation_options = 7;
 }
 
 message SecretReference {
@@ -565,23 +562,20 @@ message DeleteBackupRepositoryResponse {
 }
 
 message StartClusterBackupRequest {
-  reserved 2;
-  reserved "output_dir";
-
   string reason = 1;
-  BackupArchiveFormat archive_format = 3;
+  BackupArchiveFormat archive_format = 2;
   // Optional client-provided key for idempotent start retries. Servers may return the existing
   // operation for the same key instead of creating a duplicate operation.
-  string idempotency_key = 4;
+  string idempotency_key = 3;
   // Optional maximum time the operation may remain waiting for cluster convergence before failing.
   // Zero means the server default applies.
-  int64 convergence_timeout_seconds = 5;
+  int64 convergence_timeout_seconds = 4;
   // Required unless the daemon has an explicit default repository policy. The repository receives
   // the durable backup-set manifest, artifacts, and complete marker.
-  string repository_id = 6;
-  BackupCaptureProvider capture_provider = 7;
-  ValidationOptions validation_options = 8;
-  BackupQuiesceReadProfile quiesce_read_profile = 9;
+  string repository_id = 5;
+  BackupCaptureProvider capture_provider = 6;
+  ValidationOptions validation_options = 7;
+  BackupQuiesceReadProfile quiesce_read_profile = 8;
 }
 
 message StartClusterBackupResponse {
@@ -639,12 +633,9 @@ message GetClusterBackupSetResponse {
 }
 
 message ValidateClusterBackupSetRequest {
-  reserved 1;
-  reserved "backup_set_path";
-
-  string repository_id = 2;
-  string backup_set_id = 3;
-  ValidationOptions validation_options = 4;
+  string repository_id = 1;
+  string backup_set_id = 2;
+  ValidationOptions validation_options = 3;
 }
 
 message ValidateClusterBackupSetResponse {
