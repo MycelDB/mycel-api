@@ -8,6 +8,12 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ### Added
 
+- Documented public admin usage metric identifiers and formulas, including `graph.logical_bytes` as a quota-safe logical graph payload-content byte metric that is not hard-limit eligible in the first enforcement slice.
+
+## [v0.24.0] - 2026-11-23
+
+### Added
+
 - Added `AdminUsageAccountingService` plus usage scope, metric, revision, status, list, batch, and health messages for read-only quota-safe space/domain usage accounting snapshots.
 - Added `AdminUsageAdmissionService` plus `UsageLimit` CRUD messages for daemon-side hard write-gate configuration of quota-safe hard-limit-eligible usage metrics.
 - Added usage-accounting capabilities (`CAPABILITY_USAGE_READ`, `CAPABILITY_USAGE_DIAGNOSTIC_READ`, `CAPABILITY_USAGE_RECONCILE`, `CAPABILITY_USAGE_LIMIT_MANAGE`, and `CAPABILITY_USAGE_LIMIT_OVERRIDE`) for read APIs, diagnostics, reconciliation, and future admission controls.
