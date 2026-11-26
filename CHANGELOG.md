@@ -6,9 +6,34 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.26.0] - 2026-11-26
+
 ### Added
 
-- Documented public admin usage metric identifiers and formulas, including `graph.logical_bytes` as a quota-safe logical graph payload-content byte metric that is not hard-limit eligible in the first enforcement slice.
+- Documented public admin usage metric identifiers and formulas, including `graph.logical_bytes`: the UTF-8 byte total of scalar values in committed graph node payloads. It is quota-safe but is not eligible for hard-limit enforcement (#75).
+
+### Compatibility
+
+- This is an additive contract documentation release. Protobuf packages, fields, enums, RPCs, and wire format are unchanged from v0.25.0. Existing SDK bindings can read the metric from a daemon that supports it; no binding regeneration is required.
+
+## [v0.25.0] - 2026-11-24
+
+### Changed
+
+- Generalized repository-backed backup/restore RPCs and messages from cluster-specific names to deployment-wide names (`StartBackup`, `ListBackupSets`, `PlanRestore`, `BackupOperation`, `BackupSetSummary`, etc.) so the same contract covers standalone daemons and clustered installations.
+- Added explicit `BackupDeploymentMode` metadata and deployment identifiers to backup operations, backup sets, and restore targets; standalone backups are represented as one-node repository-backed backup sets.
+
+### Removed
+
+- Removed the legacy daemon-local backup RPCs (`TriggerBackup`, `GetBackupStatus`, `ListBackups`, and `DeleteBackup`) so public backup operations use repository-backed backup sets only.
+- Removed daemon-local backup policy scheduling/archive fields from `BackupPolicy`; the remaining policy fields define repository-backed defaults such as default repository, capture/quiesce behavior, derived subsystem policy, validation, and retention.
+- Removed local filesystem backup-set inputs (`StartClusterBackup.output_dir`, `ValidateClusterBackupSet.backup_set_path`, and the ambiguous `ListClusterBackups` RPC) from the public backup contract.
+
+### Compatibility
+
+- This release intentionally changes the backup API relative to v0.24.0. Clients must migrate to repository-backed repositories plus `StartBackup.repository_id`, `ListBackupSets`, `GetBackupSet`, `ValidateBackupSet`, repository retention, observability, and repository-backed restore planning.
+- Because the API is not yet stable, the remaining repository-only backup policy/start/validation messages use clean field numbering instead of reserving removed local-backup fields.
+- Daemon-local paths may still be used by implementations as temporary scratch or restore targets, but they are no longer durable backup artifacts in the public API.
 
 ## [v0.24.0] - 2026-11-23
 
@@ -21,23 +46,19 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 - Added restored-cluster derived subsystem readiness fields to cluster readiness so operators can see post-restore rebuild requirements for lexical, graph/checkpoint, and semantic/vector-derived artifacts.
 - Added repository backup retention planning/apply RPCs and plan/action messages so operators can preview and execute keep-last-successful, keep-for, and incomplete-prefix cleanup policies.
 - Added per-node restore progress evidence so Kubernetes restore controller/helper status can report target PVC actions, source-fencing tokens, helper pod phase, logs, and event tails.
-- Extended the restore contract with explicit standalone/clustered deployment target mappings, staging location, clean-target proof, source-fencing precondition evidence, and per-node/progress fields required before safe `NEW_DEPLOYMENT_BOOTSTRAP` restore execution can be enabled.
-- Added the first repository-backed production backup/restore contract foundation, including backup repository CRUD/validation, repository-backed deployment backup and backup-set catalog fields, restore planning/operation messages, credential-reference/encryption/capacity/compatibility summaries, and derived-state policy enums.
+- Extended the cluster restore contract with explicit target cluster/node mappings, staging location, clean-target proof, source-fencing precondition evidence, and per-node/progress fields required before safe `NEW_CLUSTER_BOOTSTRAP` restore execution can be enabled.
+- Added the first repository-backed production backup/restore contract foundation, including backup repository CRUD/validation, repository-backed cluster backup and backup-set catalog fields, restore planning/operation messages, credential-reference/encryption/capacity/compatibility summaries, and derived-state policy enums.
 - Extended backup-set validation, compatibility, capacity, and manifest summaries so clients can display schema/version, required feature, storage format, supported restore mode, artifact count, and byte-size evidence returned by daemon validators.
 - Extended quiesce participant status with active read/write counts, read allowlist profile, deadline, and admission-state fields for backup safety UX.
 
-### Removed
-
-- Removed the legacy daemon-local backup RPCs (`TriggerBackup`, `GetBackupStatus`, `ListBackups`, and `DeleteBackup`) so public backup operations use repository-backed backup sets only.
-- Removed daemon-local backup policy scheduling/archive fields from `BackupPolicy`; the remaining policy fields define repository-backed defaults such as default repository, capture/quiesce behavior, derived subsystem policy, validation, and retention.
-- Removed local filesystem backup-set inputs (`StartClusterBackup.output_dir`, `ValidateClusterBackupSet.backup_set_path`, and the ambiguous `ListClusterBackups` RPC) from the public backup contract.
-- Renamed repository-backed backup/restore RPCs and messages from cluster-specific names to deployment-wide names (`StartBackup`, `ListBackupSets`, `PlanRestore`, etc.) so the same contract covers standalone daemons and clustered installations.
-
 ### Compatibility
 
-- This is an intentional breaking backup API cleanup for the next coordinated minor release. Clients must migrate to repository-backed repositories plus `StartBackup.repository_id`, `ListBackupSets`, `GetBackupSet`, `ValidateBackupSet`, repository retention, observability, and repository-backed restore planning.
-- Because the API is not yet stable, the remaining repository-only backup policy/start/validation messages use clean field numbering instead of reserving removed local-backup fields.
-- Daemon-local paths may still be used by implementations as temporary scratch or restore targets, but they are no longer durable backup artifacts in the public API.
+- Coordinated API evolution for MycelDB v0.24.0. Daemon and SDK clients should be upgraded together to use repository-backed production backup/restore, backup observability, restored-derived readiness, usage accounting, and hard usage admission contracts.
+- Existing protobuf package names remain `mycel.*.v1`; new admin RPCs, fields, enum values, and capabilities require regenerated client bindings.
+
+### Validation
+
+- `make test` and pull-request CI passed for the merged v0.24 API contract.
 
 ## [v0.23.0] - 2026-11-17
 
