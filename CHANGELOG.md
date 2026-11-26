@@ -6,6 +6,18 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 
+## [v0.26.0] - 2026-11-26
+
+### Added
+
+- Documented public admin usage metric identifiers and formulas, including `graph.logical_bytes`: the UTF-8 byte total of scalar values in committed graph node payloads. It is quota-safe but is not eligible for hard-limit enforcement (#75).
+
+### Compatibility
+
+- This is an additive contract documentation release. Protobuf packages, fields, enums, RPCs, and wire format are unchanged from v0.25.0. Existing SDK bindings can read the metric from a daemon that supports it; no binding regeneration is required.
+
+## [v0.25.0] - 2026-11-24
+
 ### Changed
 
 - Generalized repository-backed backup/restore RPCs and messages from cluster-specific names to deployment-wide names (`StartBackup`, `ListBackupSets`, `PlanRestore`, `BackupOperation`, `BackupSetSummary`, etc.) so the same contract covers standalone daemons and clustered installations.
@@ -19,7 +31,7 @@ This project follows the spirit of [Keep a Changelog](https://keepachangelog.com
 
 ### Compatibility
 
-- This is an intentional breaking backup API cleanup for the next coordinated minor release. Clients must migrate to repository-backed repositories plus `StartBackup.repository_id`, `ListBackupSets`, `GetBackupSet`, `ValidateBackupSet`, repository retention, observability, and repository-backed restore planning.
+- This release intentionally changes the backup API relative to v0.24.0. Clients must migrate to repository-backed repositories plus `StartBackup.repository_id`, `ListBackupSets`, `GetBackupSet`, `ValidateBackupSet`, repository retention, observability, and repository-backed restore planning.
 - Because the API is not yet stable, the remaining repository-only backup policy/start/validation messages use clean field numbering instead of reserving removed local-backup fields.
 - Daemon-local paths may still be used by implementations as temporary scratch or restore targets, but they are no longer durable backup artifacts in the public API.
 

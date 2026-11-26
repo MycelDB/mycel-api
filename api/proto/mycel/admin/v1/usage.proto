@@ -204,6 +204,8 @@ message UsageLimit {
   string limit_id = 1;
   UsageScope scope = 2;
   DomainInclusionMode domain_inclusion = 3;
+  // Stable metric identifier. Implementations reject metrics that are not
+  // quota-safe hard-limit eligible.
   string metric_name = 4;
   uint32 metric_version = 5;
   uint64 hard_limit = 6;
@@ -288,6 +290,9 @@ message UsageSnapshot {
 
 // UsageMetric is one named usage value with explicit authority metadata.
 message UsageMetric {
+  // Stable metric identifier such as graph.node_count, graph.edge_count,
+  // graph.logical_bytes, or blob.active_logical_bytes. Metric formulas are
+  // documented by the API contract and may evolve by metric_version.
   string name = 1;
   uint32 metric_version = 2;
   uint64 value = 3;

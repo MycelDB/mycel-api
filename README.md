@@ -22,7 +22,7 @@ This repo **does** contain:
 
 - `.proto` source files for public MycelDB APIs.
 - Buf configuration for linting and breaking-change checks.
-- Documentation for API evolution and gRPC conventions.
+- Documentation for API evolution, gRPC conventions, and public metric semantics.
 
 This repo **does not** contain:
 
@@ -96,6 +96,15 @@ Resource IDs are opaque unless a field comment says otherwise. Clients should st
 ### Pagination and limits
 
 List/search RPCs should expose bounded result sets and cursor-style continuation where needed. Clients should treat cursors as opaque values and should not assume cursor stability across unrelated queries.
+
+### Usage metric identifiers
+
+Admin usage APIs expose metric identifiers as strings so the metric catalog can
+be extended without changing protobuf shapes. Metric names and formulas are still
+public API semantics; see [Admin usage metric names](docs/admin-usage-metrics.md)
+for the current quota-safe graph/blob metrics, including `graph.logical_bytes`,
+and the distinction between logical quota-safe metrics and diagnostic physical
+observations.
 
 ### Channel-specific search queries
 
